@@ -1,0 +1,11 @@
+{
+  "feeds": [
+    {
+      "id": "fed_press_releases",
+      "name": "Federal Reserve Press Releases",
+      "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+      "category": "Central Banks",
+      "enabled": true
+    }
+  ]
+}
