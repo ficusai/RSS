@@ -461,7 +461,7 @@ class MainWindow(QMainWindow):
         q = self.input_search.text()
         cat = self.combo_cat.currentText()
 
-        arts = load_articles(limit=300, category=cat if cat != "All" else None, search_query=q)
+        arts = load_articles(limit=300, category=cat if cat != "All" else "", search_query=q)
         self.current_articles = arts
 
         all_cats = sorted({a.get("category", "General") for a in load_articles(limit=1000) if a.get("category")})
