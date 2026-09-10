@@ -1,6 +1,7 @@
 {
   "feeds": [
     {
+      "_comment": "Stores feed configuration including URL, topic category, active toggle, and ping frequency interval in hours.",
       "id": "fed_press_releases",
       "name": "Federal Reserve Press Releases",
       "url": "https://www.federalreserve.gov/feeds/press_all.xml",

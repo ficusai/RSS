@@ -2,22 +2,88 @@
 Storage and deduplication engine for RSS feed articles.
 """
 
+# WHAT: Standard Python library for computing cryptographic hash fingerprints (SHA-256) of article text to assign unique IDs.
+# OPTIONS/VALUES: hashlib.sha256().hexdigest().
+# DEFAULTS: Standard library module.
+# OUTPUT/EFFECT: Generates fixed 64-character hash strings for unique article identification.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run 'python3 -c "import hashlib; print(hashlib.sha256(b\"test\").hexdigest())"'.
 import hashlib
+
+# WHAT: Standard JSON library for converting Python dictionaries into formatted text files and back.
+# OPTIONS/VALUES: json.dumps(), json.loads(), json.dump(), json.load().
+# DEFAULTS: Handles UTF-8 encoding.
+# OUTPUT/EFFECT: Reads/writes JSON files (dedup_state.json and scraped_articles.jsonl).
+# ERRORS/EDGE CASES: Throws json.JSONDecodeError if JSON file is corrupted.
+# HOW TO TEST: Run 'python3 -c "import json; print(json.dumps({\"a\": 1}))"'.
 import json
+
+# WHAT: Datetime utilities for tracking UTC scraping timestamps.
+# OPTIONS/VALUES: datetime.now(timezone.utc).
+# DEFAULTS: Uses Coordinated Universal Time (UTC).
+# OUTPUT/EFFECT: Stores ISO timestamp strings in the database state.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run 'python3 -c "from datetime import datetime, timezone; print(datetime.now(timezone.utc).isoformat())"'.
 from datetime import datetime, timezone
+
+# WHAT: Path library for manipulating folder and file path strings cleanly across operating systems.
+# OPTIONS/VALUES: Path("/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS").
+# DEFAULTS: Uses absolute file system path.
+# OUTPUT/EFFECT: Resolves data folder locations.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run 'python3 -c "from pathlib import Path; print(Path.home())"'.
 from pathlib import Path
+
+# WHAT: Type annotation hints to clarify function arguments and return types.
+# OPTIONS/VALUES: Any, Dict, List, Tuple.
+# DEFAULTS: Purely for static type checkers like mypy (does not change runtime execution).
+# OUTPUT/EFFECT: Improves code readability and developer tooling.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Checked by static analysis tools.
 from typing import Any, Dict, List, Tuple
 
+# WHAT: Constant defining the absolute directory path where scraped results and deduplication files are stored.
+# OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS".
+# DEFAULTS: Set to the project's SCRAPED-RESULTS folder.
+# OUTPUT/EFFECT: All scraped output files are written into this directory.
+# ERRORS/EDGE CASES: Permission errors if directory creation is blocked by OS.
+# HOW TO TEST: Check directory presence with 'ls -la /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS'.
 RESULTS_DIR = Path("/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS")
+
+# WHAT: Constant path pointing to the single master JSON Lines file storing all scraped articles.
+# OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/scraped_articles.jsonl".
+# DEFAULTS: Append-only JSON Lines formatted file (.jsonl).
+# OUTPUT/EFFECT: Stores one article per line as a JSON object.
+# ERRORS/EDGE CASES: If file is deleted, a new one will be created on the next scrape.
+# HOW TO TEST: Inspect contents with 'head -n 1 /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/scraped_articles.jsonl'.
 ARTICLES_FILE = RESULTS_DIR / "scraped_articles.jsonl"
+
+# WHAT: Constant path pointing to the JSON file keeping track of all seen article SHA-256 hashes to prevent duplicates.
+# OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/dedup_state.json".
+# DEFAULTS: Standard JSON object file.
+# OUTPUT/EFFECT: Preserves list of seen IDs across application restarts.
+# ERRORS/EDGE CASES: If corrupted, defaults back to an empty tracking state.
+# HOW TO TEST: Inspect with 'cat /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/dedup_state.json'.
 DEDUP_FILE = RESULTS_DIR / "dedup_state.json"
 
 
+# WHAT: Internal helper function that creates the output folder if it does not already exist.
+# OPTIONS/VALUES: None.
+# DEFAULTS: Creates parents and ignores existing folder error (exist_ok=True).
+# OUTPUT/EFFECT: Ensures /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS directory exists.
+# ERRORS/EDGE CASES: Raises PermissionError if write permission is denied.
+# HOW TO TEST: Call _ensure_dir() and verify folder existence with os.path.exists().
 def _ensure_dir() -> None:
     """Ensures that the output storage directory exists."""
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# WHAT: Generates a unique 64-character SHA-256 hex string ID for an article based on feed URL, link, title, or GUID.
+# OPTIONS/VALUES: Input strings: feed_url, item_link, item_title, item_guid.
+# DEFAULTS: Falls back to feed_url + current ISO timestamp if title and link are empty.
+# OUTPUT/EFFECT: Returns 64-character SHA-256 hexadecimal string.
+# ERRORS/EDGE CASES: Handles empty or None parameters gracefully by stripping and formatting fallback keys.
+# HOW TO TEST: Run 'python3 -c "from core.storage import generate_article_id; print(generate_article_id(\"http://test.com\", \"http://test.com/1\", \"Title\", \"guid123\"))"'.
 def generate_article_id(feed_url: str, item_link: str, item_title: str, item_guid: str) -> str:
     """
     Returns a SHA256 hex string based on link + title or guid.
@@ -37,6 +103,12 @@ def generate_article_id(feed_url: str, item_link: str, item_title: str, item_gui
     return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
 
+# WHAT: Internal helper function that reads dedup_state.json from disk into a Python dictionary.
+# OPTIONS/VALUES: Returns dict with keys: 'seen_ids', 'last_scrape_timestamp', 'total_scraped'.
+# DEFAULTS: Returns empty state dict if file does not exist or fails to parse.
+# OUTPUT/EFFECT: Loads deduplication history into memory.
+# ERRORS/EDGE CASES: Catches file missing, corrupted JSON syntax, or invalid data types safely.
+# HOW TO TEST: Call _load_dedup_state() in Python shell.
 def _load_dedup_state() -> Dict[str, Any]:
     """Loads deduplication state from dedup_state.json."""
     _ensure_dir()
@@ -57,6 +129,12 @@ def _load_dedup_state() -> Dict[str, Any]:
     return {"seen_ids": {}, "last_scrape_timestamp": None, "total_scraped": 0}
 
 
+# WHAT: Internal helper function that atomically writes the updated deduplication dictionary to dedup_state.json.
+# OPTIONS/VALUES: Takes state dictionary.
+# DEFAULTS: Writes formatted JSON with indent=2.
+# OUTPUT/EFFECT: Updates dedup_state.json on disk safely using a temporary file replacement.
+# ERRORS/EDGE CASES: Uses temporary file atomic rename to prevent file corruption if app crashes mid-write.
+# HOW TO TEST: Pass test dictionary to _save_dedup_state() and verify file updates.
 def _save_dedup_state(state: Dict[str, Any]) -> None:
     """Saves deduplication state atomically to dedup_state.json."""
     _ensure_dir()
@@ -66,6 +144,12 @@ def _save_dedup_state(state: Dict[str, Any]) -> None:
     temp_file.replace(DEDUP_FILE)
 
 
+# WHAT: Checks whether a specific article ID hash has already been saved previously.
+# OPTIONS/VALUES: Input article_id string.
+# DEFAULTS: Returns False if article_id is empty or missing.
+# OUTPUT/EFFECT: Returns True if article was already scraped, False if new.
+# ERRORS/EDGE CASES: Returns False for empty strings.
+# HOW TO TEST: Run 'python3 -c "from core.storage import is_duplicate; print(is_duplicate(\"non_existent_hash\"))"'.
 def is_duplicate(article_id: str) -> bool:
     """
     Checks if article_id is in the deduplication state.
@@ -76,6 +160,12 @@ def is_duplicate(article_id: str) -> bool:
     return article_id in state.get("seen_ids", {})
 
 
+# WHAT: Main storage function that filters out duplicate articles, appends new ones to scraped_articles.jsonl, and updates dedup_state.json.
+# OPTIONS/VALUES: Input list of article dictionaries.
+# DEFAULTS: Appends single line JSON string per new article.
+# OUTPUT/EFFECT: Returns tuple (new_articles_count, total_seen_count).
+# ERRORS/EDGE CASES: Creates files automatically if missing; skips duplicate articles cleanly.
+# HOW TO TEST: Call save_articles([sample_article_dict]) and check return counts.
 def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
     """
     Appends non-duplicate articles to JSONL file and updates dedup_state.json.
@@ -117,6 +207,12 @@ def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
     return len(new_articles), total_seen
 
 
+# WHAT: Reads storage metrics and returns a summary dictionary for the GUI dashboard.
+# OPTIONS/VALUES: Returns dict with keys: total_articles, dedup_count, total_feeds, last_scrape_timestamp, storage_file_exists, storage_file_size_bytes.
+# DEFAULTS: Returns 0 for counts if files do not exist.
+# OUTPUT/EFFECT: Supplies statistical counters to the PyQt6 user interface.
+# ERRORS/EDGE CASES: Gracefully handles missing output files without throwing errors.
+# HOW TO TEST: Run 'python3 -c "from core.storage import get_stats; print(get_stats())"'.
 def get_stats() -> Dict[str, Any]:
     """
     Returns stats such as total articles stored, total feeds, last scrape timestamp.

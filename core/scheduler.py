@@ -2,18 +2,77 @@
 Systemd timer installation and management for RSS feed scraper.
 """
 
+# WHAT: Operating system environment utilities module.
+# OPTIONS/VALUES: os.environ, os.path.
+# DEFAULTS: Standard Python library module.
+# OUTPUT/EFFECT: Provides OS interaction functions.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run 'python3 -c "import os; print(os.name)"'.
 import os
+
+# WHAT: Subprocess management library for executing Linux systemctl terminal commands from Python code.
+# OPTIONS/VALUES: subprocess.run(), check=True, capture_output=True, text=True.
+# DEFAULTS: Runs shell systemctl commands synchronously.
+# OUTPUT/EFFECT: Controls systemd user daemon, service units, and timer schedules.
+# ERRORS/EDGE CASES: Throws CalledProcessError if systemctl command fails.
+# HOW TO TEST: Run 'python3 -c "import subprocess; print(subprocess.run([\"systemctl\", \"--user\", \"is-active\", \"rss-scraper.timer\"], capture_output=True, text=True).stdout)"'.
 import subprocess
+
+# WHAT: System parameters module providing path to current Python binary (sys.executable).
+# OPTIONS/VALUES: sys.executable (e.g. /usr/bin/python3).
+# DEFAULTS: Standard library module.
+# OUTPUT/EFFECT: Ensures systemd service uses the exact Python interpreter executing the application.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run 'python3 -c "import sys; print(sys.executable)"'.
 import sys
+
+# WHAT: Object-oriented filesystem path handler.
+# OPTIONS/VALUES: Path.home(), Path("/home/ficus-pro/Documents/RSS").
+# DEFAULTS: Resolves home directories (~/.config/systemd/user).
+# OUTPUT/EFFECT: Constructs paths to systemd user configuration directory.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run 'python3 -c "from pathlib import Path; print(Path.home() / \".config\")"'.
 from pathlib import Path
+
+# WHAT: Type hinting classes for dicts and generic types.
+# OPTIONS/VALUES: Any, Dict.
+# DEFAULTS: Static typing annotations.
+# OUTPUT/EFFECT: Enables type checking.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Checked by static code analysis tools.
 from typing import Any, Dict
 
-
+# WHAT: Path to user systemd configuration folder (~/.config/systemd/user).
+# OPTIONS/VALUES: Path object pointing to ~/.config/systemd/user.
+# DEFAULTS: Standard Linux user systemd location.
+# OUTPUT/EFFECT: Directory where service and timer unit files are installed.
+# ERRORS/EDGE CASES: Permission error if user home directory is restricted.
+# HOW TO TEST: Run 'ls -la ~/.config/systemd/user'.
 SYSTEMD_USER_DIR = Path.home() / ".config" / "systemd" / "user"
+
+# WHAT: Path pointing to the generated systemd service file (rss-scraper.service).
+# OPTIONS/VALUES: ~/.config/systemd/user/rss-scraper.service.
+# DEFAULTS: Target location for service unit definition.
+# OUTPUT/EFFECT: Defines systemd background scrape job execution commands.
+# ERRORS/EDGE CASES: Overwritten if timer reinstall is triggered.
+# HOW TO TEST: Run 'cat ~/.config/systemd/user/rss-scraper.service'.
 SERVICE_FILE = SYSTEMD_USER_DIR / "rss-scraper.service"
+
+# WHAT: Path pointing to the generated systemd timer file (rss-scraper.timer).
+# OPTIONS/VALUES: ~/.config/systemd/user/rss-scraper.timer.
+# DEFAULTS: Target location for 12-hour schedule definition.
+# OUTPUT/EFFECT: Defines timer schedule (OnCalendar=*-*-* 00,12:00:00).
+# ERRORS/EDGE CASES: Overwritten on reinstall.
+# HOW TO TEST: Run 'systemctl --user status rss-scraper.timer'.
 TIMER_FILE = SYSTEMD_USER_DIR / "rss-scraper.timer"
 
 
+# WHAT: Installs and enables the background systemd timer to automatically run the RSS scraper twice a day (every 12 hours).
+# OPTIONS/VALUES: Returns True if systemd daemon was reloaded and timer enabled successfully; False on failure.
+# DEFAULTS: OnCalendar=*-*-* 00,12:00:00 (runs at midnight 00:00 and noon 12:00 UTC/local).
+# OUTPUT/EFFECT: Writes unit files, runs daemon-reload, and enables timer.
+# ERRORS/EDGE CASES: Catches missing systemd environment, permission errors, or systemctl failures.
+# HOW TO TEST: Call install_systemd_timer() and check 'systemctl --user list-timers'.
 def install_systemd_timer() -> bool:
     """
     Creates ~/.config/systemd/user/rss-scraper.service and rss-scraper.timer
@@ -76,6 +135,12 @@ WantedBy=timers.target
         return False
 
 
+# WHAT: Inspects whether the systemd user timer unit files exist, are enabled, and actively running.
+# OPTIONS/VALUES: Returns dict with boolean keys 'installed', 'active', 'enabled', and string 'detail'.
+# DEFAULTS: Returns active=False if timer is inactive.
+# OUTPUT/EFFECT: Provides status information to the GUI header stat card.
+# ERRORS/EDGE CASES: Returns detail error message if systemctl query fails.
+# HOW TO TEST: Run 'python3 -c "from core.scheduler import get_timer_status; print(get_timer_status())"'.
 def get_timer_status() -> Dict[str, Any]:
     """
     Checks if systemd user timer is active and enabled.

@@ -2,15 +2,76 @@
 PyQt6 Main Window and GUI components for RSS Feed Manager & Scraper.
 """
 
+# WHAT: Standard JSON module for loading and saving the feed configuration list in config/feeds.json.
+# OPTIONS/VALUES: json.dump(), json.load().
+# DEFAULTS: Uses UTF-8 encoding.
+# OUTPUT/EFFECT: Reads/writes feed lists and interval settings to disk.
+# ERRORS/EDGE CASES: Catches invalid JSON format gracefully.
+# HOW TO TEST: Checked during app startup.
 import json
+
+# WHAT: Regular Expressions module for creating clean URL and name slug identifiers.
+# OPTIONS/VALUES: re.sub().
+# DEFAULTS: Replaces non-alphanumeric characters with underscores.
+# OUTPUT/EFFECT: Generates feed ID keys.
+# ERRORS/EDGE CASES: Fallback feed IDs generated if name contains only special symbols.
+# HOW TO TEST: Add feed named "@#$%" in GUI.
 import re
+
+# WHAT: System parameters module for managing application exit and arguments.
+# OPTIONS/VALUES: sys.argv, sys.exit().
+# DEFAULTS: Standard library module.
+# OUTPUT/EFFECT: Connects Qt application loop to Python system exit.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Run app from terminal.
 import sys
+
+# WHAT: Datetime module for stamping real-time logs in the GUI terminal.
+# OPTIONS/VALUES: datetime.now().strftime("%Y-%m-%d %H:%M:%S").
+# DEFAULTS: System local time.
+# OUTPUT/EFFECT: Prepends timestamps to log messages.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Perform any action in the GUI and check Log Console timestamps.
 from datetime import datetime
+
+# WHAT: Path handling library for finding config file paths.
+# OPTIONS/VALUES: Path("/home/ficus-pro/Documents/RSS/config/feeds.json").
+# DEFAULTS: Absolute path.
+# OUTPUT/EFFECT: Ensures files are saved to the project directory.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Checked during config load.
 from pathlib import Path
+
+# WHAT: Type annotation hints for static code analysis.
+# OPTIONS/VALUES: Any, Dict, List, Optional.
+# DEFAULTS: Static code hints.
+# OUTPUT/EFFECT: Enhances IDE editor suggestions.
+# ERRORS/EDGE CASES: None.
+# HOW TO TEST: Checked by static linters.
 from typing import Any, Dict, List, Optional
 
+# WHAT: PyQt6 Core module providing thread execution, custom event signals, and alignment flags.
+# OPTIONS/VALUES: Qt.AlignmentFlag.AlignCenter, QThread, pyqtSignal.
+# DEFAULTS: Qt framework base primitives.
+# OUTPUT/EFFECT: Enables background thread processing without freezing the desktop window.
+# ERRORS/EDGE CASES: Signal emission fails if thread is uninitialized.
+# HOW TO TEST: Click '⚡ Scrape Feeds Now' button to observe background thread execution.
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
+
+# WHAT: PyQt6 GUI module providing color brushes and font settings.
+# OPTIONS/VALUES: QFont("Segoe UI", 16, QFont.Weight.Bold), QColor.
+# DEFAULTS: Custom Catppuccin theme styling.
+# OUTPUT/EFFECT: Styles window text and headers.
+# ERRORS/EDGE CASES: System font fallback used if 'Segoe UI' is missing.
+# HOW TO TEST: View GUI header titles.
 from PyQt6.QtGui import QColor, QFont
+
+# WHAT: PyQt6 Widgets module providing desktop layout containers, buttons, tables, text inputs, and dialog windows.
+# OPTIONS/VALUES: QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QTableWidget, QComboBox, QCheckBox, QTextEdit, QProgressBar, QMessageBox.
+# DEFAULTS: Qt graphical desktop widget suite.
+# OUTPUT/EFFECT: Renders the entire interactive desktop GUI.
+# ERRORS/EDGE CASES: Handled via Qt event loop.
+# HOW TO TEST: Run 'python3 main.py' to open window.
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -32,12 +93,44 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+# WHAT: Imports core feed scraper functions.
+# OPTIONS/VALUES: fetch_all_feeds().
+# DEFAULTS: Local package import.
+# OUTPUT/EFFECT: Downloads RSS feed contents.
+# ERRORS/EDGE CASES: Handled in fetcher module.
+# HOW TO TEST: Trigger manual scrape in GUI.
 from core.fetcher import fetch_all_feeds
+
+# WHAT: Imports systemd background scheduler functions.
+# OPTIONS/VALUES: get_timer_status(), install_systemd_timer().
+# DEFAULTS: Local package import.
+# OUTPUT/EFFECT: Controls 12-hour background Linux timer.
+# ERRORS/EDGE CASES: Displays notice if systemd is unavailable.
+# HOW TO TEST: Click '⚙ Enable 12-Hour Background Scraping' button.
 from core.scheduler import get_timer_status, install_systemd_timer
+
+# WHAT: Imports storage database functions.
+# OPTIONS/VALUES: get_stats(), save_articles().
+# DEFAULTS: Local package import.
+# OUTPUT/EFFECT: Appends results to JSON Lines database.
+# ERRORS/EDGE CASES: Handled in storage module.
+# HOW TO TEST: Observe Total Articles counter updating.
 from core.storage import get_stats, save_articles
 
+# WHAT: Constant path pointing to feed catalog configuration file.
+# OPTIONS/VALUES: /home/ficus-pro/Documents/RSS/config/feeds.json.
+# DEFAULTS: Path object.
+# OUTPUT/EFFECT: Location of saved feeds and ping frequencies.
+# ERRORS/EDGE CASES: File created automatically if missing.
+# HOW TO TEST: Edit feeds in GUI and check file.
 CONFIG_PATH = Path("/home/ficus-pro/Documents/RSS/config/feeds.json")
 
+# WHAT: CSS-like QSS stylesheet string defining the dark theme colors and UI borders.
+# OPTIONS/VALUES: Catppuccin Mocha theme (#1e1e2e background, #89b4fa accent blue, #a6e3a1 green, #f38ba8 red).
+# DEFAULTS: Applied to QMainWindow.
+# OUTPUT/EFFECT: Custom dark mode desktop interface appearance.
+# ERRORS/EDGE CASES: Invalid QSS rules are ignored by Qt parser.
+# HOW TO TEST: Inspect visual styling of desktop app window.
 STYLESHEET = """
 QMainWindow {
     background-color: #1e1e2e;
@@ -165,6 +258,12 @@ QComboBox QAbstractItemView {
 """
 
 
+# WHAT: Background worker thread class that runs RSS network fetching without freezing the graphical user interface window.
+# OPTIONS/VALUES: Inherits QThread; emits log_signal(str) and finished_signal(int, int, list).
+# DEFAULTS: Non-blocking worker thread.
+# OUTPUT/EFFECT: Prevents GUI window from becoming unresponsive during network calls.
+# ERRORS/EDGE CASES: Emits error payload in finished_signal if exception occurs during fetch.
+# HOW TO TEST: Click '⚡ Scrape Feeds Now' and interact with table while scraping runs.
 class ScrapeThread(QThread):
     """Background worker thread for non-blocking RSS scraping."""
 
@@ -175,6 +274,12 @@ class ScrapeThread(QThread):
         super().__init__(parent)
         self.feeds = feeds
 
+    # WHAT: Thread entrypoint method executed when thread.start() is called.
+    # OPTIONS/VALUES: Runs fetch_all_feeds() and save_articles().
+    # DEFAULTS: Emits progress signals to main GUI thread.
+    # OUTPUT/EFFECT: Downloads articles, saves to JSONL database, and reports article counts.
+    # ERRORS/EDGE CASES: Catches network timeouts and passes error messages back to GUI log console.
+    # HOW TO TEST: Checked when manual or per-feed ping is triggered.
     def run(self) -> None:
         try:
             self.log_signal.emit("Starting background feed scraping worker...")
@@ -187,6 +292,12 @@ class ScrapeThread(QThread):
             self.finished_signal.emit(0, 0, [{"feed_name": "System", "error": str(e)}])
 
 
+# WHAT: Main application window class managing all desktop GUI layouts, forms, buttons, tables, and event handlers.
+# OPTIONS/VALUES: Inherits QMainWindow; window size 1000x750.
+# DEFAULTS: Window title "RSS Feed Manager & Scraper".
+# OUTPUT/EFFECT: Primary graphical interface.
+# ERRORS/EDGE CASES: Resizes dynamically to fit display monitors.
+# HOW TO TEST: Run 'python3 main.py'.
 class MainWindow(QMainWindow):
     """Main application window for RSS Feed Manager & Scraper."""
 
@@ -206,6 +317,12 @@ class MainWindow(QMainWindow):
         self.update_stats()
         self.log("Application started. Ready.")
 
+    # WHAT: Constructs the window's visual components, layouts, forms, buttons, header cards, and log terminal.
+    # OPTIONS/VALUES: Sets central widget, main vertical box layout (QVBoxLayout), and sub-containers.
+    # DEFAULTS: 16px margins, 14px spacing.
+    # OUTPUT/EFFECT: Renders the graphical desktop workspace interface.
+    # ERRORS/EDGE CASES: None.
+    # HOW TO TEST: Launch app to observe visual component tree.
     def _init_ui(self) -> None:
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -350,6 +467,12 @@ class MainWindow(QMainWindow):
         log_layout.addWidget(self.log_console)
         main_layout.addWidget(log_box, 2)
 
+    # WHAT: Internal helper creating styled statistical summary cards for the header dashboard bar.
+    # OPTIONS/VALUES: Arguments: title, default_value, color_hex string.
+    # DEFAULTS: Dark card frame with colored metric text.
+    # OUTPUT/EFFECT: Returns QFrame widget containing title and value labels.
+    # ERRORS/EDGE CASES: None.
+    # HOW TO TEST: Inspect top header stat boxes.
     def _create_stat_card(self, title: str, default_value: str, color_hex: str) -> QFrame:
         card = QFrame()
         card.setStyleSheet(
@@ -373,12 +496,24 @@ class MainWindow(QMainWindow):
         layout.addWidget(val_lbl)
         return card
 
+    # WHAT: Appends a timestamped log line to the GUI Log Console text box.
+    # OPTIONS/VALUES: Accepts string message.
+    # DEFAULTS: Prepends current date/time string 'YYYY-MM-DD HH:MM:SS'.
+    # OUTPUT/EFFECT: Scrollable real-time event log in GUI.
+    # ERRORS/EDGE CASES: None.
+    # HOW TO TEST: Call self.log("Test Message").
     def log(self, message: str) -> None:
         """Appends a timestamped log message to the log console."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         formatted = f"[{timestamp}] {message}"
         self.log_console.append(formatted)
 
+    # WHAT: Reads feed configurations from config/feeds.json into self.feeds.
+    # OPTIONS/VALUES: Returns list of feed dicts.
+    # DEFAULTS: Returns empty list if file is missing or invalid.
+    # OUTPUT/EFFECT: Loads user feed configurations.
+    # ERRORS/EDGE CASES: Logs JSON decode errors and defaults to empty feed list.
+    # HOW TO TEST: Call load_feeds() and verify return value.
     def load_feeds(self) -> List[Dict[str, Any]]:
         """Loads feeds from config/feeds.json."""
         if not self.config_path.exists():
@@ -400,6 +535,12 @@ class MainWindow(QMainWindow):
 
         return self.feeds
 
+    # WHAT: Writes current self.feeds array to config/feeds.json on disk.
+    # OPTIONS/VALUES: Writes formatted JSON object {"feeds": self.feeds}.
+    # DEFAULTS: Pretty-printed indent=2 layout.
+    # OUTPUT/EFFECT: Saves updated feed list and ping frequencies to disk.
+    # ERRORS/EDGE CASES: Logs permission or filesystem failure messages.
+    # HOW TO TEST: Modify feed settings and verify config/feeds.json updates.
     def save_feeds(self) -> None:
         """Saves current feed list to config/feeds.json."""
         try:
@@ -409,6 +550,12 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.log(f"Failed to save feeds to config: {e}")
 
+    # WHAT: Re-renders the QTableWidget rows using current self.feeds list.
+    # OPTIONS/VALUES: Displays columns: Name, Category, URL, Ping Frequency dropdown, Enabled checkbox, Actions (⚡ Ping & Delete).
+    # DEFAULTS: Interactive cell widgets.
+    # OUTPUT/EFFECT: Updates table display with active feeds and custom control widgets.
+    # ERRORS/EDGE CASES: Clears table prior to re-populating to prevent row index mismatch.
+    # HOW TO TEST: Add or delete feed to observe table update.
     def update_table(self) -> None:
         """Populates the QTableWidget with current tracked feeds."""
         self.table.setRowCount(0)
@@ -477,6 +624,12 @@ class MainWindow(QMainWindow):
             btn_layout.addWidget(btn_del)
             self.table.setCellWidget(row_idx, 5, btn_container)
 
+    # WHAT: Updates the ping frequency setting (hours) for a feed and saves to config.
+    # OPTIONS/VALUES: hours: 1, 3, 6, 12, 24.
+    # DEFAULTS: Default frequency 12 hours.
+    # OUTPUT/EFFECT: Saves new ping interval to config/feeds.json.
+    # ERRORS/EDGE CASES: Validates index boundary.
+    # HOW TO TEST: Select '1 Hour' in table dropdown and check config/feeds.json.
     def change_feed_frequency(self, index: int, hours: int) -> None:
         """Updates the ping interval (in hours) for a feed."""
         if 0 <= index < len(self.feeds):
@@ -485,6 +638,12 @@ class MainWindow(QMainWindow):
             feed_name = self.feeds[index].get("name", "Unknown")
             self.log(f"Updated ping frequency for '{feed_name}' to every {hours} hour(s).")
 
+    # WHAT: Immediately pings a single feed, reads RSS XML content, and appends articles locally to /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/.
+    # OPTIONS/VALUES: Target feed index integer.
+    # DEFAULTS: Runs ScrapeThread background worker.
+    # OUTPUT/EFFECT: Saves results to scraped_articles.jsonl and dedup_state.json.
+    # ERRORS/EDGE CASES: Prevents multiple concurrent scraping threads.
+    # HOW TO TEST: Click '⚡ Ping' button on a feed row.
     def ping_single_feed(self, index: int) -> None:
         """Immediately pings a single RSS feed and saves scraped output locally."""
         if not (0 <= index < len(self.feeds)):
@@ -510,6 +669,12 @@ class MainWindow(QMainWindow):
         self.scrape_thread.finished_signal.connect(self.on_scrape_finished)
         self.scrape_thread.start()
 
+    # WHAT: Form handler that validates user input fields and adds a new RSS feed to the tracking list.
+    # OPTIONS/VALUES: Inputs: Feed Name, RSS URL, Category, Ping Frequency.
+    # DEFAULTS: Default category 'General', default ping frequency 12 hours.
+    # OUTPUT/EFFECT: Appends new feed dict to self.feeds, saves to config, and updates UI table.
+    # ERRORS/EDGE CASES: Shows warning box if name or URL is missing; prepends 'https://' if missing.
+    # HOW TO TEST: Fill form and click 'Add RSS Feed'.
     def add_feed(self) -> None:
         """Adds a new RSS feed from the input form."""
         name = self.input_name.text().strip()
@@ -550,6 +715,12 @@ class MainWindow(QMainWindow):
 
         self.log(f"Successfully added RSS Feed '{name}' ({url}) under '{category}' [Ping frequency: Every {freq_hours}h].")
 
+    # WHAT: Deletes a tracked feed from the list at specified table row index.
+    # OPTIONS/VALUES: Row index integer.
+    # DEFAULTS: Removes feed from self.feeds array.
+    # OUTPUT/EFFECT: Saves updated config and updates table display.
+    # ERRORS/EDGE CASES: Validates index boundary before popping.
+    # HOW TO TEST: Click 'Delete' button on feed row.
     def delete_feed(self, index: int) -> None:
         """Removes a feed at the specified index."""
         if 0 <= index < len(self.feeds):
@@ -559,6 +730,12 @@ class MainWindow(QMainWindow):
             self.update_stats()
             self.log(f"Deleted RSS Feed '{deleted_feed.get('name', 'Unknown')}'.")
 
+    # WHAT: Toggles enabled/disabled checkbox state for a feed.
+    # OPTIONS/VALUES: Checked boolean (True/False).
+    # DEFAULTS: Enables or disables feed.
+    # OUTPUT/EFFECT: Disabled feeds are skipped during automatic scraping.
+    # ERRORS/EDGE CASES: Updates config immediately.
+    # HOW TO TEST: Check/uncheck 'Enabled' box in table.
     def toggle_feed_enabled(self, index: int, enabled: bool) -> None:
         """Toggles the enabled status of a feed."""
         if 0 <= index < len(self.feeds):
@@ -567,6 +744,12 @@ class MainWindow(QMainWindow):
             self.update_stats()
             self.log(f"Feed '{self.feeds[index].get('name')}' enabled state updated to: {enabled}.")
 
+    # WHAT: Toolbar action launching background scraping for all enabled feeds in self.feeds.
+    # OPTIONS/VALUES: Disables 'Scrape Feeds Now' button while active and shows progress bar.
+    # DEFAULTS: Executes ScrapeThread.
+    # OUTPUT/EFFECT: Downloads all enabled feeds in background thread.
+    # ERRORS/EDGE CASES: Shows notice if no feeds are enabled.
+    # HOW TO TEST: Click '⚡ Scrape Feeds Now' button.
     def start_scraping(self) -> None:
         """Launches feed scraping in a background thread."""
         if self.scrape_thread and self.scrape_thread.isRunning():
@@ -589,6 +772,12 @@ class MainWindow(QMainWindow):
         self.scrape_thread.finished_signal.connect(self.on_scrape_finished)
         self.scrape_thread.start()
 
+    # WHAT: Callback executed when background ScrapeThread finishes.
+    # OPTIONS/VALUES: Receives new_count, total_count, errors list.
+    # DEFAULTS: Re-enables toolbar buttons and updates UI stats.
+    # OUTPUT/EFFECT: Reports final article count summary in Log Console.
+    # ERRORS/EDGE CASES: Displays error details in log console if any feed fetch failed.
+    # HOW TO TEST: Called automatically when scrape completes.
     def on_scrape_finished(self, new_count: int, total_count: int, errors: List[Dict[str, Any]]) -> None:
         """Callback executed when background scrape thread completes."""
         self.btn_scrape.setEnabled(True)
@@ -604,6 +793,12 @@ class MainWindow(QMainWindow):
 
         self.update_stats()
 
+    # WHAT: Toolbar action installing and activating Linux systemd user timer (12-hour background scrape schedule).
+    # OPTIONS/VALUES: Installs rss-scraper.service and rss-scraper.timer.
+    # DEFAULTS: Schedule OnCalendar=*-*-* 00,12:00:00.
+    # OUTPUT/EFFECT: Activates automatic 12-hour background execution.
+    # ERRORS/EDGE CASES: Shows dialog box reporting success or warning details.
+    # HOW TO TEST: Click '⚙ Enable 12-Hour Background Scraping' button.
     def enable_timer(self) -> None:
         """Installs and starts the systemd 12-hour background scraping timer."""
         self.log("Installing systemd 12-hour timer service...")
@@ -627,6 +822,12 @@ class MainWindow(QMainWindow):
 
         self.update_stats()
 
+    # WHAT: Updates top dashboard stat cards (Total Articles count, Tracked Feeds count, Timer Status badge).
+    # OPTIONS/VALUES: Fetches metrics via get_stats() and get_timer_status().
+    # DEFAULTS: Updates text labels in real time.
+    # OUTPUT/EFFECT: Displays current database counters and background scheduler status.
+    # ERRORS/EDGE CASES: Catches exceptions and logs warning message if stats query fails.
+    # HOW TO TEST: Observe stat values update after adding/pinging feeds.
     def update_stats(self) -> None:
         """Updates stat counter widgets and timer status."""
         try:
