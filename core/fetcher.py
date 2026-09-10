@@ -187,7 +187,16 @@ def fetch_feed(feed_config: Dict[str, Any]) -> List[Dict[str, Any]]:
     with urllib.request.urlopen(req, timeout=15) as response:
         raw_data = response.read()
 
-    root = ET.fromstring(raw_data)
+    raw_data = raw_data.lstrip(b"\xef\xbb\xbf").strip()
+
+    try:
+        root = ET.fromstring(raw_data)
+    except ET.ParseError as pe:
+        lower_data = raw_data.lower()
+        if b"<!doctype html" in lower_data or b"<html" in lower_data:
+            raise ValueError("Server returned an HTML web page instead of a valid RSS/Atom XML feed") from pe
+        raise ValueError(f"XML parse error: {pe}") from pe
+
     articles = []
 
     for elem in root.iter():

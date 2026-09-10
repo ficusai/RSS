@@ -35,12 +35,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # WHAT: Type annotation hints to clarify function arguments and return types.
-# OPTIONS/VALUES: Any, Dict, List, Tuple.
+# OPTIONS/VALUES: Any, Dict, List, Optional, Tuple.
 # DEFAULTS: Purely for static type checkers like mypy (does not change runtime execution).
 # OUTPUT/EFFECT: Improves code readability and developer tooling.
 # ERRORS/EDGE CASES: None.
 # HOW TO TEST: Checked by static analysis tools.
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # WHAT: Constant defining the absolute directory path where scraped results and deduplication files are stored.
 # OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS".
@@ -145,19 +145,19 @@ def _save_dedup_state(state: Dict[str, Any]) -> None:
 
 
 # WHAT: Checks whether a specific article ID hash has already been saved previously.
-# OPTIONS/VALUES: Input article_id string.
+# OPTIONS/VALUES: Input article_id string, optional preloaded state dict.
 # DEFAULTS: Returns False if article_id is empty or missing.
 # OUTPUT/EFFECT: Returns True if article was already scraped, False if new.
 # ERRORS/EDGE CASES: Returns False for empty strings.
 # HOW TO TEST: Run 'python3 -c "from core.storage import is_duplicate; print(is_duplicate(\"non_existent_hash\"))"'.
-def is_duplicate(article_id: str) -> bool:
+def is_duplicate(article_id: str, state: Optional[Dict[str, Any]] = None) -> bool:
     """
-    Checks if article_id is in the deduplication state.
+    Checks if article_id is in the deduplication state. Accepts optional preloaded state dict.
     """
     if not article_id:
         return False
-    state = _load_dedup_state()
-    return article_id in state.get("seen_ids", {})
+    st = state if state is not None else _load_dedup_state()
+    return article_id in st.get("seen_ids", {})
 
 
 # WHAT: Main storage function that filters out duplicate articles, appends new ones to scraped_articles.jsonl, and updates dedup_state.json.
@@ -247,3 +247,75 @@ def get_stats() -> Dict[str, Any]:
         "storage_file_exists": ARTICLES_FILE.exists(),
         "storage_file_size_bytes": ARTICLES_FILE.stat().st_size if ARTICLES_FILE.exists() else 0,
     }
+
+
+# WHAT: Loads stored articles from JSONL database file with support for filtering, searching, and pagination.
+# OPTIONS/VALUES: Arguments: limit, offset, category filter, feed filter, keyword search string.
+# DEFAULTS: Limit 200 items, reverse chronological order (newest first).
+# OUTPUT/EFFECT: Returns list of matching article dictionaries.
+# ERRORS/EDGE CASES: Returns empty list if storage file does not exist or fails to parse.
+# HOW TO TEST: Run 'python3 -c "from core.storage import load_articles; print(len(load_articles()))"'.
+def load_articles(
+    limit: int = 200,
+    offset: int = 0,
+    category: str = "",
+    feed_filter: str = "",
+    search_query: str = "",
+) -> List[Dict[str, Any]]:
+    """
+    Reads stored articles from scraped_articles.jsonl in reverse chronological order with filtering.
+    """
+    _ensure_dir()
+    if not ARTICLES_FILE.exists():
+        return []
+
+    results = []
+    query_lower = search_query.strip().lower()
+    cat_lower = category.strip().lower()
+    feed_lower = feed_filter.strip().lower()
+
+    try:
+        with open(ARTICLES_FILE, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        # Reverse so newest articles come first
+        for line in reversed(lines):
+            line_str = line.strip()
+            if not line_str:
+                continue
+            try:
+                item = json.loads(line_str)
+            except Exception:
+                continue
+
+            # Category filter
+            if cat_lower and cat_lower != "all":
+                item_cat = (item.get("category") or "General").lower()
+                if cat_lower not in item_cat:
+                    continue
+
+            # Feed filter
+            if feed_lower and feed_lower != "all":
+                item_feed = (item.get("feed_name") or "").lower()
+                if feed_lower not in item_feed:
+                    continue
+
+            # Search query (matches title, text_clean, author, or tags)
+            if query_lower:
+                title_match = query_lower in (item.get("title") or "").lower()
+                text_match = query_lower in (item.get("text_clean") or "").lower()
+                author_match = query_lower in (item.get("author") or "").lower()
+                tags_str = " ".join(item.get("tags") or []).lower()
+                tag_match = query_lower in tags_str
+                if not (title_match or text_match or author_match or tag_match):
+                    continue
+
+            results.append(item)
+
+    except Exception:
+        pass
+
+    # Pagination slice
+    start_idx = max(0, offset)
+    end_idx = start_idx + limit
+    return results[start_idx:end_idx]

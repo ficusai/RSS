@@ -94,7 +94,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory={project_dir}
-ExecStart={python_bin} -c "from core.fetcher import fetch_all_feeds; from core.storage import save_articles; import json, pathlib; config_path = pathlib.Path('{project_dir}/config/feeds.json'); feeds = json.loads(config_path.read_text())['feeds'] if config_path.exists() else []; articles, _ = fetch_all_feeds(feeds); save_articles(articles)"
+ExecStart={python_bin} {project_dir}/main.py --headless
 StandardOutput=journal
 StandardError=journal
 

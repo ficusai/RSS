@@ -8,6 +8,38 @@
       "category": "Central Banks",
       "fetch_interval_hours": 12,
       "enabled": true
+    },
+    {
+      "id": "ars_technica",
+      "name": "Ars Technica",
+      "url": "http://feeds.arstechnica.com/arstechnica/index",
+      "category": "Technology",
+      "fetch_interval_hours": 12,
+      "enabled": true
+    },
+    {
+      "id": "bbc_news_world",
+      "name": "BBC News - World",
+      "url": "http://feeds.bbci.co.uk/news/rss.xml",
+      "category": "World News",
+      "fetch_interval_hours": 12,
+      "enabled": true
+    },
+    {
+      "id": "federal_reserve_press",
+      "name": "Federal Reserve Press",
+      "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+      "category": "Finance",
+      "fetch_interval_hours": 12,
+      "enabled": true
+    },
+    {
+      "id": "federal_reserve_press",
+      "name": "Federal Reserve Press",
+      "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+      "category": "Finance",
+      "fetch_interval_hours": 12,
+      "enabled": true
     }
   ]
 }
