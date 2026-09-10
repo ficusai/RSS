@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         hdr_layout.setContentsMargins(12, 8, 12, 8)
 
         title_lbl = QLabel("RSS Feed Manager")
-        title_lbl.setFont(QFont("", 13, QFont.Weight.Bold))
+        title_lbl.setFont(QFont("", 14, QFont.Weight.Bold))
         title_lbl.setStyleSheet("color: #58a6ff;")
         hdr_layout.addWidget(title_lbl)
         hdr_layout.addStretch()
