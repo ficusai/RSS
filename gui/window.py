@@ -85,33 +85,37 @@ QTableWidget {
     background: #0d1117; border: 1px solid #21262d; border-radius: 6px;
     color: #e6edf3; gridline-color: #21262d; font-size: 14px;
     selection-background-color: #1f6feb33; selection-color: #e6edf3;
+    min-height: 32px;
 }
 QHeaderView::section {
     background: #161b22; color: #8b949e; border: none;
-    border-bottom: 1px solid #21262d; padding: 10px 12px;
-    font-weight: 600; font-size: 14px;
+    border-bottom: 1px solid #21262d; padding: 14px 12px;
+    font-weight: 600; font-size: 14px; min-height: 44px;
 }
-QTableWidget::item { padding: 8px 12px; font-size: 14px; }
+QTableWidget::item { padding: 12px 14px; min-height: 44px; }
 
 QTextEdit {
     background: #0d1117; border: 1px solid #21262d; border-radius: 6px;
-    color: #e6edf3; font-family: "Cascadia Code", monospace; font-size: 14px; padding: 12px;
+    color: #e6edf3; font-family: "Cascadia Code", monospace; font-size: 14px; padding: 16px;
+    min-height: 120px;
 }
 
 QProgressBar {
     border: 1px solid #21262d; border-radius: 6px; text-align: center;
-    background: #161b22; height: 5px;
+    background: #161b22; height: 8px;
 }
 QProgressBar::chunk { background: #1f6feb; border-radius: 4px; }
 
 QComboBox {
-    background: #0d1117; border: 1px solid #21262d; border-radius: 6px;
-    padding: 10px 14px; color: #e6edf3; font-size: 14px;
+    background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
+    padding: 14px 18px; color: #e6edf3; font-size: 15px; min-height: 46px;
 }
-QComboBox::drop-down { border: none; width: 22px; }
+QComboBox::drop-down { border: none; width: 28px; }
 QComboBox QAbstractItemView {
     background: #161b22; color: #e6edf3; border: 1px solid #21262d;
-    selection-background-color: #1f6feb33; font-size: 14px;
+    selection-background-color: #1f6feb33; font-size: 15px;
+    min-height: 44px;
+    padding: 8px;
 }
 
 QScrollBar:vertical { background: #0d1117; width: 8px; border-radius: 4px; }
