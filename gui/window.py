@@ -108,14 +108,18 @@ QProgressBar::chunk { background: #1f6feb; border-radius: 4px; }
 
 QComboBox {
     background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
-    padding: 14px 18px; color: #e6edf3; font-size: 15px; min-height: 46px;
+    padding: 14px 18px; color: #e6edf3; font-size: 15px;
+    min-height: 50px; max-height: 52px;
 }
-QComboBox::drop-down { border: none; width: 28px; }
+QComboBox::drop-down { border: none; width: 32px; }
+QComboBox::down-arrow { width: 20px; height: 20px; }
 QComboBox QAbstractItemView {
     background: #161b22; color: #e6edf3; border: 1px solid #21262d;
     selection-background-color: #1f6feb33; font-size: 15px;
-    min-height: 44px;
-    padding: 8px;
+    min-height: 48px; padding: 8px;
+}
+QComboBox QAbstractItemView::item {
+    min-height: 48px; padding: 12px;
 }
 
 QScrollBar:vertical { background: #0d1117; width: 8px; border-radius: 4px; }
@@ -127,8 +131,8 @@ QScrollBar:horizontal { background: #0d1117; height: 8px; border-radius: 4px; }
 QScrollBar::handle:horizontal { background: #30363d; border-radius: 4px; min-width: 24px; }
 QScrollBar::handle:horizontal:hover { background: #484f58; }
 
-QCheckBox { spacing: 10px; color: #e6edf3; font-size: 15px; }
-QCheckBox::indicator { width: 20px; height: 20px; border: 2px solid #30363d; border-radius: 4px; background: #0d1117; }
+QCheckBox { spacing: 10px; color: #e6edf3; font-size: 15px; min-height: 50px; padding: 8px; }
+QCheckBox::indicator { width: 22px; height: 22px; border: 2px solid #30363d; border-radius: 5px; background: #0d1117; }
 QCheckBox::indicator:checked { background: #1f6feb; border-color: #1f6feb; }
 """
 
@@ -437,6 +441,8 @@ class MainWindow(QMainWindow):
             h = feed.get("fetch_interval_hours", 12)
             freq_cb.setCurrentIndex(freq_map.get(h, 3))
             freq_cb.currentIndexChanged.connect(lambda i, fid=fid: self.set_freq(fid, [1,3,6,12,24][i]))
+            freq_cb.setMinimumHeight(46)
+            freq_cb.setMaximumHeight(50)
             self.table_feeds.setCellWidget(row, 2, freq_cb)
 
             cb_w = QWidget()
@@ -446,18 +452,24 @@ class MainWindow(QMainWindow):
             cb = QCheckBox()
             cb.setChecked(feed.get("enabled", True))
             cb.toggled.connect(lambda on, fid=fid: self.toggle(fid, on))
+            cb.setMinimumHeight(46)
+            cb.setMaximumHeight(50)
             cb_l.addWidget(cb)
             self.table_feeds.setCellWidget(row, 3, cb_w)
 
             act_w = QWidget()
             act_l = QHBoxLayout(act_w)
             act_l.setContentsMargins(0,0,0,0)
-            act_l.setSpacing(4)
+            act_l.setSpacing(6)
             pbtn = QPushButton("Ping")
             pbtn.setObjectName("accent")
+            pbtn.setMinimumHeight(46)
+            pbtn.setMaximumHeight(50)
             pbtn.clicked.connect(lambda _, fid=fid: self.ping(fid))
             dbtn = QPushButton("Del")
             dbtn.setObjectName("danger")
+            dbtn.setMinimumHeight(46)
+            dbtn.setMaximumHeight(50)
             dbtn.clicked.connect(lambda _, fid=fid: self.delete_feed(fid))
             act_l.addWidget(pbtn)
             act_l.addWidget(dbtn)
