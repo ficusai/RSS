@@ -70,7 +70,7 @@ QPushButton {
     border-radius: 4px; padding: 6px 14px; font-size: 13px;
 }
 QPushButton:hover { background: #30363d; border-color: #58a6ff; }
-QPushButton:pressed { background: #1f6feb; color: #fff; }
+QPushButton:pressed { background: #1f6feb; color: #c9d1d9; }
 QPushButton:disabled { background: #161b22; color: #484f58; border-color: #21262d; }
 
 QPushButton#accent { background: #1a5a2e; color: #3fb950; border-color: #238636; }
