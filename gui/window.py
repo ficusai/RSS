@@ -1,6 +1,5 @@
 """
-PyQt6 Main Window and GUI components for RSS Feed Manager & Scraper.
-Clean, modern Deep Slate theme with simplified navigation.
+PyQt6 Minimal Dark GUI for RSS Feed Manager & Scraper.
 """
 
 import copy
@@ -18,7 +17,6 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFrame,
-    QGroupBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -43,401 +41,197 @@ from core.storage import get_stats, load_articles, save_articles
 CONFIG_PATH = Path("/home/ficus-pro/Documents/RSS/config/feeds.json")
 ASSETS_DIR = Path("/home/ficus-pro/Documents/RSS/assets")
 
-# Deep Slate Theme - Clean, Refined
+# Strictly dark palette - zero white
 STYLESHEET = """
-QMainWindow {
-    background-color: #0f172a;
-    color: #f8fafc;
-}
-QWidget {
-    font-family: "Segoe UI", "Inter", system-ui, sans-serif;
-    color: #f8fafc;
-}
+QMainWindow { background-color: #0d1117; color: #c9d1d9; }
+QWidget { font-family: "Segoe UI", system-ui, sans-serif; color: #c9d1d9; }
 
-/* Tab Bar */
-QTabWidget::pane {
-    border: none;
-    background-color: #0f172a;
-    top: 0px;
-}
+QTabWidget::pane { border: none; background: #0d1117; top: 0; }
 QTabBar::tab {
-    background-color: transparent;
-    color: #94a3b8;
-    border: none;
-    border-bottom: 2px solid #334155;
-    padding: 12px 24px;
-    font-weight: 500;
-    font-size: 14px;
-    margin-right: 2px;
+    background: #161b22; color: #8b949e;
+    border: 1px solid #21262d; border-bottom: none;
+    border-top-left-radius: 4px; border-top-right-radius: 4px;
+    padding: 8px 18px; font-size: 13px;
 }
-QTabBar::tab:selected {
-    background-color: transparent;
-    color: #38bdf8;
-    border-bottom: 2px solid #38bdf8;
-}
-QTabBar::tab:hover:!selected {
-    color: #f8fafc;
-}
+QTabBar::tab:selected { background: #0d1117; color: #58a6ff; border-bottom: 2px solid #58a6ff; }
+QTabBar::tab:hover { background: #1c2128; }
 
-/* Cards */
-QFrame#headerCard, QFrame#toolbarCard {
-    background-color: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 10px;
-}
+QFrame { background-color: #161b22; border: 1px solid #21262d; border-radius: 4px; }
 
-/* Group Boxes */
-QGroupBox {
-    font-weight: 600;
-    font-size: 13px;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    margin-top: 10px;
-    padding-top: 12px;
-    background-color: #1e293b;
-    color: #38bdf8;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 12px;
-    padding: 0 8px;
-}
-
-/* Inputs */
 QLineEdit {
-    background-color: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    padding: 9px 14px;
-    color: #f8fafc;
-    font-size: 13px;
+    background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+    padding: 6px 10px; color: #c9d1d9; font-size: 13px;
 }
-QLineEdit:focus {
-    border: 1px solid #38bdf8;
-    background-color: #0f172a;
-}
-QLineEdit::placeholder {
-    color: #64748b;
-}
+QLineEdit:focus { border-color: #58a6ff; }
+QLineEdit::placeholder { color: #484f58; }
 
-/* Buttons */
 QPushButton {
-    background-color: #38bdf8;
-    color: #0f172a;
-    font-weight: 600;
-    font-size: 13px;
-    border: none;
-    border-radius: 6px;
-    padding: 9px 18px;
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    border-radius: 4px; padding: 6px 14px; font-size: 13px;
 }
-QPushButton:hover {
-    background-color: #7dd3fc;
-}
-QPushButton:pressed {
-    background-color: #0ea5e9;
-}
-QPushButton:disabled {
-    background-color: #334155;
-    color: #64748b;
-}
-QPushButton#dangerBtn {
-    background-color: #ef4444;
-    color: white;
-    padding: 6px 14px;
-    font-size: 12px;
-}
-QPushButton#dangerBtn:hover {
-    background-color: #f87171;
-}
-QPushButton#accentBtn {
-    background-color: #10b981;
-    color: white;
-    padding: 6px 14px;
-    font-size: 12px;
-}
-QPushButton#accentBtn:hover {
-    background-color: #34d399;
-}
-QPushButton#secondaryBtn {
-    background-color: #334155;
-    color: #f8fafc;
-    font-size: 13px;
-}
-QPushButton#secondaryBtn:hover {
-    background-color: #475569;
-}
+QPushButton:hover { background: #30363d; border-color: #58a6ff; }
+QPushButton:pressed { background: #1f6feb; color: #fff; }
+QPushButton:disabled { background: #161b22; color: #484f58; border-color: #21262d; }
 
-/* Tables */
+QPushButton#accent { background: #1a5a2e; color: #3fb950; border-color: #238636; }
+QPushButton#accent:hover { background: #216e39; }
+
+QPushButton#danger { background: #3d1818; color: #f85149; border-color: #da3633; }
+QPushButton#danger:hover { background: #4e2020; }
+
 QTableWidget {
-    background-color: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    gridline-color: #1e293b;
-    color: #f8fafc;
-    selection-background-color: #334155;
-    selection-color: #f8fafc;
+    background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+    color: #c9d1d9; gridline-color: #21262d;
+    selection-background-color: #1f6feb33; selection-color: #c9d1d9;
 }
 QHeaderView::section {
-    background-color: #1e293b;
-    color: #38bdf8;
-    padding: 10px 12px;
-    font-weight: 600;
-    border: none;
-    border-bottom: 1px solid #334155;
+    background: #161b22; color: #8b949e; border: none;
+    border-bottom: 1px solid #21262d; padding: 6px 10px; font-weight: 600;
 }
-QTableWidget::item {
-    padding: 8px 12px;
-}
+QTableWidget::item { padding: 5px 10px; }
 
-/* Text Editor / Log */
 QTextEdit {
-    background-color: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    color: #e2e8f0;
-    font-family: "Cascadia Code", "JetBrains Mono", "Consolas", monospace;
-    font-size: 12px;
-    padding: 10px;
+    background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+    color: #c9d1d9; font-family: "Cascadia Code", monospace; font-size: 12px; padding: 8px;
 }
 
-/* Progress Bar */
 QProgressBar {
-    border: 1px solid #334155;
-    border-radius: 6px;
-    text-align: center;
-    background-color: #1e293b;
-    color: #f8fafc;
-    height: 6px;
+    border: 1px solid #21262d; border-radius: 4px; text-align: center;
+    background: #161b22; height: 4px;
 }
-QProgressBar::chunk {
-    background-color: #38bdf8;
-    border-radius: 5px;
-}
+QProgressBar::chunk { background: #1f6feb; border-radius: 3px; }
 
-/* Combo Box */
 QComboBox {
-    background-color: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    padding: 8px 12px;
-    color: #f8fafc;
-    font-size: 13px;
+    background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+    padding: 5px 8px; color: #c9d1d9; font-size: 13px;
 }
-QComboBox::drop-down {
-    border: none;
-    padding-right: 8px;
-}
+QComboBox::drop-down { border: none; width: 20px; }
 QComboBox QAbstractItemView {
-    background-color: #1e293b;
-    color: #f8fafc;
-    selection-background-color: #334155;
-    border: 1px solid #334155;
-    outline: none;
+    background: #161b22; color: #c9d1d9; border: 1px solid #21262d;
+    selection-background-color: #1f6feb33;
 }
 
-/* Scroll Bars */
-QScrollBar:vertical {
-    background-color: #0f172a;
-    width: 8px;
-    border-radius: 4px;
-}
-QScrollBar::handle:vertical {
-    background-color: #334155;
-    border-radius: 4px;
-    min-height: 24px;
-}
-QScrollBar::handle:vertical:hover {
-    background-color: #475569;
-}
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
-}
-QScrollBar:horizontal {
-    background-color: #0f172a;
-    height: 8px;
-    border-radius: 4px;
-}
-QScrollBar::handle:horizontal {
-    background-color: #334155;
-    border-radius: 4px;
-    min-width: 24px;
-}
-QScrollBar::handle:horizontal:hover {
-    background-color: #475569;
-}
+QScrollBar:vertical { background: #0d1117; width: 6px; }
+QScrollBar::handle:vertical { background: #30363d; border-radius: 3px; min-height: 16px; }
+QScrollBar::handle:vertical:hover { background: #484f58; }
+QScrollBar::add-line, QScrollBar::sub-line { height: 0; }
+
+QScrollBar:horizontal { background: #0d1117; height: 6px; }
+QScrollBar::handle:horizontal { background: #30363d; border-radius: 3px; min-width: 16px; }
+QScrollBar::handle:horizontal:hover { background: #484f58; }
+
+QCheckBox { spacing: 6px; color: #c9d1d9; font-size: 13px; }
+QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid #30363d; border-radius: 3px; background: #0d1117; }
+QCheckBox::indicator:checked { background: #1f6feb; border-color: #1f6feb; }
 """
 
 PRESET_FEEDS = [
     {"name": "TechCrunch", "url": "https://techcrunch.com/feed/", "category": "Technology"},
     {"name": "Hacker News", "url": "https://news.ycombinator.com/rss", "category": "Tech News"},
-    {"name": "Federal Reserve Press", "url": "https://www.federalreserve.gov/feeds/press_all.xml", "category": "Finance"},
-    {"name": "BBC News - World", "url": "http://feeds.bbci.co.uk/news/rss.xml", "category": "World News"},
+    {"name": "Federal Reserve", "url": "https://www.federalreserve.gov/feeds/press_all.xml", "category": "Finance"},
+    {"name": "BBC World", "url": "http://feeds.bbci.co.uk/news/rss.xml", "category": "World News"},
     {"name": "Ars Technica", "url": "http://feeds.arstechnica.com/arstechnica/index", "category": "Technology"},
 ]
 
 
 class ScrapeThread(QThread):
-    """Background worker thread for non-blocking RSS scraping."""
-
     log_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(int, int, list)
 
-    def __init__(self, feeds: List[Dict[str, Any]], parent: Optional[QWidget] = None):
+    def __init__(self, feeds, parent=None):
         super().__init__(parent)
         self.feeds = copy.deepcopy(feeds)
 
-    def run(self) -> None:
+    def run(self):
         try:
-            self.log_signal.emit("Starting background feed scraper...")
+            self.log_signal.emit("Scraping feeds...")
             articles, errors = fetch_all_feeds(self.feeds)
-            self.log_signal.emit(f"Processed {len(articles)} article(s)...")
-            new_count, total_count = save_articles(articles)
-            self.finished_signal.emit(new_count, total_count, errors)
+            new, total = save_articles(articles)
+            self.finished_signal.emit(new, total, errors)
         except Exception as e:
-            self.log_signal.emit(f"Critical error: {e}")
+            self.log_signal.emit(f"Error: {e}")
             self.finished_signal.emit(0, 0, [{"feed_name": "System", "error": str(e)}])
 
 
 class MainWindow(QMainWindow):
-    """Main application window for RSS Feed Manager & Scraper."""
-
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
-        self.setWindowTitle("RSS Reader & Scraper")
-        self.resize(1200, 800)
-        self.setMinimumSize(900, 600)
+        self.setWindowTitle("RSS")
+        self.resize(900, 640)
+        self.setMinimumSize(700, 500)
 
         self.config_path = CONFIG_PATH
-        self.feeds: List[Dict[str, Any]] = []
-        self.scrape_thread: Optional[ScrapeThread] = None
-        self.current_articles: List[Dict[str, Any]] = []
+        self.feeds = []
+        self.scrape_thread = None
+        self.current_articles = []
 
         logo_path = ASSETS_DIR / "ficus.png"
         if logo_path.exists():
             self.setWindowIcon(QIcon(str(logo_path)))
 
         self.setStyleSheet(STYLESHEET)
-        self._init_ui()
+        self._build_ui()
         self.load_feeds()
-        self.update_table()
-        self.update_stats()
-        self.refresh_articles_view()
-        self.log("Application started.")
+        self.refresh()
+        self._log("Started")
 
-    def _init_ui(self) -> None:
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+    def _build_ui(self):
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+        layout.setSpacing(0)
+        layout.setContentsMargins(12, 12, 12, 12)
 
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(0)
-        main_layout.setContentsMargins(20, 20, 20, 20)
+        # Header
+        hdr = QFrame()
+        hdr_layout = QHBoxLayout(hdr)
+        hdr_layout.setContentsMargins(12, 8, 12, 8)
 
-        # ── Header Card ──
-        header_card = QFrame()
-        header_card.setObjectName("headerCard")
-        header_card.setFixedHeight(80)
-        header_layout = QHBoxLayout(header_card)
-        header_layout.setContentsMargins(20, 10, 20, 10)
-        header_layout.setSpacing(16)
+        title_lbl = QLabel("RSS Feed Manager")
+        title_lbl.setFont(QFont("", 13, QFont.Weight.Bold))
+        title_lbl.setStyleSheet("color: #58a6ff;")
+        hdr_layout.addWidget(title_lbl)
+        hdr_layout.addStretch()
 
-        # Logo & Title
-        title_box = QHBoxLayout()
-        title_box.setSpacing(12)
+        self.lbl_stats = QLabel("0 articles | 0 feeds")
+        self.lbl_stats.setStyleSheet("color: #8b949e; font-size: 12px;")
+        hdr_layout.addWidget(self.lbl_stats)
 
-        logo_path = ASSETS_DIR / "ficus.png"
-        if logo_path.exists():
-            lbl_logo = QLabel()
-            pix = QPixmap(str(logo_path))
-            lbl_logo.setPixmap(pix.scaled(44, 44, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-            title_box.addWidget(lbl_logo)
+        self.btn_sync = QPushButton("Sync")
+        self.btn_sync.setObjectName("accent")
+        self.btn_sync.clicked.connect(self.start_scrape)
+        hdr_layout.addWidget(self.btn_sync)
 
-        text_box = QVBoxLayout()
-        text_box.setSpacing(2)
-        title_label = QLabel("RSS Reader & Scraper")
-        title_label.setFont(QFont("Segoe UI", 15, QFont.Weight.Bold))
-        title_label.setStyleSheet("color: #38bdf8;")
+        self.progress = QProgressBar()
+        self.progress.setTextVisible(False)
+        self.progress.setVisible(False)
+        layout.addWidget(self.progress, 0, Qt.AlignmentFlag.AlignRight)
 
-        subtitle_label = QLabel("Automated Feed Aggregator")
-        subtitle_label.setStyleSheet("color: #64748b; font-size: 11px;")
-        text_box.addWidget(title_label)
-        text_box.addWidget(subtitle_label)
-        title_box.addLayout(text_box)
-        header_layout.addLayout(title_box)
+        layout.addWidget(hdr)
+        layout.addSpacing(8)
 
-        header_layout.addStretch()
-
-        # Stats
-        stats_layout = QHBoxLayout()
-        stats_layout.setSpacing(8)
-
-        self.lbl_stat_articles = QLabel("0")
-        self.card_articles = self._create_stat_card("Articles", self.lbl_stat_articles, "#818cf8")
-        stats_layout.addWidget(self.card_articles)
-
-        self.lbl_stat_feeds = QLabel("0")
-        self.card_feeds = self._create_stat_card("Feeds", self.lbl_stat_feeds, "#38bdf8")
-        stats_layout.addWidget(self.card_feeds)
-
-        self.lbl_stat_timer = QLabel("Checking...")
-        self.card_timer = self._create_stat_card("Auto-Sync", self.lbl_stat_timer, "#10b981")
-        stats_layout.addWidget(self.card_timer)
-
-        header_layout.addLayout(stats_layout)
-
-        # Sync Button & Progress
-        sync_box = QVBoxLayout()
-        sync_box.setSpacing(4)
-        self.btn_scrape = QPushButton("⚡ Sync Now")
-        self.btn_scrape.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_scrape.clicked.connect(self.start_scraping)
-
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setFixedHeight(4)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setVisible(False)
-
-        sync_box.addWidget(self.btn_scrape, 0, Qt.AlignmentFlag.AlignRight)
-        sync_box.addWidget(self.progress_bar, 0, Qt.AlignmentFlag.AlignRight)
-        header_layout.addLayout(sync_box)
-
-        main_layout.addWidget(header_card)
-        main_layout.addSpacing(16)
-
-        # ── Tabs ──
+        # Tabs
         self.tabs = QTabWidget()
-        main_layout.addWidget(self.tabs)
+        layout.addWidget(self.tabs)
 
-        # ─── Tab 1: Articles ───
-        tab_articles = QWidget()
-        art_layout = QVBoxLayout(tab_articles)
-        art_layout.setContentsMargins(0, 0, 0, 0)
-        art_layout.setSpacing(12)
+        # Tab 1: Articles
+        tab_art = QWidget()
+        art_l = QVBoxLayout(tab_art)
+        art_l.setContentsMargins(0, 0, 0, 0)
+        art_l.setSpacing(8)
 
-        # Search toolbar
-        art_toolbar = QHBoxLayout()
-        art_toolbar.setSpacing(10)
+        art_filter = QHBoxLayout()
+        self.input_search = QLineEdit()
+        self.input_search.setPlaceholderText("Search...")
+        self.input_search.textChanged.connect(self.refresh_articles)
+        self.combo_cat = QComboBox()
+        self.combo_cat.addItem("All")
+        self.combo_cat.currentIndexChanged.connect(self.refresh_articles)
+        art_filter.addWidget(self.input_search, 1)
+        art_filter.addWidget(self.combo_cat)
+        art_l.addLayout(art_filter)
 
-        self.input_art_search = QLineEdit()
-        self.input_art_search.setPlaceholderText("Search articles by title, author, or keyword...")
-        self.input_art_search.textChanged.connect(self.refresh_articles_view)
-
-        self.combo_art_cat = QComboBox()
-        self.combo_art_cat.addItem("All Categories")
-        self.combo_art_cat.currentIndexChanged.connect(self.refresh_articles_view)
-
-        self.btn_refresh_arts = QPushButton("Refresh")
-        self.btn_refresh_arts.setObjectName("secondaryBtn")
-        self.btn_refresh_arts.clicked.connect(self.refresh_articles_view)
-
-        art_toolbar.addWidget(self.input_art_search, 1)
-        art_toolbar.addWidget(self.combo_art_cat)
-        art_toolbar.addWidget(self.btn_refresh_arts)
-        art_layout.addLayout(art_toolbar)
-
-        # Splitter: List | Reader
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setHandleWidth(4)
-
         self.table_articles = QTableWidget()
         self.table_articles.setColumnCount(4)
         self.table_articles.setHorizontalHeaderLabels(["Title", "Source", "Category", "Date"])
@@ -445,514 +239,381 @@ class MainWindow(QMainWindow):
         self.table_articles.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table_articles.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.table_articles.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_articles.setAlternatingRowColors(True)
-        self.table_articles.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table_articles.itemSelectionChanged.connect(self._on_article_selected)
         self.table_articles.verticalHeader().setVisible(False)
-        self.table_articles.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table_articles.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table_articles.itemSelectionChanged.connect(self.on_article_sel)
 
-        # Reader panel
-        reader_frame = QFrame()
-        reader_frame.setObjectName("toolbarCard")
-        reader_layout = QVBoxLayout(reader_frame)
-        reader_layout.setContentsMargins(16, 16, 16, 16)
-        reader_layout.setSpacing(12)
+        self.txt_reader = QTextEdit()
+        self.txt_reader.setReadOnly(True)
+        self.btn_open = QPushButton("Open in Browser")
+        self.btn_open.setObjectName("accent")
+        self.btn_open.setEnabled(False)
+        self.btn_open.clicked.connect(self.open_browser)
 
-        self.lbl_reader_title = QLabel("Select an article to read")
-        self.lbl_reader_title.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
-        self.lbl_reader_title.setStyleSheet("color: #38bdf8;")
-        self.lbl_reader_title.setWordWrap(True)
-
+        reader_box = QFrame()
+        reader_l = QVBoxLayout(reader_box)
+        reader_l.setContentsMargins(8, 8, 8, 8)
+        reader_l.setSpacing(6)
+        self.lbl_reader_title = QLabel("")
+        self.lbl_reader_title.setStyleSheet("color: #58a6ff; font-size: 13px; font-weight: bold;")
         self.lbl_reader_meta = QLabel("")
-        self.lbl_reader_meta.setStyleSheet("color: #64748b; font-size: 11px;")
-        self.lbl_reader_meta.setWordWrap(True)
-
-        self.txt_reader_body = QTextEdit()
-        self.txt_reader_body.setReadOnly(True)
-
-        self.btn_open_browser = QPushButton("🌐 Open in Browser")
-        self.btn_open_browser.setObjectName("accentBtn")
-        self.btn_open_browser.setEnabled(False)
-        self.btn_open_browser.clicked.connect(self.open_article_in_browser)
-
-        reader_layout.addWidget(self.lbl_reader_title)
-        reader_layout.addWidget(self.lbl_reader_meta)
-        reader_layout.addStretch()
-        reader_layout.addWidget(self.txt_reader_body, 1)
-        reader_layout.addSpacing(8)
-        reader_layout.addWidget(self.btn_open_browser, 0, Qt.AlignmentFlag.AlignRight)
+        self.lbl_reader_meta.setStyleSheet("color: #8b949e; font-size: 11px;")
+        reader_l.addWidget(self.lbl_reader_title)
+        reader_l.addWidget(self.lbl_reader_meta)
+        reader_l.addWidget(self.txt_reader, 1)
+        reader_l.addWidget(self.btn_open, 0, Qt.AlignmentFlag.AlignRight)
 
         splitter.addWidget(self.table_articles)
-        splitter.addWidget(reader_frame)
-        splitter.setSizes([550, 500])
+        splitter.addWidget(reader_box)
+        splitter.setSizes([500, 350])
+        art_l.addWidget(splitter, 1)
+        self.tabs.addTab(tab_art, "Articles")
 
-        art_layout.addWidget(splitter, 1)
-        self.tabs.addTab(tab_articles, "📰 Articles")
+        # Tab 2: Feeds
+        tab_feed = QWidget()
+        feed_l = QVBoxLayout(tab_feed)
+        feed_l.setContentsMargins(0, 0, 0, 0)
+        feed_l.setSpacing(8)
 
-        # ─── Tab 2: Feeds ───
-        tab_feeds = QWidget()
-        feeds_layout = QVBoxLayout(tab_feeds)
-        feeds_layout.setContentsMargins(0, 0, 0, 0)
-        feeds_layout.setSpacing(12)
+        add_box = QFrame()
+        add_l = QHBoxLayout(add_box)
+        add_l.setContentsMargins(8, 6, 8, 6)
+        add_l.setSpacing(6)
 
-        # Add Feed Form
-        add_group = QGroupBox("Add New Feed")
-        add_layout = QHBoxLayout(add_group)
-        add_layout.setSpacing(10)
+        self.in_name = QLineEdit()
+        self.in_name.setPlaceholderText("Name")
+        self.in_url = QLineEdit()
+        self.in_url.setPlaceholderText("https://feed-url")
+        self.in_cat = QLineEdit()
+        self.in_cat.setText("General")
+        self.in_cat.setPlaceholderText("Category")
+        self.cb_freq = QComboBox()
+        self.cb_freq.addItems(["1h", "3h", "6h", "12h", "24h"])
+        self.cb_freq.setCurrentIndex(3)
+        self.cb_preset = QComboBox()
+        self.cb_preset.setMaximumWidth(150)
+        self.cb_preset.addItem("Presets")
+        for p in PRESET_FEEDS:
+            self.cb_preset.addItem(p["name"])
+        self.cb_preset.currentIndexChanged.connect(self.on_preset)
+        self.btn_add = QPushButton("Add")
+        self.btn_add.setObjectName("accent")
+        self.btn_add.clicked.connect(self.add_feed)
 
-        self.input_name = QLineEdit()
-        self.input_name.setPlaceholderText("Feed Name")
+        add_l.addWidget(self.in_name)
+        add_l.addWidget(self.in_url, 1)
+        add_l.addWidget(self.in_cat)
+        add_l.addWidget(self.cb_freq)
+        add_l.addWidget(self.cb_preset)
+        add_l.addWidget(self.btn_add)
+        feed_l.addWidget(add_box)
 
-        self.input_url = QLineEdit()
-        self.input_url.setPlaceholderText("https://example.com/feed.xml")
+        filter_l = QHBoxLayout()
+        self.in_filter = QLineEdit()
+        self.in_filter.setPlaceholderText("Filter feeds...")
+        self.in_filter.textChanged.connect(self.refresh_table)
+        self.cb_cat_filter = QComboBox()
+        self.cb_cat_filter.addItem("All")
+        self.cb_cat_filter.currentIndexChanged.connect(self.refresh_table)
+        filter_l.addWidget(self.in_filter, 1)
+        filter_l.addWidget(self.cb_cat_filter)
+        feed_l.addLayout(filter_l)
 
-        self.input_cat = QLineEdit()
-        self.input_cat.setText("General")
-        self.input_cat.setPlaceholderText("Category")
+        self.table_feeds = QTableWidget()
+        self.table_feeds.setColumnCount(5)
+        self.table_feeds.setHorizontalHeaderLabels(["Name", "Category", "Interval", "Active", "Actions"])
+        self.table_feeds.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table_feeds.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_feeds.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_feeds.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_feeds.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_feeds.verticalHeader().setVisible(False)
+        feed_l.addWidget(self.table_feeds, 1)
 
-        self.combo_add_freq = QComboBox()
-        self.combo_add_freq.addItems(["1h", "3h", "6h", "12h", "24h"])
-        self.combo_add_freq.setCurrentIndex(3)
-
-        self.combo_presets = QComboBox()
-        self.combo_presets.setMaximumWidth(180)
-        self.combo_presets.addItem("Quick Presets...")
-        for pf in PRESET_FEEDS:
-            self.combo_presets.addItem(f"{pf['name']}")
-        self.combo_presets.currentIndexChanged.connect(self._on_preset_selected)
-
-        self.btn_add_feed = QPushButton("Add Feed")
-        self.btn_add_feed.clicked.connect(self.add_feed)
-
-        add_layout.addWidget(self.input_name)
-        add_layout.addWidget(self.input_url, 1)
-        add_layout.addWidget(self.input_cat)
-        add_layout.addWidget(self.combo_add_freq)
-        add_layout.addWidget(self.combo_presets)
-        add_layout.addWidget(self.btn_add_feed)
-
-        feeds_layout.addWidget(add_group)
-
-        # Feed Table
-        table_group = QGroupBox("Tracked Feeds")
-        table_layout = QVBoxLayout(table_group)
-        table_layout.setSpacing(8)
-
-        filter_bar = QHBoxLayout()
-        filter_bar.setSpacing(10)
-
-        self.input_feed_search = QLineEdit()
-        self.input_feed_search.setPlaceholderText("Filter feeds...")
-        self.input_feed_search.textChanged.connect(self.update_table)
-
-        self.combo_cat_filter = QComboBox()
-        self.combo_cat_filter.addItem("All Categories")
-        self.combo_cat_filter.currentIndexChanged.connect(self.update_table)
-
-        filter_bar.addWidget(self.input_feed_search, 1)
-        filter_bar.addWidget(self.combo_cat_filter)
-        table_layout.addLayout(filter_bar)
-
-        self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["Name", "Category", "URL", "Interval", "Active", "Actions"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.setColumnWidth(3, 70)
-        self.table.setColumnWidth(4, 60)
-        self.table.setColumnWidth(5, 130)
-        self.table.verticalHeader().setVisible(False)
-        self.table.setAlternatingRowColors(True)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-
-        table_layout.addWidget(self.table)
-        feeds_layout.addWidget(table_group, 1)
-
-        # Scheduler & Log
-        sched_group = QGroupBox("Background Scheduler")
-        sched_layout = QVBoxLayout(sched_group)
-        sched_layout.setSpacing(8)
-
-        sched_btns = QHBoxLayout()
-
-        self.btn_timer = QPushButton("Enable 12h Auto-Sync")
-        self.btn_timer.setObjectName("accentBtn")
+        sched_l = QHBoxLayout()
+        self.btn_timer = QPushButton("Enable Scheduler")
+        self.btn_timer.setObjectName("accent")
         self.btn_timer.clicked.connect(self.enable_timer)
+        self.btn_clear = QPushButton("Clear Log")
+        self.btn_clear.clicked.connect(self.clear_log)
+        sched_l.addWidget(self.btn_timer)
+        sched_l.addStretch()
+        sched_l.addWidget(self.btn_clear)
+        feed_l.addLayout(sched_l)
 
-        self.btn_clear_log = QPushButton("Clear Log")
-        self.btn_clear_log.setObjectName("secondaryBtn")
-        self.btn_clear_log.clicked.connect(self.clear_log)
+        self.log_box = QTextEdit()
+        self.log_box.setReadOnly(True)
+        feed_l.addWidget(self.log_box)
 
-        sched_btns.addWidget(self.btn_timer)
-        sched_btns.addStretch()
-        sched_btns.addWidget(self.btn_clear_log)
-        sched_layout.addLayout(sched_btns)
+        self.tabs.addTab(tab_feed, "Feeds")
 
-        self.log_console = QTextEdit()
-        self.log_console.setReadOnly(True)
-        sched_layout.addWidget(self.log_console)
+    def _log(self, msg):
+        ts = datetime.now().strftime("%H:%M:%S")
+        self.log_box.append(f"[{ts}] {msg}")
+        self.log_box.verticalScrollBar().setValue(self.log_box.verticalScrollBar().maximum())
 
-        feeds_layout.addWidget(sched_group)
-        self.tabs.addTab(tab_feeds, "⚙️ Feeds")
+    def clear_log(self):
+        self.log_box.clear()
 
-    def _create_stat_card(self, title: str, val_lbl: QLabel, color_hex: str) -> QFrame:
-        card = QFrame()
-        card.setStyleSheet(f"background-color: #0f172a; border-radius: 6px; min-width: 90px;")
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(10, 6, 10, 6)
-        layout.setSpacing(2)
-
-        title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("color: #64748b; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;")
-        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        val_lbl.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
-        val_lbl.setStyleSheet(f"color: {color_hex};")
-        val_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(title_lbl)
-        layout.addWidget(val_lbl)
-        return card
-
-    def log(self, message: str) -> None:
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_console.append(f"<span style='color: #64748b;'>[{timestamp}]</span> {message}")
-        self.log_console.verticalScrollBar().setValue(self.log_console.verticalScrollBar().maximum())
-
-    def clear_log(self) -> None:
-        self.log_console.clear()
-
-    def load_feeds(self) -> List[Dict[str, Any]]:
+    def load_feeds(self):
         if not self.config_path.exists():
             self.feeds = []
-            return self.feeds
+            return
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, "r") as f:
                 data = json.load(f)
-                if isinstance(data, dict) and "feeds" in data:
-                    self.feeds = data["feeds"]
-                elif isinstance(data, list):
-                    self.feeds = data
-                else:
-                    self.feeds = []
-        except Exception as e:
-            self.log(f"Error loading config: {e}")
+                self.feeds = data.get("feeds", data) if isinstance(data, dict) else data
+        except Exception:
             self.feeds = []
-        return self.feeds
 
-    def save_feeds(self) -> None:
+    def save_feeds(self):
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, "w", encoding="utf-8") as f:
-                json.dump({"feeds": self.feeds}, f, indent=2, ensure_ascii=False)
+            with open(self.config_path, "w") as f:
+                json.dump({"feeds": self.feeds}, f, indent=2)
         except Exception as e:
-            self.log(f"Failed to save config: {e}")
+            self._log(f"Save error: {e}")
 
-    def update_table(self) -> None:
-        self.table.setRowCount(0)
+    def refresh(self):
+        self.refresh_table()
+        self.refresh_articles()
+        self.update_stats()
 
-        search_txt = self.input_feed_search.text().strip().lower()
-        selected_cat = self.combo_cat_filter.currentText()
+    def update_stats(self):
+        try:
+            stats = get_stats()
+            arts = stats.get("total_articles", 0)
+            total = len(self.feeds)
+            active = sum(1 for f in self.feeds if f.get("enabled", True))
+            timer = get_timer_status()
+            timer_s = "on" if timer.get("active") else "off"
+            self.lbl_stats.setText(f"{arts} articles | {active}/{total} feeds | sync:{timer_s}")
+        except Exception:
+            pass
 
-        categories = sorted({f.get("category", "General") for f in self.feeds if f.get("category")})
-        cur_cat = self.combo_cat_filter.currentText()
-        self.combo_cat_filter.blockSignals(True)
-        self.combo_cat_filter.clear()
-        self.combo_cat_filter.addItem("All Categories")
-        for c in categories:
-            self.combo_cat_filter.addItem(c)
-        if cur_cat in categories:
-            self.combo_cat_filter.setCurrentText(cur_cat)
-        self.combo_cat_filter.blockSignals(False)
+    def refresh_table(self):
+        self.table_feeds.setRowCount(0)
+        search = self.in_filter.text().lower()
+        cat_f = self.cb_cat_filter.currentText()
 
-        freq_map = {1: 0, 3: 1, 6: 2, 12: 3, 24: 4}
+        cats = sorted({f.get("category", "General") for f in self.feeds})
+        cur = self.cb_cat_filter.currentText()
+        self.cb_cat_filter.blockSignals(True)
+        self.cb_cat_filter.clear()
+        self.cb_cat_filter.addItem("All")
+        for c in cats:
+            self.cb_cat_filter.addItem(c)
+        if cur in cats:
+            self.cb_cat_filter.setCurrentText(cur)
+        self.cb_cat_filter.blockSignals(False)
+
+        freq_map = {"1h": 0, "3h": 1, "6h": 2, "12h": 3, "24h": 4}
         row = 0
-
         for feed in self.feeds:
             name = feed.get("name", "")
             cat = feed.get("category", "General")
             url = feed.get("url", "")
-            feed_id = feed.get("id") or re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"feed_{row}"
-            feed["id"] = feed_id
+            fid = feed.get("id") or re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"f{row}"
+            feed["id"] = fid
 
-            if search_txt and not any(search_txt in v.lower() for v in [name, cat, url]):
+            if search and not any(search in v.lower() for v in [name, cat, url]):
                 continue
-            if selected_cat != "All Categories" and cat != selected_cat:
+            if cat_f != "All" and cat != cat_f:
                 continue
 
-            self.table.insertRow(row)
+            self.table_feeds.insertRow(row)
+            self.table_feeds.setItem(row, 0, QTableWidgetItem(name))
+            self.table_feeds.setItem(row, 1, QTableWidgetItem(cat))
 
-            name_item = QTableWidgetItem(name)
-            name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.table.setItem(row, 0, name_item)
+            freq_cb = QComboBox()
+            freq_cb.addItems(["1h", "3h", "6h", "12h", "24h"])
+            h = feed.get("fetch_interval_hours", 12)
+            freq_cb.setCurrentIndex(freq_map.get(h, 3))
+            freq_cb.currentIndexChanged.connect(lambda i, fid=fid: self.set_freq(fid, [1,3,6,12,24][i]))
+            self.table_feeds.setCellWidget(row, 2, freq_cb)
 
-            cat_item = QTableWidgetItem(cat)
-            cat_item.setFlags(cat_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.table.setItem(row, 1, cat_item)
-
-            url_item = QTableWidgetItem(url)
-            url_item.setFlags(url_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.table.setItem(row, 2, url_item)
-
-            freq_combo = QComboBox()
-            freq_combo.addItems(["1h", "3h", "6h", "12h", "24h"])
-            hours = feed.get("fetch_interval_hours", 12)
-            freq_combo.setCurrentIndex(freq_map.get(hours, 3))
-            freq_combo.currentIndexChanged.connect(
-                lambda idx, fid=feed_id: self.change_feed_frequency(fid, [1, 3, 6, 12, 24][idx])
-            )
-            self.table.setCellWidget(row, 3, freq_combo)
-
-            cb_container = QWidget()
-            cb_layout = QHBoxLayout(cb_container)
-            cb_layout.setContentsMargins(0, 0, 0, 0)
-            cb_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            cb_w = QWidget()
+            cb_l = QHBoxLayout(cb_w)
+            cb_l.setContentsMargins(0,0,0,0)
+            cb_l.setAlignment(Qt.AlignmentFlag.AlignCenter)
             cb = QCheckBox()
             cb.setChecked(feed.get("enabled", True))
-            cb.toggled.connect(lambda checked, fid=feed_id: self.toggle_feed_enabled(fid, checked))
-            cb_layout.addWidget(cb)
-            self.table.setCellWidget(row, 4, cb_container)
+            cb.toggled.connect(lambda on, fid=fid: self.toggle(fid, on))
+            cb_l.addWidget(cb)
+            self.table_feeds.setCellWidget(row, 3, cb_w)
 
-            act_container = QWidget()
-            act_layout = QHBoxLayout(act_container)
-            act_layout.setContentsMargins(2, 2, 2, 2)
-            act_layout.setSpacing(4)
-
-            ping_btn = QPushButton("Ping")
-            ping_btn.setObjectName("accentBtn")
-            ping_btn.clicked.connect(lambda _, fid=feed_id: self.ping_feed(fid))
-
-            del_btn = QPushButton("Delete")
-            del_btn.setObjectName("dangerBtn")
-            del_btn.clicked.connect(lambda _, fid=feed_id: self.delete_feed(fid))
-
-            act_layout.addWidget(ping_btn)
-            act_layout.addWidget(del_btn)
-            self.table.setCellWidget(row, 5, act_container)
-
+            act_w = QWidget()
+            act_l = QHBoxLayout(act_w)
+            act_l.setContentsMargins(0,0,0,0)
+            act_l.setSpacing(4)
+            pbtn = QPushButton("Ping")
+            pbtn.setObjectName("accent")
+            pbtn.clicked.connect(lambda _, fid=fid: self.ping(fid))
+            dbtn = QPushButton("Del")
+            dbtn.setObjectName("danger")
+            dbtn.clicked.connect(lambda _, fid=fid: self.delete_feed(fid))
+            act_l.addWidget(pbtn)
+            act_l.addWidget(dbtn)
+            self.table_feeds.setCellWidget(row, 4, act_w)
             row += 1
 
-    def _on_preset_selected(self, index: int) -> None:
-        if index <= 0:
-            return
-        preset = PRESET_FEEDS[index - 1]
-        self.input_name.setText(preset["name"])
-        self.input_url.setText(preset["url"])
-        self.input_cat.setText(preset["category"])
-        self.combo_presets.setCurrentIndex(0)
+    def refresh_articles(self):
+        q = self.input_search.text()
+        cat = self.combo_cat.currentText()
 
-    def change_feed_frequency(self, feed_id: str, hours: int) -> None:
-        for feed in self.feeds:
-            if feed.get("id") == feed_id:
-                feed["fetch_interval_hours"] = hours
-                self.save_feeds()
-                self.log(f"Updated '{feed.get('name')}' to every {hours}h")
-                break
-
-    def toggle_feed_enabled(self, feed_id: str, enabled: bool) -> None:
-        for feed in self.feeds:
-            if feed.get("id") == feed_id:
-                feed["enabled"] = enabled
-                self.save_feeds()
-                self.update_stats()
-                self.log(f"'{feed.get('name')}' {'enabled' if enabled else 'disabled'}")
-                break
-
-    def ping_feed(self, feed_id: str) -> None:
-        target = next((f for f in self.feeds if f.get("id") == feed_id), None)
-        if not target:
-            return
-        if self.scrape_thread and self.scrape_thread.isRunning():
-            self.log("Scraper busy. Please wait...")
-            return
-
-        name = target.get("name", "Feed")
-        self.log(f"Pinging '{name}'...")
-        self.btn_scrape.setEnabled(False)
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)
-
-        self.scrape_thread = ScrapeThread([target])
-        self.scrape_thread.log_signal.connect(self.log)
-        self.scrape_thread.finished_signal.connect(self.on_scrape_finished)
-        self.scrape_thread.start()
-
-    def add_feed(self) -> None:
-        name = self.input_name.text().strip()
-        url = self.input_url.text().strip()
-        category = self.input_cat.text().strip() or "General"
-        freq_idx = self.combo_add_freq.currentIndex()
-        hours = [1, 3, 6, 12, 24][freq_idx]
-
-        if not name or not url:
-            QMessageBox.warning(self, "Validation Error", "Feed name and URL are required.")
-            return
-
-        if not url.startswith(("http://", "https://")):
-            url = "https://" + url
-
-        feed_id = re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"feed_{len(self.feeds) + 1}"
-
-        self.feeds.append({
-            "id": feed_id,
-            "name": name,
-            "url": url,
-            "category": category,
-            "fetch_interval_hours": hours,
-            "enabled": True,
-        })
-        self.save_feeds()
-        self.update_table()
-        self.update_stats()
-        self.log(f"Added '{name}'")
-
-        self.input_name.clear()
-        self.input_url.clear()
-        self.input_cat.setText("General")
-        self.combo_add_freq.setCurrentIndex(3)
-
-    def delete_feed(self, feed_id: str) -> None:
-        for i, feed in enumerate(self.feeds):
-            if feed.get("id") == feed_id:
-                self.feeds.pop(i)
-                self.save_feeds()
-                self.update_table()
-                self.update_stats()
-                self.log(f"Deleted '{feed.get('name', 'Unknown')}'")
-                return
-
-    def start_scraping(self) -> None:
-        if self.scrape_thread and self.scrape_thread.isRunning():
-            return
-
-        enabled = [f for f in self.feeds if f.get("enabled", True)]
-        if not enabled:
-            QMessageBox.information(self, "No Feeds", "No enabled feeds to sync.")
-            return
-
-        self.btn_scrape.setEnabled(False)
-        self.btn_scrape.setText("Syncing...")
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)
-
-        self.scrape_thread = ScrapeThread(self.feeds)
-        self.scrape_thread.log_signal.connect(self.log)
-        self.scrape_thread.finished_signal.connect(self.on_scrape_finished)
-        self.scrape_thread.start()
-
-    def on_scrape_finished(self, new_count: int, total_count: int, errors: List[Dict[str, Any]]) -> None:
-        self.btn_scrape.setEnabled(True)
-        self.btn_scrape.setText("⚡ Sync Now")
-        self.progress_bar.setVisible(False)
-
-        self.log(f"Sync complete. +{new_count} articles. Total: {total_count}.")
-
-        if errors:
-            self.log(f"{len(errors)} error(s) occurred:")
-            for err in errors:
-                self.log(f"  • {err.get('feed_name', 'Unknown')}: {err.get('error')}")
-
-        self.update_stats()
-        self.refresh_articles_view()
-
-    def enable_timer(self) -> None:
-        self.log("Installing systemd timer...")
-        success = install_systemd_timer()
-        status = get_timer_status()
-
-        if success or status.get("active"):
-            self.log("Auto-sync enabled (12h intervals).")
-            QMessageBox.information(self, "Timer Active", "Background scraping is now scheduled every 12 hours.")
-        else:
-            self.log("Timer installation failed.")
-            QMessageBox.warning(self, "Timer Warning", f"Systemd timer status:\n{status.get('detail', '')}")
-
-        self.update_stats()
-
-    def update_stats(self) -> None:
-        try:
-            stats = get_stats()
-            timer_info = get_timer_status()
-
-            self.lbl_stat_articles.setText(str(stats.get("total_articles", 0)))
-            active = sum(1 for f in self.feeds if f.get("enabled", True))
-            self.lbl_stat_feeds.setText(f"{active}/{len(self.feeds)}")
-
-            if timer_info.get("active"):
-                self.lbl_stat_timer.setText("Active")
-                self.lbl_stat_timer.setStyleSheet("color: #10b981; font-weight: bold;")
-            elif timer_info.get("installed"):
-                self.lbl_stat_timer.setText("Ready")
-                self.lbl_stat_timer.setStyleSheet("color: #fbbf24; font-weight: bold;")
-            else:
-                self.lbl_stat_timer.setText("Off")
-                self.lbl_stat_timer.setStyleSheet("color: #ef4444; font-weight: bold;")
-        except Exception as e:
-            self.log(f"Stats error: {e}")
-
-    def refresh_articles_view(self) -> None:
-        query = self.input_art_search.text()
-        cat = self.combo_art_cat.currentText()
-
-        articles = load_articles(limit=300, category=cat, search_query=query)
-        self.current_articles = articles
+        arts = load_articles(limit=300, category=cat if cat != "All" else None, search_query=q)
+        self.current_articles = arts
 
         all_cats = sorted({a.get("category", "General") for a in load_articles(limit=1000) if a.get("category")})
-        cur = self.combo_art_cat.currentText()
-        self.combo_art_cat.blockSignals(True)
-        self.combo_art_cat.clear()
-        self.combo_art_cat.addItem("All Categories")
+        cur = self.combo_cat.currentText()
+        self.combo_cat.blockSignals(True)
+        self.combo_cat.clear()
+        self.combo_cat.addItem("All")
         for c in all_cats:
-            self.combo_art_cat.addItem(c)
+            self.combo_cat.addItem(c)
         if cur in all_cats:
-            self.combo_art_cat.setCurrentText(cur)
-        self.combo_art_cat.blockSignals(False)
+            self.combo_cat.setCurrentText(cur)
+        self.combo_cat.blockSignals(False)
 
         self.table_articles.setRowCount(0)
-        for i, art in enumerate(articles):
+        for i, a in enumerate(arts):
             self.table_articles.insertRow(i)
-
-            title = QTableWidgetItem(art.get("title", "Untitled"))
-            feed = QTableWidgetItem(art.get("feed_name", "Unknown"))
-            category = QTableWidgetItem(art.get("category", "General"))
-            date_raw = art.get("published_at_iso") or art.get("scraped_at_iso") or ""
-            date = QTableWidgetItem(date_raw[:10] if len(date_raw) >= 10 else date_raw)
-
-            for col, item in enumerate([title, feed, category, date]):
+            title = a.get("title", "Untitled")
+            src = a.get("feed_name", "-")
+            cat = a.get("category", "General")
+            dt = (a.get("published_at_iso") or a.get("scraped_at_iso") or "")[:10]
+            for col, val in enumerate([title, src, cat, dt]):
+                item = QTableWidgetItem(val)
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.table_articles.setItem(i, col, item)
 
-    def _on_article_selected(self) -> None:
+    def on_article_sel(self):
         rows = self.table_articles.selectedIndexes()
         if not rows:
             return
-
-        art = self.current_articles[rows[0].row()]
-        self.lbl_reader_title.setText(art.get("title", "Untitled"))
-
+        a = self.current_articles[rows[0].row()]
+        self.lbl_reader_title.setText(a.get("title", ""))
         meta = []
-        if art.get("feed_name"):
-            meta.append(f"From: {art['feed_name']}")
-        if art.get("author"):
-            meta.append(f"By: {art['author']}")
-        if art.get("published_at_iso"):
-            meta.append(art["published_at_iso"][:10])
-        self.lbl_reader_meta.setText("  •  ".join(meta))
-
-        body = art.get("text_clean") or art.get("summary_raw") or "No content available."
-        self.txt_reader_body.setPlainText(body)
-
-        url = art.get("url")
-        self.btn_open_browser.setEnabled(bool(url))
+        if a.get("feed_name"): meta.append(a["feed_name"])
+        if a.get("author"): meta.append(a["author"])
+        if a.get("published_at_iso"): meta.append(a["published_at_iso"][:10])
+        self.lbl_reader_meta.setText(" · ".join(meta))
+        body = a.get("text_clean") or a.get("summary_raw") or ""
+        self.txt_reader.setPlainText(body)
+        url = a.get("url")
+        self.btn_open.setEnabled(bool(url))
         if url:
-            self.btn_open_browser.setProperty("article_url", url)
+            self.btn_open.setProperty("url", url)
 
-    def open_article_in_browser(self) -> None:
-        url = self.btn_open_browser.property("article_url")
+    def open_browser(self):
+        url = self.btn_open.property("url")
         if url:
             QDesktopServices.openUrl(QUrl(url))
+
+    def on_preset(self, i):
+        if i <= 0:
+            return
+        p = PRESET_FEEDS[i - 1]
+        self.in_name.setText(p["name"])
+        self.in_url.setText(p["url"])
+        self.in_cat.setText(p["category"])
+        self.cb_preset.setCurrentIndex(0)
+
+    def set_freq(self, fid, hours):
+        for f in self.feeds:
+            if f.get("id") == fid:
+                f["fetch_interval_hours"] = hours
+                self.save_feeds()
+                break
+
+    def toggle(self, fid, on):
+        for f in self.feeds:
+            if f.get("id") == fid:
+                f["enabled"] = on
+                self.save_feeds()
+                self.update_stats()
+                break
+
+    def ping(self, fid):
+        target = next((f for f in self.feeds if f.get("id") == fid), None)
+        if not target:
+            return
+        if self.scrape_thread and self.scrape_thread.isRunning():
+            return
+        self._log(f"Pinging {target['name']}")
+        self._run_scrape([target])
+
+    def add_feed(self):
+        name = self.in_name.text().strip()
+        url = self.in_url.text().strip()
+        cat = self.in_cat.text().strip() or "General"
+        h = [1, 3, 6, 12, 24][self.cb_freq.currentIndex()]
+        if not name or not url:
+            QMessageBox.warning(self, "Missing", "Name and URL required")
+            return
+        if not url.startswith("http"):
+            url = "https://" + url
+        fid = re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"f{len(self.feeds)}"
+        self.feeds.append({"id": fid, "name": name, "url": url, "category": cat, "fetch_interval_hours": h, "enabled": True})
+        self.save_feeds()
+        self.refresh()
+        self._log(f"Added {name}")
+        self.in_name.clear()
+        self.in_url.clear()
+
+    def delete_feed(self, fid):
+        for i, f in enumerate(self.feeds):
+            if f.get("id") == fid:
+                self.feeds.pop(i)
+                self.save_feeds()
+                self.refresh()
+                self._log(f"Deleted {f.get('name')}")
+                return
+
+    def start_scrape(self):
+        if self.scrape_thread and self.scrape_thread.isRunning():
+            return
+        enabled = [f for f in self.feeds if f.get("enabled")]
+        if not enabled:
+            QMessageBox.information(self, "No feeds", "Enable at least one feed.")
+            return
+        self._run_scrape(self.feeds)
+
+    def _run_scrape(self, feeds):
+        self.btn_sync.setEnabled(False)
+        self.btn_sync.setText("...")
+        self.progress.setVisible(True)
+        self.progress.setRange(0, 0)
+        self.scrape_thread = ScrapeThread(feeds)
+        self.scrape_thread.log_signal.connect(self._log)
+        self.scrape_thread.finished_signal.connect(self.on_done)
+        self.scrape_thread.start()
+
+    def on_done(self, new, total, errors):
+        self.btn_sync.setEnabled(True)
+        self.btn_sync.setText("Sync")
+        self.progress.setVisible(False)
+        self._log(f"Done. +{new} articles. Total: {total}.")
+        if errors:
+            self._log(f"Errors: {len(errors)}")
+        self.update_stats()
+        self.refresh_articles()
+
+    def enable_timer(self):
+        self._log("Installing timer...")
+        ok = install_systemd_timer()
+        st = get_timer_status()
+        if ok or st.get("active"):
+            self._log("Timer enabled (12h)")
+            QMessageBox.information(self, "Timer", "Background scraper active every 12h.")
+        else:
+            self._log("Timer failed")
+            QMessageBox.warning(self, "Timer", str(st.get("detail", "")))
+        self.update_stats()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    win = MainWindow()
+    win.show()
+    sys.exit(app.exec())
