@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RSS
+Comment=RSS Feed Tracker & Scraping Service
+Exec=/home/ficus-pro/Documents/RSS/RSS
+Path=/home/ficus-pro/Documents/RSS
+Icon=/home/ficus-pro/Documents/RSS/assets/ficus.png
+Terminal=false
+Categories=Utility;News;
