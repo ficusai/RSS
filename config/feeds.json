@@ -5,6 +5,7 @@
       "name": "Federal Reserve Press Releases",
       "url": "https://www.federalreserve.gov/feeds/press_all.xml",
       "category": "Central Banks",
+      "fetch_interval_hours": 12,
       "enabled": true
     }
   ]

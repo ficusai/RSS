@@ -14,6 +14,7 @@ from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
     QFrame,
     QGroupBox,
     QHBoxLayout,
@@ -147,6 +148,20 @@ QProgressBar::chunk {
     background-color: #89b4fa;
     border-radius: 5px;
 }
+QComboBox {
+    background-color: #313244;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #cdd6f4;
+    font-size: 12px;
+}
+QComboBox QAbstractItemView {
+    background-color: #181825;
+    color: #cdd6f4;
+    selection-background-color: #45475a;
+    border: 1px solid #313244;
+}
 """
 
 
@@ -249,7 +264,7 @@ class MainWindow(QMainWindow):
 
         self.input_name = QLineEdit()
         self.input_name.setPlaceholderText("Feed Name (e.g. TechCrunch)")
-        
+
         self.input_url = QLineEdit()
         self.input_url.setPlaceholderText("RSS Feed URL (https://...)")
 
@@ -257,13 +272,18 @@ class MainWindow(QMainWindow):
         self.input_cat.setPlaceholderText("Category")
         self.input_cat.setText("General")
 
+        self.combo_add_freq = QComboBox()
+        self.combo_add_freq.addItems(["Ping: 1 Hour", "Ping: 3 Hours", "Ping: 6 Hours", "Ping: 12 Hours", "Ping: 24 Hours"])
+        self.combo_add_freq.setCurrentIndex(3)  # Default: 12 Hours
+
         self.btn_add_feed = QPushButton("Add RSS Feed")
         self.btn_add_feed.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_add_feed.clicked.connect(self.add_feed)
 
         add_layout.addWidget(self.input_name, 2)
-        add_layout.addWidget(self.input_url, 4)
+        add_layout.addWidget(self.input_url, 3)
         add_layout.addWidget(self.input_cat, 2)
+        add_layout.addWidget(self.combo_add_freq, 2)
         add_layout.addWidget(self.btn_add_feed, 2)
 
         main_layout.addWidget(add_box)
@@ -274,15 +294,17 @@ class MainWindow(QMainWindow):
         table_layout.setContentsMargins(14, 16, 14, 14)
 
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Name", "Category", "URL", "Enabled", "Action"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Name", "Category", "URL", "Ping Frequency", "Enabled", "Action"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
         self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(3, 80)
-        self.table.setColumnWidth(4, 90)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
+        self.table.setColumnWidth(3, 140)
+        self.table.setColumnWidth(4, 70)
+        self.table.setColumnWidth(5, 170)
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 
@@ -391,6 +413,8 @@ class MainWindow(QMainWindow):
         """Populates the QTableWidget with current tracked feeds."""
         self.table.setRowCount(0)
 
+        freq_map = {1: 0, 3: 1, 6: 2, 12: 3, 24: 4}
+
         for row_idx, feed in enumerate(self.feeds):
             self.table.insertRow(row_idx)
 
@@ -409,6 +433,17 @@ class MainWindow(QMainWindow):
             item_url.setFlags(item_url.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table.setItem(row_idx, 2, item_url)
 
+            # Ping Frequency (QComboBox Button Selection)
+            freq_combo = QComboBox()
+            freq_combo.addItems(["1 Hour", "3 Hours", "6 Hours", "12 Hours", "24 Hours"])
+            current_hours = feed.get("fetch_interval_hours", 12)
+            combo_index = freq_map.get(current_hours, 3)
+            freq_combo.setCurrentIndex(combo_index)
+            freq_combo.currentIndexChanged.connect(
+                lambda idx, r=row_idx: self.change_feed_frequency(r, [1, 3, 6, 12, 24][idx])
+            )
+            self.table.setCellWidget(row_idx, 3, freq_combo)
+
             # Enabled (Checkbox)
             cb_container = QWidget()
             cb_layout = QHBoxLayout(cb_container)
@@ -418,25 +453,70 @@ class MainWindow(QMainWindow):
             cb.setChecked(feed.get("enabled", True))
             cb.toggled.connect(lambda checked, idx=row_idx: self.toggle_feed_enabled(idx, checked))
             cb_layout.addWidget(cb)
-            self.table.setCellWidget(row_idx, 3, cb_container)
+            self.table.setCellWidget(row_idx, 4, cb_container)
 
-            # Action (Delete Button)
+            # Actions (⚡ Ping Now Button & Delete Button)
             btn_container = QWidget()
             btn_layout = QHBoxLayout(btn_container)
-            btn_layout.setContentsMargins(4, 2, 4, 2)
+            btn_layout.setContentsMargins(2, 2, 2, 2)
+            btn_layout.setSpacing(4)
             btn_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            btn_ping = QPushButton("⚡ Ping")
+            btn_ping.setObjectName("accentBtn")
+            btn_ping.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_ping.setToolTip("Ping RSS Feed now and save results locally")
+            btn_ping.clicked.connect(lambda _, idx=row_idx: self.ping_single_feed(idx))
+
             btn_del = QPushButton("Delete")
             btn_del.setObjectName("dangerBtn")
             btn_del.setCursor(Qt.CursorShape.PointingHandCursor)
             btn_del.clicked.connect(lambda _, idx=row_idx: self.delete_feed(idx))
+
+            btn_layout.addWidget(btn_ping)
             btn_layout.addWidget(btn_del)
-            self.table.setCellWidget(row_idx, 4, btn_container)
+            self.table.setCellWidget(row_idx, 5, btn_container)
+
+    def change_feed_frequency(self, index: int, hours: int) -> None:
+        """Updates the ping interval (in hours) for a feed."""
+        if 0 <= index < len(self.feeds):
+            self.feeds[index]["fetch_interval_hours"] = hours
+            self.save_feeds()
+            feed_name = self.feeds[index].get("name", "Unknown")
+            self.log(f"Updated ping frequency for '{feed_name}' to every {hours} hour(s).")
+
+    def ping_single_feed(self, index: int) -> None:
+        """Immediately pings a single RSS feed and saves scraped output locally."""
+        if not (0 <= index < len(self.feeds)):
+            return
+
+        target_feed = self.feeds[index]
+        feed_name = target_feed.get("name", "Feed")
+        feed_url = target_feed.get("url", "")
+
+        if self.scrape_thread and self.scrape_thread.isRunning():
+            self.log("Scraping worker is currently busy. Please wait...")
+            return
+
+        self.log(f"Pinging RSS feed '{feed_name}' ({feed_url})...")
+        self.log("Scraped results will be saved to: /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/ (scraped_articles.jsonl & dedup_state.json)")
+
+        self.btn_scrape.setEnabled(False)
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)
+
+        self.scrape_thread = ScrapeThread([target_feed])
+        self.scrape_thread.log_signal.connect(self.log)
+        self.scrape_thread.finished_signal.connect(self.on_scrape_finished)
+        self.scrape_thread.start()
 
     def add_feed(self) -> None:
         """Adds a new RSS feed from the input form."""
         name = self.input_name.text().strip()
         url = self.input_url.text().strip()
         category = self.input_cat.text().strip() or "General"
+        freq_idx = self.combo_add_freq.currentIndex()
+        freq_hours = [1, 3, 6, 12, 24][freq_idx]
 
         if not name or not url:
             QMessageBox.warning(self, "Validation Error", "Both Feed Name and RSS Feed URL are required.")
@@ -454,6 +534,7 @@ class MainWindow(QMainWindow):
             "name": name,
             "url": url,
             "category": category,
+            "fetch_interval_hours": freq_hours,
             "enabled": True,
         }
 
@@ -465,8 +546,9 @@ class MainWindow(QMainWindow):
         self.input_name.clear()
         self.input_url.clear()
         self.input_cat.setText("General")
+        self.combo_add_freq.setCurrentIndex(3)
 
-        self.log(f"Successfully added RSS Feed '{name}' ({url}) under '{category}'.")
+        self.log(f"Successfully added RSS Feed '{name}' ({url}) under '{category}' [Ping frequency: Every {freq_hours}h].")
 
     def delete_feed(self, index: int) -> None:
         """Removes a feed at the specified index."""
