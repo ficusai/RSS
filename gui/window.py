@@ -191,6 +191,18 @@ class ScrapeThread(QThread):
             self.finished_signal.emit(0, 0, [{"feed_name": "System", "error": str(e)}])
 
 
+def get_category_color(category_name: str) -> str:
+    """Returns hex color code badge for a category."""
+    cat = (category_name or "").lower()
+    if "tech" in cat:
+        return "#58a6ff"
+    elif "finan" in cat or "econ" in cat or "bank" in cat:
+        return "#3fb950"
+    elif "news" in cat or "world" in cat:
+        return "#d29922"
+    return "#a371f7"
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -479,6 +491,66 @@ class MainWindow(QMainWindow):
 
         self.tabs.addTab(tab_feed, "Feeds & Operations Hub")
 
+        # -------------------------------------------------------------
+        # Tab 3: Feed Presets Library
+        # -------------------------------------------------------------
+        tab_presets = QWidget()
+        presets_l = QVBoxLayout(tab_presets)
+        presets_l.setContentsMargins(10, 10, 10, 10)
+        presets_l.setSpacing(10)
+
+        presets_header = QHBoxLayout()
+        presets_header.setSpacing(10)
+
+        presets_title = QLabel("📚 Feed Presets Library")
+        presets_title.setStyleSheet("color: #e6edf3; font-size: 16px; font-weight: bold;")
+
+        self.preset_combo_cat = QComboBox()
+        self.preset_combo_cat.setMinimumWidth(220)
+        self.preset_combo_cat.currentIndexChanged.connect(self.refresh_presets_table)
+
+        self.in_preset_search = QLineEdit()
+        self.in_preset_search.setPlaceholderText("Search presets by name, URL, or category...")
+        self.in_preset_search.textChanged.connect(self.refresh_presets_table)
+
+        self.btn_add_all_presets = QPushButton("➕ Add All Presets")
+        self.btn_add_all_presets.setObjectName("accent")
+        self.btn_add_all_presets.clicked.connect(self.add_all_presets)
+
+        presets_header.addWidget(presets_title)
+        presets_header.addWidget(self.preset_combo_cat)
+        presets_header.addWidget(self.in_preset_search, 1)
+        presets_header.addWidget(self.btn_add_all_presets)
+        presets_l.addLayout(presets_header)
+
+        self.table_presets = QTableWidget()
+        self.table_presets.setColumnCount(5)
+        self.table_presets.setHorizontalHeaderLabels(["Name", "RSS Endpoint URL", "Category", "Status", "Actions"])
+        pres_header = self.table_presets.horizontalHeader()
+        pres_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        pres_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        pres_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        pres_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        pres_header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_presets.setColumnWidth(0, 200)
+        self.table_presets.verticalHeader().setVisible(False)
+        self.table_presets.verticalHeader().setDefaultSectionSize(48)
+        self.table_presets.setAlternatingRowColors(True)
+        self.table_presets.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        presets_l.addWidget(self.table_presets, 1)
+
+        presets_note = QLabel(
+            "Preset feeds are curated one-click subscriptions from the feature/feed-presets-library branch. "
+            "Click Add to subscribe a feed, or Add All Presets to bulk-import the whole catalog."
+        )
+        presets_note.setWordWrap(True)
+        presets_note.setStyleSheet("color: #8b949e; font-size: 14px; padding: 4px 8px;")
+        presets_l.addWidget(presets_note)
+
+        self.tabs.addTab(tab_presets, "Feed Presets Library")
+        self.load_preset_categories()
+        self.refresh_presets_table()
+
     def _log(self, msg):
         ts = datetime.now().strftime("%H:%M:%S")
         self.log_box.append(f"[{ts}] {msg}")
@@ -570,14 +642,7 @@ class MainWindow(QMainWindow):
 
             # Column 2: Category Badging
             cat_item = QTableWidgetItem(cat)
-            if "tech" in cat.lower():
-                cat_item.setForeground(QColor("#58a6ff"))
-            elif "finan" in cat.lower() or "econ" in cat.lower():
-                cat_item.setForeground(QColor("#3fb950"))
-            elif "news" in cat.lower() or "world" in cat.lower():
-                cat_item.setForeground(QColor("#d29922"))
-            else:
-                cat_item.setForeground(QColor("#a371f7"))
+            cat_item.setForeground(QColor(get_category_color(cat)))
             cat_item.setFlags(cat_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table_feeds.setItem(row, 2, cat_item)
 
@@ -653,15 +718,7 @@ class MainWindow(QMainWindow):
             src_item = QTableWidgetItem(src)
             cat_item = QTableWidgetItem(cat_val)
             dt_item = QTableWidgetItem(dt)
-
-            if "tech" in cat_val.lower():
-                cat_item.setForeground(QColor("#58a6ff"))
-            elif "finan" in cat_val.lower() or "econ" in cat_val.lower():
-                cat_item.setForeground(QColor("#3fb950"))
-            elif "news" in cat_val.lower() or "world" in cat_val.lower():
-                cat_item.setForeground(QColor("#d29922"))
-            else:
-                cat_item.setForeground(QColor("#a371f7"))
+            cat_item.setForeground(QColor(get_category_color(cat_val)))
 
             for col, item in enumerate([title_item, src_item, cat_item, dt_item]):
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -772,6 +829,128 @@ class MainWindow(QMainWindow):
                 self.refresh()
                 self._log(f"Unsubscribed feed: {removed_name}")
                 return
+
+    def load_preset_categories(self):
+        try:
+            from features.feature_feed_presets_library.implementation.feeds_presets import (
+                get_preset_categories,
+            )
+            cats = ["All Categories"] + get_preset_categories()
+        except Exception:
+            cats = ["All Categories"]
+
+        cur = self.preset_combo_cat.currentText()
+        self.preset_combo_cat.blockSignals(True)
+        self.preset_combo_cat.clear()
+        self.preset_combo_cat.addItems(cats)
+        if cur in cats:
+            self.preset_combo_cat.setCurrentText(cur)
+        self.preset_combo_cat.blockSignals(False)
+
+    def refresh_presets_table(self):
+        try:
+            from features.feature_feed_presets_library.implementation.feeds_presets import (
+                get_presets_by_category,
+                search_presets,
+                feed_already_present,
+            )
+        except Exception:
+            return
+
+        cat = self.preset_combo_cat.currentText()
+        q = self.in_preset_search.text().strip()
+        presets = search_presets(q) if q else get_presets_by_category(cat)
+
+        self.table_presets.setRowCount(0)
+        row = 0
+        for preset in presets:
+            name = preset.get("name", "")
+            url = preset.get("url", "")
+            cat_val = preset.get("category", "General")
+            present = feed_already_present(preset, self.feeds)
+
+            self.table_presets.insertRow(row)
+
+            name_item = QTableWidgetItem(name)
+            name_item.setFont(QFont("", 16, QFont.Weight.Bold))
+            name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table_presets.setItem(row, 0, name_item)
+
+            url_item = QTableWidgetItem(url)
+            url_item.setForeground(QColor("#8b949e"))
+            url_item.setToolTip(url)
+            url_item.setFlags(url_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table_presets.setItem(row, 1, url_item)
+
+            cat_item = QTableWidgetItem(cat_val)
+            cat_item.setForeground(QColor(get_category_color(cat_val)))
+            cat_item.setFlags(cat_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table_presets.setItem(row, 2, cat_item)
+
+            status_item = QTableWidgetItem("Subscribed" if present else "Available")
+            status_item.setForeground(QColor("#3fb950") if present else QColor("#8b949e"))
+            status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table_presets.setItem(row, 3, status_item)
+
+            act_w = QWidget()
+            act_l = QHBoxLayout(act_w)
+            act_l.setContentsMargins(2, 2, 2, 2)
+            act_l.setSpacing(6)
+            add_btn = QPushButton("Add")
+            add_btn.setObjectName("accent")
+            add_btn.setMinimumHeight(38)
+            add_btn.setEnabled(not present)
+            add_btn.clicked.connect(lambda _, p=preset: self.add_preset_feed(p))
+            act_l.addWidget(add_btn)
+            self.table_presets.setCellWidget(row, 4, act_w)
+            row += 1
+
+    def add_preset_feed(self, preset):
+        from features.feature_feed_presets_library.implementation.feeds_presets import (
+            feed_already_present,
+        )
+        if feed_already_present(preset, self.feeds):
+            self._log(f"Preset already subscribed: {preset.get('name')}")
+            return
+        name = (preset.get("name") or "").strip()
+        url = (preset.get("url") or "").strip()
+        cat = (preset.get("category") or "General").strip()
+        if not name or not url:
+            return
+        fid = re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"f{len(self.feeds)}"
+        self.feeds.append(
+            {"id": fid, "name": name, "url": url, "category": cat, "fetch_interval_hours": 12, "enabled": True}
+        )
+        self.save_feeds()
+        self.refresh()
+        self.refresh_presets_table()
+        self._log(f"Subscribed preset feed: {name}")
+
+    def add_all_presets(self):
+        from features.feature_feed_presets_library.implementation.feeds_presets import (
+            get_preset_feeds,
+            feed_already_present,
+        )
+        added = 0
+        for preset in get_preset_feeds():
+            if feed_already_present(preset, self.feeds):
+                continue
+            name = (preset.get("name") or "").strip()
+            url = (preset.get("url") or "").strip()
+            cat = (preset.get("category") or "General").strip()
+            if not name or not url:
+                continue
+            fid = re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"f{len(self.feeds)}"
+            self.feeds.append(
+                {"id": fid, "name": name, "url": url, "category": cat, "fetch_interval_hours": 12, "enabled": True}
+            )
+            added += 1
+        if added:
+            self.save_feeds()
+            self.refresh()
+            self.refresh_presets_table()
+        self._log(f"Preset import complete: {added} new feed(s) added.")
+        QMessageBox.information(self, "Presets Imported", f"Added {added} preset feed(s) to your subscriptions.")
 
     def start_scrape(self):
         if self.scrape_thread and self.scrape_thread.isRunning():
