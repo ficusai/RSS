@@ -3,7 +3,7 @@ Unit tests for Cookie Manager module.
 """
 
 import pytest
-from core.cookie_manager import parse_cookie_header, format_cookie_header
+from core.cookies import parse_cookie_header, format_cookie_header
 
 
 def test_parse_cookie_header():

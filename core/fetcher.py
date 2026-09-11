@@ -19,8 +19,7 @@ import re
 
 from .cleaner import clean_html, parse_to_iso
 from .storage import generate_article_id
-from .header_generator import get_client_hints_headers, USER_AGENTS
-from .stealth_fetcher import fetch_with_stealth_browser, is_stealth_available
+from .stealth import get_client_hints_headers, USER_AGENTS, fetch_with_stealth_browser, is_stealth_available
 
 DEFAULT_USER_AGENT = USER_AGENTS[0]
 

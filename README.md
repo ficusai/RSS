@@ -230,11 +230,18 @@ touched by each branch so future branch sessions stay in sync with this README.
 
 | File | Change |
 | :--- | :--- |
-| `core/header_generator.py` | Added — generates dynamic Chrome Client Hints headers (`Sec-Ch-Ua`, `Sec-Ch-Ua-Mobile`, `Sec-Ch-Ua-Platform`, `Sec-Fetch-*`) to bypass bot blocks. |
-| `core/stealth_fetcher.py` | Added — Playwright browser ingestion engine with CDP response interception, navigator.webdriver concealment, cookie injection, and `headless=False` fallback for Cloudflare human challenges. |
-| `core/cookie_manager.py` | Added — Cookie header parser and Playwright context synchronization utility (`parse_cookie_header`, `format_cookie_header`, `set_playwright_cookies`). |
-| `core/anti_hotlink.py` | Added — Anti-hotlink media URL rewriter (`process_anti_hotlink`, `is_hotlink_protected`) for referrer-restricted image/video sources. |
-| `core/script_data_extractor.py` | Added — Embedded JavaScript JSON state extractor (`extract_next_data`, `extract_nuxt_data`, `extract_window_state`). |
+| `core/stealth/get_client_hints_headers.py` | Added — single-function module generating Chrome Client Hints headers (`get_client_hints_headers`). |
+| `core/stealth/is_stealth_available.py` | Added — single-function module checking Playwright availability (`is_stealth_available`). |
+| `core/stealth/fetch_with_stealth_browser.py` | Added — single-function module executing Playwright browser ingestion (`fetch_with_stealth_browser`). |
+| `core/cookies/parse_cookie_header.py` | Added — single-function module parsing HTTP cookie strings (`parse_cookie_header`). |
+| `core/cookies/format_cookie_header.py` | Added — single-function module formatting cookie dict arrays (`format_cookie_header`). |
+| `core/cookies/set_playwright_cookies.py` | Added — single-function module applying cookies to Playwright context (`set_playwright_cookies`). |
+| `core/cookies/get_playwright_cookies.py` | Added — single-function module extracting cookies from Playwright context (`get_playwright_cookies`). |
+| `core/anti_hotlink/is_hotlink_protected.py` | Added — single-function module checking hotlink-restricted domains (`is_hotlink_protected`). |
+| `core/anti_hotlink/process_anti_hotlink.py` | Added — single-function module rewriting HTML media tags (`process_anti_hotlink`). |
+| `core/extractors/extract_next_data.py` | Added — single-function module extracting Next.js state (`extract_next_data`). |
+| `core/extractors/extract_nuxt_data.py` | Added — single-function module extracting Nuxt.js state (`extract_nuxt_data`). |
+| `core/extractors/extract_window_state.py` | Added — single-function module extracting custom window state (`extract_window_state`). |
 | `core/fetcher.py` | Modified — upgraded `fetch_feed` into a Tiered Dual-Engine Fetcher (Tier 1 urllib Client Hints, Tier 2 stealth Playwright fallback). |
 | `tests/test_stealth_fetcher.py` | Added — unit and integration tests for Client Hints header generation, stealth availability, and tiered fetch parsing. |
 | `tests/test_cookie_manager.py` | Added — unit tests for cookie parsing and domain filtering. |

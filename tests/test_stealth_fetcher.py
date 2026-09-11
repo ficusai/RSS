@@ -3,8 +3,7 @@ Unit and integration tests for Stealth Browser Ingestion Engine and Client Hints
 """
 
 import pytest
-from core.header_generator import get_client_hints_headers
-from core.stealth_fetcher import is_stealth_available, fetch_with_stealth_browser
+from core.stealth import get_client_hints_headers, is_stealth_available, fetch_with_stealth_browser
 from core.fetcher import fetch_feed
 
 

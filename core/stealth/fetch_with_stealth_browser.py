@@ -1,10 +1,4 @@
-"""
-Stealth Browser Ingestion Engine using Playwright/Patchright & CDP Protocol.
-Bypasses HTTP 403 / 412 / 503 anti-bot challenges and Cloudflare verification screens.
-Includes cookie synchronization and proxy integration.
-Includes headless=False fallback for interactive Cloudflare challenge solving.
-"""
-
+"""Single-function module for Playwright stealth browser fetching."""
 import logging
 import time
 from urllib.parse import urlparse
@@ -12,7 +6,6 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Try importing playwright sync API
 PLAYWRIGHT_AVAILABLE = False
 try:
     from playwright.sync_api import sync_playwright
@@ -20,13 +13,8 @@ try:
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
-from .header_generator import get_client_hints_headers
-from .cookie_manager import set_playwright_cookies
-
-
-def is_stealth_available() -> bool:
-    """Returns True if Playwright browser automation is installed and ready."""
-    return PLAYWRIGHT_AVAILABLE
+from .get_client_hints_headers import get_client_hints_headers
+from core.cookies.set_playwright_cookies import set_playwright_cookies
 
 
 def fetch_with_stealth_browser(
@@ -39,20 +27,6 @@ def fetch_with_stealth_browser(
 ) -> bytes:
     """
     Fetches raw content from url using a stealth-configured Chromium browser instance.
-    
-    Args:
-        url: Remote feed or web page URL.
-        timeout: Request timeout in seconds.
-        allow_interactive_fallback: If True, re-launches with headless=False when a Cloudflare challenge is detected.
-        force_headless: Explicitly override headless mode (True/False).
-        cookie_str: Optional raw HTTP Cookie header string to inject into context.
-        proxy_uri: Optional proxy URI (e.g., "http://127.0.0.1:8080").
-
-    Returns:
-        Raw bytes of the target feed XML or response body.
-
-    Raises:
-        RuntimeError: If Playwright is not installed or if fetching fails.
     """
     if not PLAYWRIGHT_AVAILABLE:
         raise RuntimeError(
@@ -86,7 +60,6 @@ def fetch_with_stealth_browser(
                     extra_http_headers=headers,
                 )
 
-                # Stealth evasion init script: conceal navigator.webdriver
                 context.add_init_script("""
                     Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                     window.chrome = { runtime: {} };
@@ -94,13 +67,10 @@ def fetch_with_stealth_browser(
                     Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
                 """)
 
-                # Inject cookies if provided
                 if cookie_str and parsed_domain:
                     set_playwright_cookies(context, cookie_str, parsed_domain)
 
                 page = context.new_page()
-
-                # Intercept network responses via CDP / Playwright route hooks
                 intercepted_data = {}
 
                 def handle_response(response):
@@ -115,14 +85,11 @@ def fetch_with_stealth_browser(
 
                 logger.info(f"Stealth browser navigating to: {url} (headless={headless})")
                 page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-
-                # Wait up to 2 seconds for response capture
                 time.sleep(2)
 
                 content_str = page.content()
                 lower_content = content_str.lower()
 
-                # Check if Cloudflare or anti-bot challenge is blocking access
                 is_challenge = any(
                     marker in lower_content
                     for marker in [
@@ -138,7 +105,6 @@ def fetch_with_stealth_browser(
                 if is_challenge and headless and allow_interactive_fallback:
                     raise PermissionError("Cloudflare interactive challenge detected in headless mode")
 
-                # If challenge present and in headful mode, wait for user interaction
                 if is_challenge and not headless:
                     logger.warning("Cloudflare challenge active. Waiting up to 20 seconds for user interaction...")
                     start_wait = time.time()
@@ -148,17 +114,14 @@ def fetch_with_stealth_browser(
                         if not any(m in curr_content for m in ["just a moment...", "cf-browser-verification"]):
                             break
 
-                # If raw response bytes were intercepted from target URL, return them
                 if intercepted_data.get("bytes"):
                     return intercepted_data["bytes"]
 
-                # Otherwise return page DOM content as UTF-8 bytes
                 return page.content().encode("utf-8")
 
             finally:
                 browser.close()
 
-    # Determine headless state
     headless_setting = True if force_headless is None else force_headless
 
     try:

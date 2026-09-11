@@ -1,14 +1,7 @@
-"""
-Dynamic Client Hints and modern browser request header generator.
-Generates realistic Chrome, Firefox, Safari, and Edge headers to bypass basic anti-bot blocks.
-"""
-
+"""Single-function module for generating modern browser Client Hints headers."""
 import random
 from typing import Dict, Optional
 
-# WHAT: Realistic Chrome/Firefox/Safari User-Agent strings matching recent browser versions.
-# OPTIONS/VALUES: Chrome 122+, Firefox 123+, Safari 17+.
-# DEFAULTS: Chrome 122 on Windows 10.
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -21,12 +14,6 @@ USER_AGENTS = [
 def get_client_hints_headers(ua: Optional[str] = None) -> Dict[str, str]:
     """
     Generates realistic browser headers including modern Chrome Client Hints (Sec-Ch-Ua-*).
-    
-    Args:
-        ua: Optional explicit User-Agent string. If omitted, picks randomly from USER_AGENTS.
-
-    Returns:
-        Dictionary of HTTP request header key-value pairs.
     """
     user_agent = ua or random.choice(USER_AGENTS)
     headers = {
@@ -42,7 +29,6 @@ def get_client_hints_headers(ua: Optional[str] = None) -> Dict[str, str]:
         "Cache-Control": "max-age=0",
     }
 
-    # Attach Chrome Client Hints if User-Agent is Chromium-based
     if "Chrome" in user_agent or "Edg" in user_agent:
         is_mac = "Macintosh" in user_agent
         platform_str = '"macOS"' if is_mac else '"Windows"'

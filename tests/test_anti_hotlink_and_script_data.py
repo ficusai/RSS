@@ -4,7 +4,7 @@ Unit tests for Anti-Hotlink Media Rewriter and Embedded Script Data Extractor.
 
 import pytest
 from core.anti_hotlink import is_hotlink_protected, process_anti_hotlink
-from core.script_data_extractor import extract_next_data, extract_nuxt_data, extract_window_state
+from core.extractors import extract_next_data, extract_nuxt_data, extract_window_state
 
 
 def test_is_hotlink_protected():
