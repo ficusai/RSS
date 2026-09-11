@@ -32,7 +32,7 @@ def run_headless_scrape() -> None:
         print("[RSS Scraper] No enabled feeds to scrape.")
         sys.exit(0)
 
-    articles, errors = fetch_all_feeds(enabled_feeds)
+    articles, errors = fetch_all_feeds(enabled_feeds, extract_full_text=True)
     new_count, total_count = save_articles(articles)
 
     print(f"[SUMMARY] Scrape complete! {new_count} new article(s) added. Total stored articles: {total_count}.")
