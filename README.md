@@ -217,6 +217,7 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/gui-minimal-3tab` | Streamlined 3-tab GUI architecture (Articles Explorer split reader, Subscriptions Hub with collapsible presets drawer, Systemd Operations & Logs console). |
 | `feature/feed-presets-library` | Bundles the 475-feed preset catalog (including RSSHub endpoints & verified global news feeds) + dedicated GUI presets tab. |
 | `feature/stealth-browser-fetcher` | Tiered Dual-Engine stealth scraper with Playwright, CDP request replaying, Client Hints, and Cloudflare challenge fallback. |
+| `feature/readability-extractor` | DOM-based readability & full-text article body extractor stripping layout clutter, popups, and ads. |
 
 ### Branch-Related File Changes
 
@@ -245,6 +246,15 @@ touched by each branch so future branch sessions stay in sync with this README.
 | File | Change |
 | :--- | :--- |
 | `gui/window.py` | Modified — completely overhauled UI into a modern 3-tab layout: Tab 1 Articles Explorer (60/40 Master-Detail Split Reader), Tab 2 Subscriptions Hub (Grid + Collapsible Add & Presets Import Drawer), and Tab 3 Operations & System (Systemd Background Scheduler Telemetry & Dedicated Log Console). |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
+
+#### `feature/readability-extractor`
+
+| File | Change |
+| :--- | :--- |
+| `core/readability.py` | Added — DOM-based readability & full-text article body extractor using BeautifulSoup to strip navigation, sidebars, ads, popups, and footers. |
+| `core/__init__.py` | Modified — exports `ReadabilityExtractor` class at package root level. |
+| `tests/test_readability_extractor.py` | Added — unit tests for HTML layout noise stripping, title parsing, word count calculation, and edge cases. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
 #### `feature/feed-presets-library`
