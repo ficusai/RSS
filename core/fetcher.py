@@ -33,14 +33,15 @@ import xml.etree.ElementTree as ET
 # ERRORS/EDGE CASES: None.
 # HOW TO TEST: Run 'python3 -c "from datetime import datetime, timezone; print(datetime.now(timezone.utc))"'.
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # WHAT: Type hints for list, dict, and tuple data structures.
-# OPTIONS/VALUES: Any, Dict, List, Tuple.
+# OPTIONS/VALUES: Any, Dict, List, Tuple, Callable, Optional.
 # DEFAULTS: Static typing annotations.
 # OUTPUT/EFFECT: Enhances IDE code completion and type verification.
 # ERRORS/EDGE CASES: None.
 # HOW TO TEST: Checked by static code analysis tools.
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # WHAT: Imports HTML scrubbing and date parsing functions from the local cleaner module.
 # OPTIONS/VALUES: clean_html(), parse_to_iso().
@@ -64,10 +65,36 @@ from .storage import generate_article_id
 # OUTPUT/EFFECT: Bypasses basic 403 Forbidden bot protection on news servers.
 # ERRORS/EDGE CASES: Some strict servers may require unique user agents.
 # HOW TO TEST: Verify headers sent in urllib Request objects.
-DEFAULT_USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-)
+import random
+import gzip
+import io
+
+# WHAT: User-Agent browser header pool sent with HTTP requests to bypass strict bot protection on news servers.
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
+]
+
+DEFAULT_USER_AGENT = USER_AGENTS[0]
+
+
+def get_browser_headers(ua: Optional[str] = None) -> Dict[str, str]:
+    """Generates modern browser request headers to bypass bot blocks."""
+    user_agent = ua or random.choice(USER_AGENTS)
+    return {
+        "User-Agent": user_agent,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Upgrade-Insecure-Requests": "1",
+        "Cache-Control": "max-age=0",
+    }
 
 
 # WHAT: Internal helper function that strips XML namespace prefixes (like '{http://www.w3.org/2005/Atom}') to return plain tag names ('entry').
@@ -122,7 +149,7 @@ def fetch_full_page_text(url: str, timeout: int = 5) -> str:
 # OUTPUT/EFFECT: Produces comprehensive article object ready for JSON Lines saving.
 # ERRORS/EDGE CASES: Handles missing author, missing dates, missing tags, or raw HTML content cleanly.
 # HOW TO TEST: Pass an XML element into _parse_item_element() and check returned keys.
-def _parse_item_element(elem: ET.Element, feed_config: Dict[str, Any]) -> Dict[str, Any]:
+def _parse_item_element(elem: ET.Element, feed_config: Dict[str, Any], extract_full_text: bool = False) -> Dict[str, Any]:
     """Parses single RSS <item> or Atom <entry> XML element into standardized dict with preview & full content."""
     feed_url = feed_config.get("url", "")
     feed_name = feed_config.get("name", "")
@@ -186,7 +213,7 @@ def _parse_item_element(elem: ET.Element, feed_config: Dict[str, Any]) -> Dict[s
         preview_clean = full_text_clean[:400] + ("..." if len(full_text_clean) > 400 else "")
 
     # If full text is missing or shorter than preview, attempt web page scrape fallback if link exists
-    if len(full_text_clean) < len(preview_clean) or len(full_text_clean) < 150:
+    if extract_full_text and (len(full_text_clean) < len(preview_clean) or len(full_text_clean) < 150):
         web_text = fetch_full_page_text(link, timeout=3)
         if len(web_text) > len(full_text_clean):
             full_text_clean = web_text
@@ -223,41 +250,69 @@ def _parse_item_element(elem: ET.Element, feed_config: Dict[str, Any]) -> Dict[s
 # OUTPUT/EFFECT: Returns list of parsed article dictionaries.
 # ERRORS/EDGE CASES: Throws ValueError if feed_config lacks 'url'; throws HTTP errors on network failure.
 # HOW TO TEST: Run 'python3 -c "from core.fetcher import fetch_feed; print(len(fetch_feed({\"url\": \"https://www.federalreserve.gov/feeds/press_all.xml\"})))"'.
-def fetch_feed(feed_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _fetch_url_bytes(url: str, timeout: int = 10, headers: Optional[Dict[str, str]] = None) -> bytes:
+    """Helper that executes HTTP GET request with de-compression support."""
+    req = urllib.request.Request(url, headers=headers or get_browser_headers())
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        content_encoding = response.info().get("Content-Encoding", "").lower()
+        raw_bytes = response.read()
+        if content_encoding == "gzip" or raw_bytes[:2] == b"\x1f\x8b":
+            try:
+                raw_bytes = gzip.decompress(raw_bytes)
+            except Exception:
+                pass
+        return raw_bytes
+
+
+def fetch_feed(feed_config: Dict[str, Any], extract_full_text: bool = False, timeout: int = 10) -> List[Dict[str, Any]]:
     """
-    Fetches RSS/Atom XML from feed_config['url'] using urllib.request and returns standardized article list.
+    Fetches RSS/Atom XML from feed_config['url'] using urllib.request with retries & header rotation.
     """
     url = feed_config.get("url")
     if not url:
         raise ValueError("Feed configuration missing 'url' key")
 
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": DEFAULT_USER_AGENT,
-            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-        },
-    )
+    raw_data = None
+    last_err = None
 
-    with urllib.request.urlopen(req, timeout=15) as response:
-        raw_data = response.read()
+    # Retry loop with header rotation for 403 / transient errors
+    for attempt in range(2):
+        try:
+            ua = USER_AGENTS[attempt % len(USER_AGENTS)]
+            headers = get_browser_headers(ua)
+            raw_data = _fetch_url_bytes(url, timeout=timeout, headers=headers)
+            break
+        except Exception as e:
+            last_err = e
+            if attempt == 0 and any(code in str(e) for code in ["403", "503", "500", "502", "504", "timed out"]):
+                continue
+            raise e
+
+    if raw_data is None and last_err:
+        raise last_err
 
     raw_data = raw_data.lstrip(b"\xef\xbb\xbf").strip()
 
     try:
         root = ET.fromstring(raw_data)
     except ET.ParseError as pe:
-        lower_data = raw_data.lower()
-        if b"<!doctype html" in lower_data or b"<html" in lower_data:
-            raise ValueError("Server returned an HTML web page instead of a valid RSS/Atom XML feed") from pe
-        raise ValueError(f"XML parse error: {pe}") from pe
+        # Sanitize control characters and retry parsing
+        import re
+        sanitized_bytes = re.sub(b"[\x00-\x08\x0B\x0C\x0E-\x1F]", b"", raw_data)
+        try:
+            root = ET.fromstring(sanitized_bytes)
+        except ET.ParseError:
+            lower_data = raw_data.lower()
+            if b"<!doctype html" in lower_data or b"<html" in lower_data:
+                raise ValueError("Server returned an HTML web page instead of a valid RSS/Atom XML feed") from pe
+            raise ValueError(f"XML parse error: {pe}") from pe
 
     articles = []
 
     for elem in root.iter():
         ltag = _local_tag(elem)
         if ltag in ("item", "entry"):
-            articles.append(_parse_item_element(elem, feed_config))
+            articles.append(_parse_item_element(elem, feed_config, extract_full_text=extract_full_text))
 
     return articles
 
@@ -268,29 +323,58 @@ def fetch_feed(feed_config: Dict[str, Any]) -> List[Dict[str, Any]]:
 # OUTPUT/EFFECT: Returns tuple (all_articles_list, errors_list).
 # ERRORS/EDGE CASES: Captures individual feed errors in errors_list so one bad feed doesn't crash the entire run.
 # HOW TO TEST: Call fetch_all_feeds([{'url': 'https://www.federalreserve.gov/feeds/press_all.xml', 'enabled': True}]).
-def fetch_all_feeds(feeds_list: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+def fetch_all_feeds(
+    feeds_list: List[Dict[str, Any]],
+    progress_callback: Optional[Callable[[str], None]] = None,
+    max_workers: int = 20,
+    extract_full_text: bool = False,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
-    Loops over enabled feeds in feeds_list and returns (all_articles, errors_list).
+    Loops over enabled feeds in feeds_list in parallel using ThreadPoolExecutor
+    and returns (all_articles, errors_list).
     """
     all_articles: List[Dict[str, Any]] = []
     errors_list: List[Dict[str, Any]] = []
 
-    for feed in feeds_list:
-        if not isinstance(feed, dict):
-            continue
-        if not feed.get("enabled", True):
-            continue
+    enabled_feeds = [
+        f for f in feeds_list if isinstance(f, dict) and f.get("enabled", True)
+    ]
+    total_enabled = len(enabled_feeds)
 
+    if not enabled_feeds:
+        return all_articles, errors_list
+
+    if progress_callback:
+        progress_callback(f"Starting parallel fetch of {total_enabled} feed(s)...")
+
+    completed = 0
+
+    def _worker(feed: Dict[str, Any]) -> Tuple[Dict[str, Any], List[Dict[str, Any]], Optional[str]]:
         try:
-            articles = fetch_feed(feed)
-            all_articles.extend(articles)
+            arts = fetch_feed(feed, extract_full_text=extract_full_text, timeout=10)
+            return feed, arts, None
         except Exception as e:
-            errors_list.append(
-                {
-                    "feed_name": feed.get("name", "Unknown Feed"),
-                    "feed_url": feed.get("url", ""),
-                    "error": str(e),
-                }
-            )
+            return feed, [], str(e)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_worker, f): f for f in enabled_feeds}
+        for future in as_completed(futures):
+            feed, arts, err = future.result()
+            completed += 1
+            feed_name = feed.get("name", "Unknown Feed")
+            if err:
+                errors_list.append(
+                    {
+                        "feed_name": feed_name,
+                        "feed_url": feed.get("url", ""),
+                        "error": err,
+                    }
+                )
+                if progress_callback:
+                    progress_callback(f"[{completed}/{total_enabled}] ❌ {feed_name}: {err}")
+            else:
+                all_articles.extend(arts)
+                if progress_callback:
+                    progress_callback(f"[{completed}/{total_enabled}] ✅ {feed_name}: {len(arts)} article(s)")
 
     return all_articles, errors_list

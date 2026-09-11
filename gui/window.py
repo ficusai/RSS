@@ -190,8 +190,8 @@ class ScrapeThread(QThread):
 
     def run(self):
         try:
-            self.log_signal.emit("Initializing feed scrape process...")
-            articles, errors = fetch_all_feeds(self.feeds)
+            self.log_signal.emit("Initializing parallel feed scrape process...")
+            articles, errors = fetch_all_feeds(self.feeds, progress_callback=self.log_signal.emit)
             new, total = save_articles(articles)
             self.finished_signal.emit(new, total, errors)
         except Exception as e:
