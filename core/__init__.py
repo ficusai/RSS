@@ -14,6 +14,7 @@ from .cleaner import clean_html, parse_to_iso
 from .storage import generate_article_id, is_duplicate, save_articles, get_stats
 from .fetcher import fetch_feed, fetch_all_feeds
 from .readability import ReadabilityExtractor
+from .cache import CacheManager
 
 __all__ = [
     "clean_html",
@@ -25,4 +26,5 @@ __all__ = [
     "fetch_feed",
     "fetch_all_feeds",
     "ReadabilityExtractor",
+    "CacheManager",
 ]
