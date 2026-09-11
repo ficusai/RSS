@@ -1,6 +1,6 @@
 # RSS — Automated Feed Scraper & Article Tracking Engine
 
-> **RSS** is a lightweight RSS 2.0 & Atom 1.0 feed ingestion, scrubbing, and tracking system. Equipped with a PyQt6 dark-themed GUI reader and a headless CLI engine, it features SHA-256 cryptographic deduplication, JSON Lines storage, full-text web fallback scraping, background systemd scheduling, and a one-click **Feed Presets Library** of 239 curated subscriptions across 22 industry categories.
+> **RSS** is a lightweight RSS 2.0 & Atom 1.0 feed ingestion, scrubbing, and tracking system. Equipped with a PyQt6 dark-themed GUI reader and a headless CLI engine, it features SHA-256 cryptographic deduplication, JSON Lines storage, full-text web fallback scraping, background systemd scheduling, and a one-click **Feed Presets Library** of 247 curated subscriptions across 22 industry categories.
 
 ---
 
@@ -215,7 +215,7 @@ All commits within this repository maintain strict local directory boundary isol
 | :--- | :--- |
 | `RSS-0.1v-linux-native` | Core release engine — lightweight RSS reader, scraper, storage, and dashboard. |
 | `feature/gui-minimal-3tab` | Streamlined 3-tab GUI architecture (Articles Explorer split reader, Subscriptions Hub with collapsible presets drawer, Systemd Operations & Logs console). |
-| `feature/feed-presets-library` | Bundles the curated feed preset catalog + fast preset chips. |
+| `feature/feed-presets-library` | Bundles the 247-feed preset catalog (including RSSHub endpoints) + dedicated GUI presets tab. |
 | `feature/stealth-browser-fetcher` | Tiered Dual-Engine stealth scraper with Playwright, CDP request replaying, Client Hints, and Cloudflare challenge fallback. |
 
 ### Branch-Related File Changes
@@ -251,7 +251,8 @@ touched by each branch so future branch sessions stay in sync with this README.
 
 | File | Change |
 | :--- | :--- |
-| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Added — 239 curated RSS/Atom feeds across 22 categories + lookup/duplicate-check API (`get_preset_feeds`, `get_preset_categories`, `get_presets_by_category`, `search_presets`, `feed_already_present`). |
+| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Added — 247 curated RSS/Atom feeds across 22 categories (including RSSHub endpoints) + lookup/duplicate-check API (`get_preset_feeds`, `get_preset_categories`, `get_presets_by_category`, `search_presets`, `feed_already_present`). |
+| `config/feeds.json` | Modified — includes active default subscriptions for RSSHub endpoints (36Kr Newsflashes, Zhihu Daily). |
 | `features/feature_feed_presets_library/tests/test_feed_presets.py` | Added — validates catalog size, category cleanliness, URL dedup, filtering, search, and duplicate detection. |
 | `gui/window.py` | Modified — adds the **Feed Presets Library** tab (category combo, search box, presets table, per-feed Add, Add All Presets) and shared `get_category_color` helper. |
 | `README.md` | Modified — documents the presets module, GUI usage, tests, and this branching map. |
