@@ -1,8 +1,8 @@
 """
 Pre-Configured Feed Presets Library (Git Branch: feature/feed-presets-library)
 
-239 curated RSS/Atom feed subscriptions across 22 industry
-categories, sourced from market intelligence feed catalogs.
+247 curated RSS/Atom feed subscriptions across 22 industry
+categories, sourced from market intelligence feed catalogs and RSSHub.
 """
 
 from typing import Any, Dict, List
@@ -37,9 +37,12 @@ PRESET_FEEDS: List[Dict[str, str]] = [
     {"name": "ArsTechnica", "url": "http://feeds.arstechnica.com/arstechnica/index", "category": "Technology"},
     {"name": "Bloomberg Tech", "url": "https://feeds.bloomberg.com/technology/news.rss", "category": "Technology"},
     {"name": "Engadget", "url": "https://www.engadget.com/rss.xml", "category": "Technology"},
+    {"name": "GitHub Trending Daily (RSSHub)", "url": "https://rsshub.app/github/trending/daily/any", "category": "Technology"},
     {"name": "Reuters Tech", "url": "http://feeds.reuters.com/reuters/technologyNews", "category": "Technology"},
+    {"name": "Solidot News (RSSHub)", "url": "https://rsshub.app/solidot/main", "category": "Technology"},
     {"name": "TechCrunch", "url": "https://techcrunch.com/feed/", "category": "Technology"},
     {"name": "TheVerge", "url": "https://www.theverge.com/rss/index.xml", "category": "Technology"},
+    {"name": "V2EX Hot Topics (RSSHub)", "url": "https://rsshub.app/v2ex/topics/hot", "category": "Technology"},
     {"name": "Wired", "url": "https://www.wired.com/feed/rss", "category": "Technology"},
     # --- Artificial Intelligence ---
     {"name": "AI Research Feed", "url": "https://raw.githubusercontent.com/0xSMW/rss-feeds/main/feeds/feed_ai_research.xml", "category": "Artificial Intelligence"},
@@ -109,6 +112,9 @@ PRESET_FEEDS: List[Dict[str, str]] = [
     {"name": "Trading Economics", "url": "https://tradingeconomics.com/rss/news.aspx", "category": "Economy & Indicators"},
     {"name": "We Work Remotely", "url": "https://weworkremotely.com/remote-jobs.rss", "category": "Economy & Indicators"},
     # --- Finance & Markets ---
+    {"name": "36Kr Newsflashes (RSSHub)", "url": "https://rsshub.app/36kr/newsflashes", "category": "Finance & Markets"},
+    {"name": "10JQKA Realtime News (RSSHub)", "url": "https://rsshub.app/10jqka/realtimenews", "category": "Finance & Markets"},
+    {"name": "21st Century Business Herald (RSSHub)", "url": "https://rsshub.app/21caijing/channel/headnews", "category": "Finance & Markets"},
     {"name": "ARK Invest", "url": "https://ark-invest.com/feed/", "category": "Finance & Markets"},
     {"name": "Bloomberg Markets", "url": "https://feeds.bloomberg.com/markets/news.rss", "category": "Finance & Markets"},
     {"name": "Bloomberg Opinion Levine", "url": "https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine.rss", "category": "Finance & Markets"},
@@ -130,6 +136,7 @@ PRESET_FEEDS: List[Dict[str, str]] = [
     {"name": "The Economist Finance", "url": "https://www.economist.com/finance-and-economics/rss.xml", "category": "Finance & Markets"},
     {"name": "The Information", "url": "https://www.theinformation.com/feed", "category": "Finance & Markets"},
     {"name": "WSJ Markets", "url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", "category": "Finance & Markets"},
+    {"name": "WallStreetCN Live (RSSHub)", "url": "https://rsshub.app/wallstreetcn/news/global", "category": "Finance & Markets"},
     {"name": "Yahoo Finance", "url": "https://feeds.finance.yahoo.com/rss/2.0/headline", "category": "Finance & Markets"},
     {"name": "Yahoo Finance Index", "url": "https://finance.yahoo.com/news/rssindex", "category": "Finance & Markets"},
     # --- Bonds & Credit ---
@@ -200,10 +207,12 @@ PRESET_FEEDS: List[Dict[str, str]] = [
     {"name": "BBC Africa", "url": "https://feeds.bbci.co.uk/news/world/africa/rss.xml", "category": "World News"},
     {"name": "BBC Asia", "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml", "category": "World News"},
     {"name": "BBC Latin America", "url": "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml", "category": "World News"},
+    {"name": "Bilibili Hot Ranking (RSSHub)", "url": "https://rsshub.app/bilibili/ranking/0/3", "category": "World News"},
     {"name": "CNN Top Stories", "url": "http://rss.cnn.com/rss/cnn_topstories.rss", "category": "World News"},
     {"name": "Democracy Now", "url": "https://www.democracynow.org/democracynow.rdf", "category": "World News"},
     {"name": "FoxNews Politics", "url": "http://feeds.foxnews.com/foxnews/politics", "category": "World News"},
     {"name": "La Silla Vacía", "url": "https://www.lasillavacia.com/rss", "category": "World News"},
+    {"name": "NetEase 163 Special News (RSSHub)", "url": "https://rsshub.app/163/news/special", "category": "World News"},
     {"name": "NPR News", "url": "https://feeds.npr.org/1001/rss.xml", "category": "World News"},
     {"name": "NYTimes Homepage", "url": "http://feeds.nytimes.com/nyt/rss/HomePage", "category": "World News"},
     {"name": "Rest of World", "url": "https://restofworld.org/feed/", "category": "World News"},
@@ -211,6 +220,7 @@ PRESET_FEEDS: List[Dict[str, str]] = [
     {"name": "USAToday", "url": "http://rssfeeds.usatoday.com/usatoday-NewsTopStories", "category": "World News"},
     {"name": "Vietnam News", "url": "https://vietnamnews.vn/rss", "category": "World News"},
     {"name": "WashingtonPost", "url": "http://feeds.washingtonpost.com/rss/politics", "category": "World News"},
+    {"name": "Zhihu Daily (RSSHub)", "url": "https://rsshub.app/zhihu/daily", "category": "World News"},
     # --- Europe ---
     {"name": "BBC UK", "url": "http://feeds.bbci.co.uk/news/uk/rss.xml", "category": "Europe"},
     {"name": "BBC World", "url": "http://feeds.bbci.co.uk/news/world/rss.xml", "category": "Europe"},

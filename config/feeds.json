@@ -63,6 +63,22 @@
       "category": "US News",
       "enabled": true,
       "fetch_interval_hours": 12
+    },
+    {
+      "id": "rsshub_36kr_newsflashes",
+      "name": "36Kr Newsflashes (RSSHub)",
+      "url": "https://rsshub.app/36kr/newsflashes",
+      "category": "Finance & Markets",
+      "enabled": true,
+      "fetch_interval_hours": 12
+    },
+    {
+      "id": "rsshub_zhihu_daily",
+      "name": "Zhihu Daily (RSSHub)",
+      "url": "https://rsshub.app/zhihu/daily",
+      "category": "World News",
+      "enabled": true,
+      "fetch_interval_hours": 12
     }
   ]
 }
