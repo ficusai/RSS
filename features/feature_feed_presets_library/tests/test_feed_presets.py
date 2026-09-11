@@ -25,7 +25,7 @@ class TestFeedPresets(unittest.TestCase):
     def test_preset_feeds_non_empty(self):
         presets = get_preset_feeds()
         self.assertGreater(len(presets), 0)
-        self.assertGreaterEqual(len(presets), 200)
+        self.assertGreaterEqual(len(presets), 300)
 
     def test_preset_structure(self):
         for p in PRESET_FEEDS:

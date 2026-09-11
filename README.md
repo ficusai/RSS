@@ -1,6 +1,6 @@
 # RSS — Automated Feed Scraper & Article Tracking Engine
 
-> **RSS** is a lightweight RSS 2.0 & Atom 1.0 feed ingestion, scrubbing, and tracking system. Equipped with a PyQt6 dark-themed GUI reader and a headless CLI engine, it features SHA-256 cryptographic deduplication, JSON Lines storage, full-text web fallback scraping, background systemd scheduling, and a one-click **Feed Presets Library** of 247 curated subscriptions across 22 industry categories.
+> **RSS** is a lightweight RSS 2.0 & Atom 1.0 feed ingestion, scrubbing, and tracking system. Equipped with a PyQt6 dark-themed GUI reader and a headless CLI engine, it features SHA-256 cryptographic deduplication, JSON Lines storage, full-text web fallback scraping, background systemd scheduling, and a one-click **Feed Presets Library** of 379 curated subscriptions across 22 industry categories.
 
 ---
 
@@ -251,7 +251,7 @@ touched by each branch so future branch sessions stay in sync with this README.
 
 | File | Change |
 | :--- | :--- |
-| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Added — 247 curated RSS/Atom feeds across 22 categories (including RSSHub endpoints) + lookup/duplicate-check API (`get_preset_feeds`, `get_preset_categories`, `get_presets_by_category`, `search_presets`, `feed_already_present`). |
+| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Added — 379 curated RSS/Atom feeds across 22 categories (including RSSHub endpoints & verified global news feeds) + lookup/duplicate-check API (`get_preset_feeds`, `get_preset_categories`, `get_presets_by_category`, `search_presets`, `feed_already_present`). |
 | `config/feeds.json` | Modified — includes active default subscriptions for RSSHub endpoints (36Kr Newsflashes, Zhihu Daily). |
 | `features/feature_feed_presets_library/tests/test_feed_presets.py` | Added — validates catalog size, category cleanliness, URL dedup, filtering, search, and duplicate detection. |
 | `gui/window.py` | Modified — adds the **Feed Presets Library** tab (category combo, search box, presets table, per-feed Add, Add All Presets) and shared `get_category_color` helper. |
