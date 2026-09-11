@@ -5,7 +5,11 @@ Tests core cleaner, storage, fetcher, scheduler, and main entrypoint functions.
 
 import sys
 import json
+import gzip
+import zlib
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -25,7 +29,7 @@ from core.storage import (
     ARTICLES_FILE,
     DEDUP_FILE,
 )
-from core.fetcher import _local_tag, _parse_item_element, fetch_feed, fetch_all_feeds
+from core.fetcher import _local_tag, _parse_item_element, fetch_feed, fetch_all_feeds, parse_xml_bytes
 import xml.etree.ElementTree as ET
 
 
@@ -224,6 +228,120 @@ class TestFetcherModule(unittest.TestCase):
         self.assertEqual(parsed["author"], "Jane Smith")
         self.assertEqual(parsed["text_clean"], "Atom body content")
         self.assertEqual(parsed["published_at_iso"], "2026-09-10T15:30:00Z")
+
+
+class TestParseXmlBytesUnicodePreservation(unittest.TestCase):
+    """Regression: the old allow-list regex mangled every non-ASCII character.
+
+    Python backslash-x escapes consume only 2 hex digits, so the old pattern
+    `[^x09 x0A x0D -xD7FF ...]` was misparsed and stripped Lambda, en/em
+    dashes, curly quotes, apostrophes and n-tilde from titles/body text.
+    """
+
+    FEED_CONFIG = {"name": "Unicode Feed", "url": "http://example.com/feed", "category": "News"}
+
+    def test_non_ascii_titles_preserved(self):
+        xml = (
+            "<rss version=\"2.0\"><channel>"
+            "<item><title>Λ Snap – An inviting programming language — “it’s hell” ¿qué tal? </title>"
+            "<link>http://example.com/1</link><guid>g1</guid>"
+            "<description>&lt;p&gt;Café ñandú — prices&#160;surge&lt;/p&gt;</description>"
+            "</item>"
+            "</channel></rss>"
+        )
+        raw = xml.encode("utf-8")
+        arts = parse_xml_bytes(raw, self.FEED_CONFIG)
+        self.assertEqual(len(arts), 1)
+        self.assertEqual(
+            arts[0]["title"],
+            "Λ Snap – An inviting programming language — “it’s hell” ¿qué tal?",
+        )
+        self.assertIn("Café ñandú — prices surge", arts[0]["text_clean"])
+
+    def test_control_chars_still_removed(self):
+        xml = ("<rss version=\"2.0\"><channel>"
+               "<item><title>Clean</title><link>http://example.com/1</link>"
+               "<guid>g2</guid><description>a\x00b\x1fc</description></item>"
+               "</channel></rss>")
+        arts = parse_xml_bytes(xml.encode("utf-8"), self.FEED_CONFIG)
+        self.assertEqual(arts[0]["text_clean"], "abc")
+
+    def test_rsshub_html_response_rejected_not_silently_corrupted(self):
+        # Malformed HTML served by a proxy must raise, not silently produce mangled articles.
+        with self.assertRaises(ET.ParseError):
+            parse_xml_bytes(b"<html><body>Cloudflare challenge</body>", self.FEED_CONFIG)
+
+
+class TestContentDecoding(unittest.TestCase):
+    """Validates gzip/deflate/brotli decoding used by fetch_url_bytes."""
+
+    def _fetch_module(self):
+        import importlib
+        return importlib.import_module("core.fetcher.fetch_url_bytes")
+
+    def test_decompress_gzip(self):
+        raw = gzip.compress(b"hello gzip")
+        self.assertEqual(self._fetch_module()._decompress(raw, "gzip"), b"hello gzip")
+
+    def test_decompress_deflate_zlib(self):
+        raw = zlib.compress(b"hello deflate")
+        self.assertEqual(self._fetch_module()._decompress(raw, "deflate"), b"hello deflate")
+
+    def test_decompress_deflate_raw(self):
+        comp = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+        raw = comp.compress(b"hello raw") + comp.flush()
+        self.assertEqual(self._fetch_module()._decompress(raw, "deflate"), b"hello raw")
+
+    def test_decompress_brotli(self):
+        mod = self._fetch_module()
+        if not mod.BROTLI_AVAILABLE:
+            self.skipTest("brotli not installed")
+        raw = mod.brotli.compress(b"hello brotli")
+        self.assertEqual(mod._decompress(raw, "br"), b"hello brotli")
+
+    def test_decompress_unknown_returns_raw(self):
+        self.assertEqual(self._fetch_module()._decompress(b"plain", "identity"), b"plain")
+
+    def test_accept_encoding_only_supported(self):
+        enc = self._fetch_module()._build_accept_encoding()
+        self.assertIn("gzip", enc)
+        self.assertIn("deflate", enc)
+        self.assertNotIn("zstd", enc)
+
+    def test_end_to_end_brotli_fetch(self):
+        mod = self._fetch_module()
+        if not mod.BROTLI_AVAILABLE:
+            self.skipTest("brotli not installed")
+
+        payload = b"<rss><channel><item><title>br article</title></item></channel></rss>"
+        encoded = mod.brotli.compress(payload)
+
+        class Handler(BaseHTTPRequestHandler):
+            enc = "br"
+
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/rss+xml")
+                self.send_header("Content-Encoding", self.enc)
+                self.send_header("Content-Length", str(len(encoded)))
+                self.end_headers()
+                self.wfile.write(encoded)
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        port = server.server_address[1]
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        try:
+            from core.fetcher import fetch_url_bytes
+            body = fetch_url_bytes(f"http://127.0.0.1:{port}/rss", timeout=10)
+            self.assertEqual(body, payload)
+        finally:
+            server.shutdown()
+            server.server_close()
+            t.join(timeout=5)
 
 
 if __name__ == "__main__":

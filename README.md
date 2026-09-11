@@ -204,7 +204,7 @@ The presets test suite validates catalog completeness (≥ 400 feeds), URL dedup
 ## 🌿 Git & Release Branching
 
 * **Active Release Branch**: `RSS-0.1v-linux-native`
-* **Active Feature Branch**: `feature/feed-presets-library`
+* **Active Feature Branch**: `feature/feed-parsing-unicode-encoding-fixes`
 * **Remote Origin**: `https://github.com/ficusai/RSS.git`
 
 All commits within this repository maintain strict local directory boundary isolation and follow standardized release branch naming (`<PROJECT>-0.1v-linux-native`).
@@ -220,6 +220,8 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/readability-extractor` | DOM-based readability & full-text article body extractor stripping layout clutter, popups, and ads. |
 | `feature/tiered-cache-manager` | Tiered memory & response cache manager with lock claiming for concurrency control and thundering herd protection. |
 | `feature/core-storage-fetcher-modular` | Single-function modularization of storage, cleaner, XML parser, transport fetcher, and CLI orchestrator. |
+| `feature/scraping-quality-improvements` | Full-text extraction improvements: readability-based article extraction, CDATA/HTML entity parsing, and default `extract_full_text=True` for the headless CLI scraper. |
+| `feature/feed-parsing-unicode-encoding-fixes` | Fixes XML parsing that silently destroyed non-ASCII characters and adds gzip/deflate/brotli decompression so br-only feeds (TechCrunch) parse. |
 
 ### Branch-Related File Changes
 
@@ -322,6 +324,25 @@ Note: older draft modules under `features/` that are **not** implemented as Git
 branches (e.g. `web_scraper_fallback`, `systemd_scheduler`, `gui_reader_pro`)
 are intentionally **omitted** from this branch map until their feature branches
 are actually created and pushed.
+
+#### `feature/scraping-quality-improvements`
+
+| File | Change |
+| :--- | :--- |
+| `core/extractors/extract_article_text.py` | Added — BeautifulSoup-based readability extractor used as a fallback for preview-only RSS items (`extract_article_text`). |
+| `core/fetcher/parse_item_element.py` | Modified — HTML entity unescaping, CDATA handling and readability fallback for short/empty article content. |
+| `core/run_headless_scrape.py` | Modified — headless CLI scrape now runs with `extract_full_text=True` by default. |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
+
+#### `feature/feed-parsing-unicode-encoding-fixes`
+
+| File | Change |
+| :--- | :--- |
+| `core/fetcher/parse_xml_bytes.py` | Fixed — replaced the Unicode-destroying XML sanitization allow-list regex (Python `\x` captures only 2 hex digits, so the old range silently stripped Λ, –, —, curly quotes, apostrophes and ñ from titles/body text) with a precise strip of only XML-invalid control chars, surrogates and `\uFFFE/\uFFFF`. |
+| `core/fetcher/fetch_url_bytes.py` | Fixed — added gzip/deflate/brotli decompression and an honest `Accept-Encoding` header (only advertises encodings that can be decoded), fixing TechCrunch (served `Content-Encoding: br`) which previously failed with `not well-formed (invalid token): line 1, column 3`. |
+| `scripts/feed_parse_audit.py` | Added — one-time per-feed parsing audit (loop: ping real feed → run the RSS.desktop GUI app pipeline in an isolated store → compare headline/link/date/text stats and print a summary table). |
+| `tests/test_rss.py` | Modified — added regression tests: non-ASCII title/body preservation, XML-invalid control-char stripping, malformed-HTML rejection, and gzip/deflate/brotli decoding incl. a local end-to-end brotli fetch. |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
 ---
 

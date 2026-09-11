@@ -9,7 +9,16 @@ from .parse_item_element import parse_item_element
 def parse_xml_bytes(raw_data: bytes, feed_config: Dict[str, Any], extract_full_text: bool = False) -> List[Dict[str, Any]]:
     """Sanitizes raw XML bytes and parses article items."""
     xml_str = raw_data.decode("utf-8", errors="ignore")
-    xml_str = re.sub(r"[^\x09\x0A\x0D\x20-\xD7FF\xE000-\xFFFD]", "", xml_str)
+    # NOTE: strip ONLY characters that are structurally invalid in XML 1.0
+    # (most control chars, surrogates, \uFFFE/\uFFFF). Never use a broad
+    # allow-list here: \x escapes only consume 2 hex digits, so ranges such
+    # as \x20-\xD7FF get misparsed and silently destroy every non-ASCII
+    # character (Λ, –, —, curly quotes, ñ, ...) in titles and body text.
+    xml_str = re.sub(
+        r"[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]",
+        "",
+        xml_str,
+    )
 
     root = ET.fromstring(xml_str)
     articles = []
