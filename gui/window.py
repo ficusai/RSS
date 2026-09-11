@@ -37,11 +37,11 @@ from PyQt6.QtWidgets import (
 )
 
 from core.fetcher import fetch_all_feeds
-from core.scheduler import get_timer_status, install_systemd_timer
 from core.storage import get_stats, load_articles, save_articles
 
-CONFIG_PATH = Path("/home/ficus-pro/Documents/RSS/config/feeds.json")
-ASSETS_DIR = Path("/home/ficus-pro/Documents/RSS/assets")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = PROJECT_ROOT / "config" / "feeds.json"
+ASSETS_DIR = PROJECT_ROOT / "assets"
 
 # Modern minimal high-contrast dark theme with consistent 16px visual hierarchy
 STYLESHEET = """
@@ -171,14 +171,6 @@ QCheckBox::indicator { width: 22px; height: 22px; border: 2px solid #30363d; bor
 QCheckBox::indicator:checked { background: #1f6feb; border-color: #1f6feb; }
 """
 
-PRESET_FEEDS = [
-    {"name": "TechCrunch", "url": "https://techcrunch.com/feed/", "category": "Technology"},
-    {"name": "Hacker News", "url": "https://news.ycombinator.com/rss", "category": "Tech News"},
-    {"name": "Federal Reserve", "url": "https://www.federalreserve.gov/feeds/press_all.xml", "category": "Finance"},
-    {"name": "BBC World", "url": "http://feeds.bbci.co.uk/news/rss.xml", "category": "World News"},
-    {"name": "Ars Technica", "url": "http://feeds.arstechnica.com/arstechnica/index", "category": "Technology"},
-]
-
 
 class ScrapeThread(QThread):
     log_signal = pyqtSignal(str)
@@ -259,14 +251,9 @@ class MainWindow(QMainWindow):
         self.lbl_feeds_stat.setStyleSheet(
             "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #a371f7; font-weight: 600;"
         )
-        self.lbl_timer_stat = QLabel("Timer: --")
-        self.lbl_timer_stat.setStyleSheet(
-            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #3fb950; font-weight: 600;"
-        )
 
         hdr_layout.addWidget(self.lbl_articles_stat)
         hdr_layout.addWidget(self.lbl_feeds_stat)
-        hdr_layout.addWidget(self.lbl_timer_stat)
         hdr_layout.addSpacing(10)
 
         self.btn_sync = QPushButton("🔄 Sync All Feeds")
@@ -406,13 +393,6 @@ class MainWindow(QMainWindow):
         self.cb_freq.setCurrentIndex(3)
         self.cb_freq.setMaximumWidth(110)
 
-        self.cb_preset = QComboBox()
-        self.cb_preset.addItem("Presets...")
-        for p in PRESET_FEEDS:
-            self.cb_preset.addItem(f"{p['name']} ({p['category']})")
-        self.cb_preset.currentIndexChanged.connect(self.on_preset)
-        self.cb_preset.setMaximumWidth(180)
-
         self.btn_add = QPushButton("➕ Add Feed")
         self.btn_add.setObjectName("accent")
         self.btn_add.clicked.connect(self.add_feed)
@@ -421,7 +401,6 @@ class MainWindow(QMainWindow):
         add_top.addWidget(self.in_url, 2)
         add_top.addWidget(self.in_cat)
         add_top.addWidget(self.cb_freq)
-        add_top.addWidget(self.cb_preset)
         add_top.addWidget(self.btn_add)
         add_v.addLayout(add_top)
 
@@ -482,16 +461,11 @@ class MainWindow(QMainWindow):
         ops_title = QLabel("⚙️ Operations Log")
         ops_title.setStyleSheet("color: #8b949e; font-size: 15px; font-weight: bold;")
 
-        self.btn_timer = QPushButton("⚡ Enable 12h Scheduler")
-        self.btn_timer.setObjectName("accent")
-        self.btn_timer.clicked.connect(self.enable_timer)
-
         self.btn_clear = QPushButton("🧹 Clear Log")
         self.btn_clear.clicked.connect(self.clear_log)
 
         sched_l.addWidget(ops_title)
         sched_l.addStretch()
-        sched_l.addWidget(self.btn_timer)
         sched_l.addWidget(self.btn_clear)
         ops_l.addLayout(sched_l)
 
@@ -543,20 +517,9 @@ class MainWindow(QMainWindow):
             arts = stats.get("total_articles", 0)
             total = len(self.feeds)
             active = sum(1 for f in self.feeds if f.get("enabled", True))
-            timer = get_timer_status()
-            timer_s = "Active" if timer.get("active") else "Inactive"
 
             self.lbl_articles_stat.setText(f"📰 {arts} Articles")
             self.lbl_feeds_stat.setText(f"📡 {active}/{total} Feeds Active")
-            self.lbl_timer_stat.setText(f"⏱️ Timer: {timer_s}")
-            if timer.get("active"):
-                self.lbl_timer_stat.setStyleSheet(
-                    "background: #1a5a2e; border: 1px solid #238636; border-radius: 6px; padding: 4px 14px; color: #3fb950; font-weight: bold;"
-                )
-            else:
-                self.lbl_timer_stat.setStyleSheet(
-                    "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #8b949e; font-weight: bold;"
-                )
         except Exception:
             pass
 
@@ -756,15 +719,6 @@ class MainWindow(QMainWindow):
             self._log(f"Copied URL to clipboard: {url}")
             QMessageBox.information(self, "Link Copied", "Article URL copied to clipboard!")
 
-    def on_preset(self, i):
-        if i <= 0:
-            return
-        p = PRESET_FEEDS[i - 1]
-        self.in_name.setText(p["name"])
-        self.in_url.setText(p["url"])
-        self.in_cat.setText(p["category"])
-        self.cb_preset.setCurrentIndex(0)
-
     def set_freq(self, fid, hours):
         for f in self.feeds:
             if f.get("id") == fid:
@@ -847,18 +801,6 @@ class MainWindow(QMainWindow):
             self._log(f"Encountered {len(errors)} feed fetching issue(s).")
         self.update_stats()
         self.refresh_articles()
-
-    def enable_timer(self):
-        self._log("Installing background 12-hour systemd scheduler service...")
-        ok = install_systemd_timer()
-        st = get_timer_status()
-        if ok or st.get("active"):
-            self._log("Background 12-hour systemd timer is ACTIVE.")
-            QMessageBox.information(self, "Scheduler Configured", "Background systemd timer successfully enabled (runs every 12h).")
-        else:
-            self._log("Systemd timer setup failed.")
-            QMessageBox.warning(self, "Scheduler Error", str(st.get("detail", "Failed to configure timer.")))
-        self.update_stats()
 
 
 if __name__ == "__main__":

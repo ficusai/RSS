@@ -26,7 +26,6 @@ from core.storage import (
     DEDUP_FILE,
 )
 from core.fetcher import _local_tag, _parse_item_element, fetch_feed, fetch_all_feeds
-from core.scheduler import get_timer_status
 import xml.etree.ElementTree as ET
 
 
@@ -225,15 +224,6 @@ class TestFetcherModule(unittest.TestCase):
         self.assertEqual(parsed["author"], "Jane Smith")
         self.assertEqual(parsed["text_clean"], "Atom body content")
         self.assertEqual(parsed["published_at_iso"], "2026-09-10T15:30:00Z")
-
-
-class TestSchedulerModule(unittest.TestCase):
-    def test_get_timer_status_structure(self):
-        status = get_timer_status()
-        self.assertIn("installed", status)
-        self.assertIn("active", status)
-        self.assertIn("enabled", status)
-        self.assertIn("detail", status)
 
 
 if __name__ == "__main__":

@@ -110,39 +110,6 @@ def _local_tag(elem: ET.Element) -> str:
     return elem.tag.lower()
 
 
-# WHAT: Web page scraper helper that extracts clean main article text from an HTML web page URL if RSS feed only provides a short preview snippet.
-# OPTIONS/VALUES: Input article URL, timeout in seconds (default 5s).
-# DEFAULTS: Returns empty string if request fails or times out.
-# OUTPUT/EFFECT: Extracts paragraph body text from article web page.
-# ERRORS/EDGE CASES: Ignores non-200 responses or timeout exceptions silently.
-# HOW TO TEST: Call fetch_full_page_text("https://arstechnica.com/...").
-def fetch_full_page_text(url: str, timeout: int = 5) -> str:
-    """Extracts clean full text from an article webpage when RSS only provides a short summary snippet."""
-    if not url or not url.startswith("http"):
-        return ""
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": DEFAULT_USER_AGENT})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            html_bytes = resp.read()
-            html_str = html_bytes.decode("utf-8", errors="ignore")
-
-        import re
-        main_match = re.search(r"<(main|article)[^>]*>(.*?)</\1>", html_str, re.DOTALL | re.IGNORECASE)
-        target_html = main_match.group(2) if main_match else html_str
-
-        paragraphs = re.findall(r"<p[^>]*>(.*?)</p>", target_html, re.DOTALL | re.IGNORECASE)
-        clean_paragraphs = [clean_html(p) for p in paragraphs if clean_html(p)]
-
-        valid_p = [
-            p for p in clean_paragraphs
-            if len(p) > 30
-            and not any(w in p.lower() for w in ["official website", "subscribe", "cookie policy", "all rights reserved", "terms of use", "javascript", "browser"])
-        ]
-        return "\n\n".join(valid_p)
-    except Exception:
-        return ""
-
-
 # WHAT: Internal parser function that extracts title, URL link, GUID, publication date, author, preview, and full content from an RSS <item> or Atom <entry>.
 # OPTIONS/VALUES: Inputs: XML element, feed_config dict.
 # DEFAULTS: Returns standardized dictionary with preview, raw summary, encoded content, and clean full text.
@@ -211,12 +178,6 @@ def _parse_item_element(elem: ET.Element, feed_config: Dict[str, Any], extract_f
     # If preview is empty, derive preview from first 400 chars of full text
     if not preview_clean and full_text_clean:
         preview_clean = full_text_clean[:400] + ("..." if len(full_text_clean) > 400 else "")
-
-    # If full text is missing or shorter than preview, attempt web page scrape fallback if link exists
-    if extract_full_text and (len(full_text_clean) < len(preview_clean) or len(full_text_clean) < 150):
-        web_text = fetch_full_page_text(link, timeout=3)
-        if len(web_text) > len(full_text_clean):
-            full_text_clean = web_text
 
     text_clean = full_text_clean if len(full_text_clean) > len(preview_clean) else (preview_clean or full_text_clean)
 

@@ -54,23 +54,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# WHAT: Import core scraper, scheduler, and storage functions.
-# OPTIONS/VALUES: fetch_all_feeds(), get_timer_status(), install_systemd_timer(), save_articles().
-# DEFAULTS: Local package imports.
-# OUTPUT/EFFECT: Enables background scrape execution and systemd scheduling.
-# ERRORS/EDGE CASES: Missing modules throw ImportError.
-# HOW TO TEST: Run 'python3 -c "from core.fetcher import fetch_all_feeds"'.
+# WHAT: Import core scraper and storage functions.
 from core.fetcher import fetch_all_feeds
-from core.scheduler import get_timer_status, install_systemd_timer
 from core.storage import save_articles
 
 # WHAT: Path constant for feed catalog configuration file.
-# OPTIONS/VALUES: /home/ficus-pro/Documents/RSS/config/feeds.json.
-# DEFAULTS: Points to JSON configuration file.
-# OUTPUT/EFFECT: Location where user feeds and ping frequencies are saved.
-# ERRORS/EDGE CASES: File missing handled in run_headless_scrape().
-# HOW TO TEST: Inspect with 'cat config/feeds.json'.
-CONFIG_PATH = Path("/home/ficus-pro/Documents/RSS/config/feeds.json")
+CONFIG_PATH = PROJECT_ROOT / "config" / "feeds.json"
 
 
 # WHAT: Runs automated headless RSS feed scraping without opening a graphical window (used by systemd timer).
@@ -138,15 +127,6 @@ def main() -> None:
         print("[RSS Scraper] Falling back to headless CLI scrape mode.")
         run_headless_scrape()
         return
-
-    # Auto-install background 12-hour timer if not active
-    try:
-        timer_status = get_timer_status()
-        if not timer_status.get("active"):
-            print("[RSS Scraper] Systemd timer is inactive. Automatically setting up 12-hour background timer...")
-            install_systemd_timer()
-    except Exception as e:
-        print(f"[WARNING] Could not check or install systemd timer: {e}")
 
     # Launch PyQt6 GUI Application
     from PyQt6.QtWidgets import QApplication

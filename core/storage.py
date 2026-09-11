@@ -42,28 +42,9 @@ from pathlib import Path
 # HOW TO TEST: Checked by static analysis tools.
 from typing import Any, Dict, List, Optional, Tuple
 
-# WHAT: Constant defining the absolute directory path where scraped results and deduplication files are stored.
-# OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS".
-# DEFAULTS: Set to the project's SCRAPED-RESULTS folder.
-# OUTPUT/EFFECT: All scraped output files are written into this directory.
-# ERRORS/EDGE CASES: Permission errors if directory creation is blocked by OS.
-# HOW TO TEST: Check directory presence with 'ls -la /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS'.
-RESULTS_DIR = Path("/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS")
-
-# WHAT: Constant path pointing to the single master JSON Lines file storing all scraped articles.
-# OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/scraped_articles.jsonl".
-# DEFAULTS: Append-only JSON Lines formatted file (.jsonl).
-# OUTPUT/EFFECT: Stores one article per line as a JSON object.
-# ERRORS/EDGE CASES: If file is deleted, a new one will be created on the next scrape.
-# HOW TO TEST: Inspect contents with 'head -n 1 /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/scraped_articles.jsonl'.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESULTS_DIR = PROJECT_ROOT / "SCRAPED-RESULTS"
 ARTICLES_FILE = RESULTS_DIR / "scraped_articles.jsonl"
-
-# WHAT: Constant path pointing to the JSON file keeping track of all seen article SHA-256 hashes to prevent duplicates.
-# OPTIONS/VALUES: "/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/dedup_state.json".
-# DEFAULTS: Standard JSON object file.
-# OUTPUT/EFFECT: Preserves list of seen IDs across application restarts.
-# ERRORS/EDGE CASES: If corrupted, defaults back to an empty tracking state.
-# HOW TO TEST: Inspect with 'cat /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS/dedup_state.json'.
 DEDUP_FILE = RESULTS_DIR / "dedup_state.json"
 
 
