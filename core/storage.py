@@ -27,7 +27,7 @@ import json
 from datetime import datetime, timezone
 
 # WHAT: Path library for manipulating folder and file path strings cleanly across operating systems.
-# OPTIONS/VALUES: Path("/home/ficus-pro/Documents/RSS/SCRAPED-RESULTS").
+# OPTIONS/VALUES: PROJECT_ROOT / "SCRAPED-RESULTS".
 # DEFAULTS: Uses absolute file system path.
 # OUTPUT/EFFECT: Resolves data folder locations.
 # ERRORS/EDGE CASES: None.
@@ -51,7 +51,7 @@ DEDUP_FILE = RESULTS_DIR / "dedup_state.json"
 # WHAT: Internal helper function that creates the output folder if it does not already exist.
 # OPTIONS/VALUES: None.
 # DEFAULTS: Creates parents and ignores existing folder error (exist_ok=True).
-# OUTPUT/EFFECT: Ensures /home/ficus-pro/Documents/RSS/SCRAPED-RESULTS directory exists.
+# OUTPUT/EFFECT: Ensures SCRAPED-RESULTS directory exists within project root.
 # ERRORS/EDGE CASES: Raises PermissionError if write permission is denied.
 # HOW TO TEST: Call _ensure_dir() and verify folder existence with os.path.exists().
 def _ensure_dir() -> None:

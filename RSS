@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# What: This shell script acts as a shortcut to launch the RSS application.
-# Options: Can be run directly without parameters (opens GUI) or with '--headless' / '--scrape' (runs in background mode).
-# Defaults: If no arguments are passed, it runs the graphical desktop application window.
-# Output/effect: Starts Python 3 and runs main.py with any parameters passed to this script.
-# Errors: Fails if Python 3 is missing or if main.py path is invalid.
-# How to test: Run './RSS' from terminal or double click the desktop icon.
-python3 /home/ficus-pro/Documents/RSS/main.py "$@"
+# What: Shell script shortcut to launch the RSS application dynamically on any Linux system.
+# Options: Can be run directly without parameters (opens GUI) or with '--headless' / '--scrape'.
+# Defaults: If no arguments are passed, opens graphical desktop app.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "$SCRIPT_DIR/main.py" "$@"

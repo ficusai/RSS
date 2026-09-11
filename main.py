@@ -45,7 +45,7 @@ import sys
 from pathlib import Path
 
 # WHAT: Calculates project absolute root directory and inserts it into sys.path.
-# OPTIONS/VALUES: /home/ficus-pro/Documents/RSS.
+# OPTIONS/VALUES: Dynamic project root directory.
 # DEFAULTS: Project root folder.
 # OUTPUT/EFFECT: Allows relative module imports ('from core.fetcher import ...').
 # ERRORS/EDGE CASES: None.
