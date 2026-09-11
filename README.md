@@ -253,7 +253,8 @@ touched by each branch so future branch sessions stay in sync with this README.
 
 | File | Change |
 | :--- | :--- |
-| `core/readability.py` | Added — DOM-based readability & full-text article body extractor using BeautifulSoup to strip navigation, sidebars, ads, popups, and footers. |
+| `core/extractors/extract_readability.py` | Added — single-function module for DOM-based readability & full-text article body extraction (`extract_readability`). |
+| `core/readability.py` | Modified — delegates to `core/extractors/extract_readability.py`. |
 | `core/__init__.py` | Modified — exports `ReadabilityExtractor` class at package root level. |
 | `tests/test_readability_extractor.py` | Added — unit tests for HTML layout noise stripping, title parsing, word count calculation, and edge cases. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
