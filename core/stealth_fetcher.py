@@ -1,11 +1,13 @@
 """
 Stealth Browser Ingestion Engine using Playwright/Patchright & CDP Protocol.
 Bypasses HTTP 403 / 412 / 503 anti-bot challenges and Cloudflare verification screens.
+Includes cookie synchronization and proxy integration.
 Includes headless=False fallback for interactive Cloudflare challenge solving.
 """
 
 import logging
 import time
+from urllib.parse import urlparse
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,7 @@ except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
 from .header_generator import get_client_hints_headers
+from .cookie_manager import set_playwright_cookies
 
 
 def is_stealth_available() -> bool:
@@ -31,6 +34,8 @@ def fetch_with_stealth_browser(
     timeout: int = 30,
     allow_interactive_fallback: bool = True,
     force_headless: Optional[bool] = None,
+    cookie_str: Optional[str] = None,
+    proxy_uri: Optional[str] = None,
 ) -> bytes:
     """
     Fetches raw content from url using a stealth-configured Chromium browser instance.
@@ -40,6 +45,8 @@ def fetch_with_stealth_browser(
         timeout: Request timeout in seconds.
         allow_interactive_fallback: If True, re-launches with headless=False when a Cloudflare challenge is detected.
         force_headless: Explicitly override headless mode (True/False).
+        cookie_str: Optional raw HTTP Cookie header string to inject into context.
+        proxy_uri: Optional proxy URI (e.g., "http://127.0.0.1:8080").
 
     Returns:
         Raw bytes of the target feed XML or response body.
@@ -54,19 +61,24 @@ def fetch_with_stealth_browser(
 
     headers = get_client_hints_headers()
     user_agent = headers["User-Agent"]
+    parsed_domain = urlparse(url).netloc
 
     def _attempt_fetch(headless: bool) -> bytes:
         with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=headless,
-                args=[
+            launch_kwargs = {
+                "headless": headless,
+                "args": [
                     "--disable-blink-features=AutomationControlled",
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
                     "--disable-infobars",
                     "--window-size=1280,800",
                 ],
-            )
+            }
+            if proxy_uri:
+                launch_kwargs["proxy"] = {"server": proxy_uri}
+
+            browser = p.chromium.launch(**launch_kwargs)
             try:
                 context = browser.new_context(
                     user_agent=user_agent,
@@ -81,6 +93,10 @@ def fetch_with_stealth_browser(
                     Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
                     Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
                 """)
+
+                # Inject cookies if provided
+                if cookie_str and parsed_domain:
+                    set_playwright_cookies(context, cookie_str, parsed_domain)
 
                 page = context.new_page()
 
@@ -100,7 +116,7 @@ def fetch_with_stealth_browser(
                 logger.info(f"Stealth browser navigating to: {url} (headless={headless})")
                 page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
 
-                # Wait up to 5 seconds for page load / response capture
+                # Wait up to 2 seconds for response capture
                 time.sleep(2)
 
                 content_str = page.content()

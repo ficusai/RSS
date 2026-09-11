@@ -229,9 +229,12 @@ touched by each branch so future branch sessions stay in sync with this README.
 | File | Change |
 | :--- | :--- |
 | `core/header_generator.py` | Added — generates dynamic Chrome Client Hints headers (`Sec-Ch-Ua`, `Sec-Ch-Ua-Mobile`, `Sec-Ch-Ua-Platform`, `Sec-Fetch-*`) to bypass bot blocks. |
-| `core/stealth_fetcher.py` | Added — Playwright browser ingestion engine with CDP response interception, navigator.webdriver concealment, and `headless=False` fallback for Cloudflare human challenges. |
-| `core/fetcher.py` | Modified — upgraded `fetch_feed` into a Tiered Dual-Engine Fetcher (Tier 1 urllib Client Hints, Tier 2 stealth Playwright fallback). |
+| `core/stealth_fetcher.py` | Added — Playwright browser ingestion engine with CDP response interception, navigator.webdriver concealment, cookie injection, proxy support, and `headless=False` fallback for Cloudflare human challenges. |
+| `core/cookie_manager.py` | Added — Cookie header parser and Playwright context synchronization utility (`parse_cookie_header`, `format_cookie_header`, `set_playwright_cookies`). |
+| `core/proxy_manager.py` | Added — Multi-proxy pool manager supporting round-robin rotation, failure tracking, auto-quarantine, and urllib ProxyHandler creation. |
+| `core/fetcher.py` | Modified — upgraded `fetch_feed` into a Tiered Dual-Engine Fetcher (Tier 1 urllib Client Hints + proxy pool, Tier 2 stealth Playwright fallback). |
 | `tests/test_stealth_fetcher.py` | Added — unit and integration tests for Client Hints header generation, stealth availability, and tiered fetch parsing. |
+| `tests/test_proxy_and_cookies.py` | Added — unit tests for cookie parsing, domain filtering, proxy rotation, and health failover. |
 | `requirements.txt` | Added — lists `PyQt6`, `playwright`, and `pytest` dependencies. |
 | `README.md` | Modified — updated Key Features, Quick Installation, Branch Map, and Branch-Related File Changes documentation. |
 
