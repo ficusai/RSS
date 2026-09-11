@@ -34,6 +34,7 @@ Consolidating news, research, and technical blogs across disparate websites ofte
 ## ⚡ Key Features
 
 * **Dual-Format Feed Parsing**: Full support for XML namespace handling across RSS 2.0 and Atom 1.0 standards.
+* **Tiered Dual-Engine Stealth Scraping**: Combines fast `urllib` HTTP GET with modern Chrome Client Hints (`Sec-Ch-Ua`) and an evasion-hardened Playwright stealth browser engine. Automatically bypasses HTTP 403 / 412 / 503 anti-bot challenges and Cloudflare verification screens with `headless=False` interactive fallback.
 * **SHA-256 Cryptographic Deduplication**: Maintains `dedup_state.json` to prevent storing identical articles across feed refreshes.
 * **Append-Friendly JSON Lines Storage**: Uses `.jsonl` streaming format (`SCRAPED-RESULTS/scraped_articles.jsonl`) for fast querying without loading monolithic files into memory.
 * **PyQt6 Dark Theme Dashboard**: Interactive reader UI featuring search, category filter dropdowns, reading time estimators, and subscription management tables.
@@ -115,7 +116,10 @@ git clone https://github.com/ficusai/RSS.git
 cd RSS
 
 # Install Python dependencies
-pip install PyQt6 beautifulsoup4 feedparser requests
+pip install -r requirements.txt
+
+# Install Playwright Chromium driver for anti-bot stealth scraping
+python3 -m playwright install chromium
 ```
 
 ---
@@ -212,12 +216,24 @@ All commits within this repository maintain strict local directory boundary isol
 | `RSS-0.1v-linux-native` | Core release engine — lightweight RSS reader, scraper, storage, and dashboard. |
 | `feature/gui-minimal-3tab` | Streamlined 3-tab GUI architecture (Articles Explorer split reader, Subscriptions Hub with collapsible presets drawer, Systemd Operations & Logs console). |
 | `feature/feed-presets-library` | Bundles the curated feed preset catalog + fast preset chips. |
+| `feature/stealth-browser-fetcher` | Tiered Dual-Engine stealth scraper with Playwright, CDP request replaying, Client Hints, and Cloudflare challenge fallback. |
 
 ### Branch-Related File Changes
 
 Each feature branch owns a dedicated module folder under `features/` plus any
 integration changes it introduces. The following tables record every file
 touched by each branch so future branch sessions stay in sync with this README.
+
+#### `feature/stealth-browser-fetcher`
+
+| File | Change |
+| :--- | :--- |
+| `core/header_generator.py` | Added — generates dynamic Chrome Client Hints headers (`Sec-Ch-Ua`, `Sec-Ch-Ua-Mobile`, `Sec-Ch-Ua-Platform`, `Sec-Fetch-*`) to bypass bot blocks. |
+| `core/stealth_fetcher.py` | Added — Playwright browser ingestion engine with CDP response interception, navigator.webdriver concealment, and `headless=False` fallback for Cloudflare human challenges. |
+| `core/fetcher.py` | Modified — upgraded `fetch_feed` into a Tiered Dual-Engine Fetcher (Tier 1 urllib Client Hints, Tier 2 stealth Playwright fallback). |
+| `tests/test_stealth_fetcher.py` | Added — unit and integration tests for Client Hints header generation, stealth availability, and tiered fetch parsing. |
+| `requirements.txt` | Added — lists `PyQt6`, `playwright`, and `pytest` dependencies. |
+| `README.md` | Modified — updated Key Features, Quick Installation, Branch Map, and Branch-Related File Changes documentation. |
 
 #### `feature/gui-minimal-3tab`
 
