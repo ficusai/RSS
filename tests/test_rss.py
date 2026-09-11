@@ -344,5 +344,345 @@ class TestContentDecoding(unittest.TestCase):
             t.join(timeout=5)
 
 
+class TestExtractArticleText(unittest.TestCase):
+    def _extract(self, html):
+        import core.extractors.extract_article_text as mod
+        return mod.extract_article_text(html, url="http://example.com/a")
+
+    def test_inline_tags_do_not_split_paragraphs(self):
+        html = (
+            "<html><head><title>T</title></head><body><article>"
+            "<p>In <a href='#'>a blog post</a>, the <code>maker</code> said it was "
+            "<strong>serious</strong>.</p>"
+            "<p>Second paragraph with more details and enough length to survive.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertIn("In a blog post, the maker said it was serious.", result["clean_text"])
+        self.assertNotIn("pose\n", result["clean_text"])
+        self.assertEqual(result["clean_text"].count("\n\n"), 1)
+
+    def test_paragraph_structure_preserved(self):
+        html = (
+            "<html><body><article>"
+            "<p>First real paragraph of the story with plenty of words here.</p>"
+            "<p>Second real paragraph of the story with plenty of words here.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertTrue(result["clean_text"].startswith("First real paragraph"))
+        self.assertIn("\n\nSecond real paragraph", result["clean_text"])
+
+    def test_boilerplate_blocks_pruned(self):
+        html = (
+            "<html><body><article>"
+            "<p>Hardware wallet maker Trezor is warning its users about a phishing "
+            "campaign that tries to drain their devices.</p>"
+            "<section class='most-popular'><h3>Most Popular</h3><a>Story One</a>"
+            "<a>Story Two</a></section>"
+            "<p>Don't miss out on our conference October 13-15 San Francisco. "
+            "REGISTER NOW and get a free ticket.</p>"
+            "<p>by John Doe</p>"
+            "<p>The company said this vulnerability affected several models.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("Most Popular", result["clean_text"])
+        self.assertNotIn("REGISTER", result["clean_text"])
+        self.assertNotIn("by John Doe", result["clean_text"])
+        self.assertIn("phishing", result["clean_text"])
+        self.assertIn("affected several models", result["clean_text"])
+
+    def test_byline_gallery_rows_removed(self):
+        html = (
+            "<html><body><article>"
+            "<p>OEIStreams</p><p>by mobility212</p>"
+            "<p>ScratchJr</p><p>by dana-dai</p>"
+            "<p>This is the genuine introduction to the project with enough words "
+            "to be kept by the extractor.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("mobility212", result["clean_text"])
+        self.assertNotIn("OEIStreams", result["clean_text"])
+        self.assertIn("genuine introduction", result["clean_text"])
+
+    def test_continue_reading_artifact_removed(self):
+        html = (
+            "<html><body><article>"
+            "<p>The full article text that the publisher provided in full with "
+            "enough length to survive extraction cleanly.</p>"
+            "<p>Continue reading...</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("Continue reading", result["clean_text"])
+
+    def test_nav_intro_lines_trimmed(self):
+        html = (
+            "<html><body><article>"
+            "<p>Previous</p><p>Next</p><p>Welcome to Snap!</p>"
+            "<p>Here begins the actual documentation of the project in detail.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("Welcome to Snap!", result["clean_text"])
+        self.assertTrue(result["clean_text"].startswith("Here begins"), result["clean_text"])
+
+    def test_unwanted_sections_removed(self):
+        html = (
+            "<html><body>"
+            "<header>Site Header Navigation Links Galore</header>"
+            "<footer>Copyright 2026 All Rights Reserved</footer>"
+            "<article><p>A real article paragraph that survives extraction with "
+            "sufficient length to be counted as news content.</p></article>"
+            "</body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("Site Header", result["clean_text"])
+        self.assertNotIn("All Rights Reserved", result["clean_text"])
+        self.assertIn("real article paragraph", result["clean_text"])
+
+    def test_link_dense_headline_boxes_removed(self):
+        html = (
+            "<html><body><article>"
+            "<div class='mobility-box'>"
+            "<p><a href='/1'>Tesla cybercab hits the road and hits a snag</a></p>"
+            "<p><a href='/2'>Hikers rescued after using Google Gemini for planning</a></p>"
+            "</div>"
+            "<p>The real reporting about the crypto wallet breach follows here with "
+            "enough words to pass the minimum bar comfortably.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("cybercab", result["clean_text"])
+        self.assertNotIn("Gemini", result["clean_text"])
+        self.assertIn("crypto wallet breach", result["clean_text"])
+
+    def test_link_only_headings_dropped_but_headline_kept(self):
+        html = (
+            "<html><body><article>"
+            "<h1><a href='/article'>A Real Long Headline That Describes The Story</a></h1>"
+            "<p>First paragraph delivering the actual news with plenty of text so it "
+            "survives the boilerplate heuristics unchanged and intact.</p>"
+            "<section class='most-popular'><h2>Most Popular</h2>"
+            "<h3><a href='/x'>Documentary stuns Telluride festival</a></h3>"
+            "<h3><a href='/y'>TechCrunch Mobility Tesla cybercab hits the road</a></h3>"
+            "</section>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertIn("Real Long Headline", result["clean_text"])
+        self.assertNotIn("Documentary stuns Telluride", result["clean_text"])
+        self.assertNotIn("Mobility Tesla cybercab", result["clean_text"])
+        self.assertIn("delivering the actual news", result["clean_text"])
+
+    def test_trailing_comment_bullet_line_removed(self):
+        html = (
+            "<html><body><article>"
+            "<p>The article body is genuine and long enough to survive extraction "
+            "while other lines get cleaned away from the endings here.</p>"
+            "<p>joshenders commented Dec 7, 2023 •</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("joshenders commented", result["clean_text"])
+
+    def test_ui_chrome_terms_removed(self):
+        html = (
+            "<html><body><article>"
+            "<div>Select an option</div>"
+            "<div>No results found</div>"
+            "<div>Learn more about clone URLs</div>"
+            "<p>The switch to swap files is straightforward on modern Linux systems "
+            "and removes an entire class of disk layout problems.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("Select an option", result["clean_text"])
+        self.assertNotIn("No results found", result["clean_text"])
+        self.assertNotIn("clone URLs", result["clean_text"])
+        self.assertIn("swap files", result["clean_text"])
+        self.assertTrue(result["clean_text"].startswith("The switch to swap files"))
+
+    def test_event_promo_copy_removed(self):
+        html = (
+            "<html><body><article>"
+            "<p>Disrupt 2026: OpenAI, Anthropic, Replit, and more take over 6 "
+            "industry stages. 25% off tickets now.</p>"
+            "<p>Back by popular demand: Save up to $300 on Disrupt.</p>"
+            "<p>The scammers targeted customers right after the vendor confirmed a "
+            "breach at its marketing email provider over the weekend.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("tickets", result["clean_text"])
+        self.assertNotIn("Save up to", result["clean_text"])
+        self.assertNotIn("Disrupt 2026", result["clean_text"])
+        self.assertIn("marketing email provider", result["clean_text"])
+
+    def test_curly_apostrophe_boilerplate_removed(self):
+        html = (
+            "<html><body><article>"
+            "<p>Don\u2019t miss out. The startup community will gather to answer a "
+            "pivotal question: How do you build sustainably in the AI era?</p>"
+            "<p>The genuine reporting with a decent number of words follows the "
+            "promo paragraph and should be the last block that remains.</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn("miss out", result["clean_text"])
+        self.assertIn("genuine reporting", result["clean_text"])
+
+    def test_ui_fragment_tail_removed(self):
+        html = (
+            "<html><body><article>"
+            "<p>The substantive article body that survives the extraction by "
+            "having enough real content to pass every single filter here.</p>"
+            "<p>.com</p>"
+            "</article></body></html>"
+        )
+        result = self._extract(html)
+        self.assertNotIn(".com", result["clean_text"])
+        self.assertTrue(result["clean_text"].endswith("filter here."), result["clean_text"])
+
+    def test_empty_html(self):
+        result = self._extract("")
+        self.assertEqual(result["clean_text"], "")
+        self.assertEqual(result["word_count"], 0)
+
+
+class TestPreviewDerivation(unittest.TestCase):
+    def _parse_item(self, description, content):
+        import xml.etree.ElementTree as ET
+        from core.fetcher import parse_item_element
+        xml = (
+            "<item xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">"
+            f"<title>Demo Title</title>"
+            f"<link>http://example.com/demo</link>"
+            f"<description>{description}</description>"
+            f"<content:encoded>{content}</content:encoded>"
+            "</item>"
+        )
+        root = ET.fromstring(xml)
+        feed_config = {
+            "url": "http://example.com/rss",
+            "name": "Demo Feed",
+            "category": "Tech",
+        }
+        return parse_item_element(root, feed_config, extract_full_text=False)
+
+    def test_trivial_comments_description_uses_full_text_lead(self):
+        desc = (
+            "&lt;p&gt;&lt;a href=&quot;https://news.ycombinator.com/item?id=4&quot;"
+            "&gt;Comments&lt;/a&gt;&lt;/p&gt;"
+        )
+        content = (
+            "Swap files have had the same performance characteristics as swap "
+            "partitions for more than twenty years now."
+        )
+        item = self._parse_item(desc, content)
+        self.assertNotEqual(item["preview"], "Comments")
+        self.assertNotIn("Comments", item["preview"])
+        self.assertEqual(item["preview"], content)
+        self.assertEqual(item["full_text_clean"], content)
+
+    def test_substantive_description_kept_as_preview(self):
+        desc = "Trezor is warning users about a phishing campaign targeting wallets."
+        content = "A much longer full article body that would follow the summary."
+        item = self._parse_item(desc, content)
+        self.assertEqual(item["preview"], desc)
+        self.assertEqual(item["full_text_clean"], content)
+
+
+class TestCleanerReplacement(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = TemporaryDirectory()
+        self.patch_results_dir = Path(self.temp_dir.name)
+
+        import core.storage as storage_mod
+        self.orig_results = storage_mod.RESULTS_DIR
+        self.orig_articles = storage_mod.ARTICLES_FILE
+        self.orig_dedup = storage_mod.DEDUP_FILE
+
+        storage_mod.RESULTS_DIR = self.patch_results_dir
+        storage_mod.ARTICLES_FILE = self.patch_results_dir / "scraped_articles.jsonl"
+        storage_mod.DEDUP_FILE = self.patch_results_dir / "dedup_state.json"
+
+    def tearDown(self):
+        import core.storage as storage_mod
+        storage_mod.RESULTS_DIR = self.orig_results
+        storage_mod.ARTICLES_FILE = self.orig_articles
+        storage_mod.DEDUP_FILE = self.orig_dedup
+        self.temp_dir.cleanup()
+
+    def _article(self, title, text, preview="Preview lead here."):
+        return {
+            "article_id": "clean_repl_hash",
+            "feed_name": "Test Feed",
+            "feed_url": "http://example.com/rss",
+            "category": "Tech",
+            "title": title,
+            "author": "Alice",
+            "url": "http://example.com/1",
+            "guid": "guide1",
+            "published_at_iso": "2026-09-11T10:00:00Z",
+            "scraped_at_iso": "2026-09-11T10:00:00Z",
+            "preview": preview,
+            "text_clean": text,
+            "tags": [],
+        }
+
+    def _sum_preview_problem(self):
+        junk = (
+            "Most Popular Stories REGISTER NOW Don't miss out Subscribe to our "
+            "newsletter Today's deals Sponsored content you may also like follow us "
+            + ("boilerplate padding words " * 10)
+        )
+        return junk
+
+    def test_cleaner_shorter_text_replaces_junk(self):
+        from core.storage import save_articles, load_articles
+        junk = self._sum_preview_problem()
+        save_articles([self._article("A", junk)])
+        self.assertIn("Most Popular", load_articles()[0]["text_clean"])
+
+        clean = (
+            "Hardware wallet maker Trezor is warning users about a phishing "
+            "campaign that tries to drain their devices."
+        )
+        new_count, total = save_articles([self._article("A", clean)])
+        self.assertEqual(new_count, 1)
+        loaded = load_articles()
+        self.assertEqual(len(loaded), 1)
+        self.assertNotIn("Most Popular", loaded[0]["text_clean"])
+
+    def test_short_clean_text_does_not_clobber_long_real_text(self):
+        from core.storage import save_articles, load_articles
+        real = (
+            "The full and substantive article body with many paragraphs of "
+            "genuine news reporting that goes on for quite some length. " * 3
+        )
+        save_articles([self._article("B", real)])
+        short = "Just a tiny snippet with no junk markers."
+        save_articles([self._article("B", short)])
+        loaded = load_articles()
+        self.assertEqual(len(loaded), 1)
+        self.assertEqual(loaded[0]["text_clean"], real)
+
+    def test_new_extractor_version_refreshes_existing_row(self):
+        from core.storage import save_articles, load_articles
+        seed = self._article("V", "old text without boilerplate markers but long")
+        seed["extractor_version"] = 1
+        save_articles([seed])
+        upgraded = self._article("V", "brand new compact clean text without markers")
+        upgraded["extractor_version"] = 2
+        new_count, _ = save_articles([upgraded])
+        self.assertEqual(new_count, 1)
+        loaded = load_articles()[0]
+        self.assertEqual(loaded["extractor_version"], 2)
+        self.assertEqual(loaded["text_clean"], "brand new compact clean text without markers")
+
+
 if __name__ == "__main__":
     unittest.main()

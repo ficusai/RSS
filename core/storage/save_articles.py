@@ -9,6 +9,33 @@ from .save_dedup_state import _save_dedup_state
 from .generate_article_id import generate_article_id
 
 
+def _clutter_score(text: str) -> int:
+    """Counts boilerplate markers in text; higher means more page junk."""
+    from core.boilerplate_terms import BOILERPLATE_TERMS
+    low = (text or "").lower()
+    return sum(1 for marker in BOILERPLATE_TERMS if marker in low)
+
+
+def _is_cleaner_replacement(old_art: Dict[str, Any], new_art: Dict[str, Any]) -> bool:
+    """True when the new extraction is a strict improvement over the stored one."""
+    old_text = old_art.get("text_clean") or ""
+    new_text = new_art.get("text_clean") or ""
+    old_len = len(old_text)
+    new_len = len(new_text)
+    old_ver = int(old_art.get("extractor_version") or 0)
+    new_ver = int(new_art.get("extractor_version") or 0)
+
+    if new_len > old_len:
+        return True
+    # An evolved extractor bumps the version; refresh rows it previously produced
+    # (guarding against an empty/garbage extraction clobbering real content).
+    if new_ver > old_ver and new_len >= 40:
+        return True
+    # A measurably cleaner text (fewer boilerplate markers) may replace longer
+    # junk; otherwise keep the stored article untouched.
+    return _clutter_score(new_text) < _clutter_score(old_text)
+
+
 def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
     """Appends non-duplicate articles to JSONL file and updates dedup_state.json."""
     _ensure_dir()
@@ -54,11 +81,9 @@ def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
             existing_records[art_id] = art
         elif art_id in existing_records:
             old_art = existing_records[art_id]
-            old_len = len(old_art.get("text_clean") or "")
-            new_len = len(art.get("text_clean") or "")
             missing_preview = not old_art.get("preview") and art.get("preview")
 
-            if new_len > old_len or missing_preview:
+            if _is_cleaner_replacement(old_art, art) or missing_preview:
                 existing_records[art_id] = art
                 update_map[art_id] = art
 

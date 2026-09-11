@@ -204,7 +204,7 @@ The presets test suite validates catalog completeness (≥ 400 feeds), URL dedup
 ## 🌿 Git & Release Branching
 
 * **Active Release Branch**: `RSS-0.1v-linux-native`
-* **Active Feature Branch**: `feature/feed-parsing-unicode-encoding-fixes`
+* **Active Feature Branch**: `feature/readability-extraction-quality`
 * **Remote Origin**: `https://github.com/ficusai/RSS.git`
 
 All commits within this repository maintain strict local directory boundary isolation and follow standardized release branch naming (`<PROJECT>-0.1v-linux-native`).
@@ -222,6 +222,7 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/core-storage-fetcher-modular` | Single-function modularization of storage, cleaner, XML parser, transport fetcher, and CLI orchestrator. |
 | `feature/scraping-quality-improvements` | Full-text extraction improvements: readability-based article extraction, CDATA/HTML entity parsing, and default `extract_full_text=True` for the headless CLI scraper. |
 | `feature/feed-parsing-unicode-encoding-fixes` | Fixes XML parsing that silently destroyed non-ASCII characters and adds gzip/deflate/brotli decompression so br-only feeds (TechCrunch) parse. |
+| `feature/readability-extraction-quality` | Readability-grade article extraction: block-aware paragraph joining (no broken inline lines), text-density main selection with link-density & boilerplate pruning, smart preview generation (no more "Comments" previews), and an `extractor_version`-gated storage refresh. Requires a full DB rebuild of `SCRAPED-RESULTS`. |
 
 ### Branch-Related File Changes
 
@@ -342,6 +343,18 @@ are actually created and pushed.
 | `core/fetcher/fetch_url_bytes.py` | Fixed — added gzip/deflate/brotli decompression and an honest `Accept-Encoding` header (only advertises encodings that can be decoded), fixing TechCrunch (served `Content-Encoding: br`) which previously failed with `not well-formed (invalid token): line 1, column 3`. |
 | `scripts/feed_parse_audit.py` | Added — one-time per-feed parsing audit (loop: ping real feed → run the RSS.desktop GUI app pipeline in an isolated store → compare headline/link/date/text stats and print a summary table). |
 | `tests/test_rss.py` | Modified — added regression tests: non-ASCII title/body preservation, XML-invalid control-char stripping, malformed-HTML rejection, and gzip/deflate/brotli decoding incl. a local end-to-end brotli fetch. |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
+
+#### `feature/readability-extraction-quality`
+
+| File | Change |
+| :--- | :--- |
+| `core/boilerplate_terms.py` | Added — single shared vocabulary of boilerplate/promo/UI chrome terms consumed by both the extractor (pruning) and storage (clutter-based replacement gate). |
+| `core/extractors/extract_article_text.py` | Rewritten — readability-grade extractor: block-aware inline joins (`<a>/<code>/<span>` no longer split lines), text-density main-container selection, link-density filtering that drops nav/headline-link boxes (while protecting the first heading), boilerplate/promo pruning (incl. curly-apostrophe normalization, "Continue reading", gist comment bullets, `.com` UI fragments), and event-promo copy removal. |
+| `core/fetcher/parse_item_element.py` | Modified — smart preview generation (`_is_trivial_preview`/`_make_preview`) so link-artifact descriptions like HN's "Comments" never become previews; description falls back as body text only when no full content exists; readability fallback now sends `Accept`/`Accept-Language` headers; articles record `extractor_version=2`. |
+| `core/storage/save_articles.py` | Modified — replacement gate now (a) refreshes stored rows when a newer `extractor_version` produced text ≥ 40 chars, (b) replaces longer junk when the new text is measurably cleaner via the shared boilerplate vocabulary, and (c) still keeps substantive stored articles safe from short clean snippets. |
+| `tests/test_rss.py` | Added — extractor regression tests (inline-tag joins, paragraph structure, boilerplate/by-line/gallery pruning, link-only heading boxes, curly-apostrophe promo, UI fragment tails, "Continue reading", nav intros, header/footer stripping), preview derivation tests (trivial "Comments" description falls back to full-text lead; substantive descriptions stay), and storage tests (cleaner-shorter replacement, no clobbering of long real text, `extractor_version` refresh). |
+| `SCRAPED-RESULTS/scraped_articles.jsonl` | Rebuilt — full DB rebuild from scratch using the finalized extractor: 257 articles, all `extractor_version=2`, zero "Continue reading"/"Most Popular"/"Select an option" artifacts. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
 ---
