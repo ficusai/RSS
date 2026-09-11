@@ -217,6 +217,7 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/gui-minimal-3tab` | Streamlined 3-tab GUI architecture (Articles Explorer split reader, Subscriptions Hub with collapsible presets drawer, Systemd Operations & Logs console). |
 | `feature/feed-presets-library` | Bundles the 475-feed preset catalog (including RSSHub endpoints & verified global news feeds) + dedicated GUI presets tab. |
 | `feature/stealth-browser-fetcher` | Tiered Dual-Engine stealth scraper with Playwright, CDP request replaying, Client Hints, and Cloudflare challenge fallback. |
+| `feature/tiered-cache-manager` | Tiered memory & response cache manager with lock claiming for concurrency control and thundering herd protection. |
 
 ### Branch-Related File Changes
 
@@ -245,6 +246,15 @@ touched by each branch so future branch sessions stay in sync with this README.
 | File | Change |
 | :--- | :--- |
 | `gui/window.py` | Modified — completely overhauled UI into a modern 3-tab layout: Tab 1 Articles Explorer (60/40 Master-Detail Split Reader), Tab 2 Subscriptions Hub (Grid + Collapsible Add & Presets Import Drawer), and Tab 3 Operations & System (Systemd Background Scheduler Telemetry & Dedicated Log Console). |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
+
+#### `feature/tiered-cache-manager`
+
+| File | Change |
+| :--- | :--- |
+| `core/cache.py` | Added — Tiered memory & Redis response cache manager with TTL expiration, concurrency locks, and stampede protection. |
+| `core/__init__.py` | Modified — exports `CacheManager` class at package root level. |
+| `tests/test_cache_manager.py` | Added — unit tests for cache hits/misses, TTL expiration, lock claiming/releasing, and store clearing. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
 #### `feature/feed-presets-library`

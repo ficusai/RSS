@@ -13,6 +13,7 @@ Core package for RSS Feed Scraper system.
 from .cleaner import clean_html, parse_to_iso
 from .storage import generate_article_id, is_duplicate, save_articles, get_stats
 from .fetcher import fetch_feed, fetch_all_feeds
+from .cache import CacheManager
 
 __all__ = [
     "clean_html",
@@ -23,4 +24,5 @@ __all__ = [
     "get_stats",
     "fetch_feed",
     "fetch_all_feeds",
+    "CacheManager",
 ]
