@@ -262,7 +262,13 @@ touched by each branch so future branch sessions stay in sync with this README.
 
 | File | Change |
 | :--- | :--- |
-| `core/cache.py` | Added — Tiered memory & Redis response cache manager with TTL expiration, concurrency locks, and stampede protection. |
+| `core/cache/cache_manager.py` | Added — `CacheManager` class facade for memory/Redis cache & lock management. |
+| `core/cache/cache_get.py` | Added — single-function module for cache retrieval (`cache_get`). |
+| `core/cache/cache_set.py` | Added — single-function module for cache insertion (`cache_set`). |
+| `core/cache/cache_claim_lock.py` | Added — single-function module for concurrency lock claiming (`cache_claim_lock`). |
+| `core/cache/cache_release_lock.py` | Added — single-function module for concurrency lock releasing (`cache_release_lock`). |
+| `core/cache/cache_clear.py` | Added — single-function module for clearing cache store (`cache_clear`). |
+| `core/cache/__init__.py` | Added — re-exports single-function modules and `CacheManager` facade. |
 | `core/__init__.py` | Modified — exports `CacheManager` class at package root level. |
 | `tests/test_cache_manager.py` | Added — unit tests for cache hits/misses, TTL expiration, lock claiming/releasing, and store clearing. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
