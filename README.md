@@ -210,13 +210,21 @@ All commits within this repository maintain strict local directory boundary isol
 | Branch | Purpose |
 | :--- | :--- |
 | `RSS-0.1v-linux-native` | Core release engine — lightweight RSS reader, scraper, storage, and dashboard. |
-| `feature/feed-presets-library` | Bundles the 239-feed preset catalog + dedicated GUI presets tab. |
+| `feature/gui-minimal-3tab` | Streamlined 3-tab GUI architecture (Articles Explorer split reader, Subscriptions Hub with collapsible presets drawer, Systemd Operations & Logs console). |
+| `feature/feed-presets-library` | Bundles the curated feed preset catalog + fast preset chips. |
 
 ### Branch-Related File Changes
 
 Each feature branch owns a dedicated module folder under `features/` plus any
 integration changes it introduces. The following tables record every file
 touched by each branch so future branch sessions stay in sync with this README.
+
+#### `feature/gui-minimal-3tab`
+
+| File | Change |
+| :--- | :--- |
+| `gui/window.py` | Modified — completely overhauled UI into a modern 3-tab layout: Tab 1 Articles Explorer (60/40 Master-Detail Split Reader), Tab 2 Subscriptions Hub (Grid + Collapsible Add & Presets Import Drawer), and Tab 3 Operations & System (Systemd Background Scheduler Telemetry & Dedicated Log Console). |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
 #### `feature/feed-presets-library`
 

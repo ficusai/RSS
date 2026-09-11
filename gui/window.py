@@ -1,7 +1,8 @@
 """
 PyQt6 Modern Dark Dashboard for RSS Feed Manager & Scraper.
 Features unified 16px typography, touch-friendly tactile controls, live metadata badges,
-category color coding, article reading time estimation, clipboard sharing, and diagnostics console.
+category color coding, article reading time estimation, clipboard sharing,
+collapsible feed preset drawer, and dedicated systemd operations console.
 """
 
 import copy
@@ -38,6 +39,15 @@ from PyQt6.QtWidgets import (
 
 from core.fetcher import fetch_all_feeds
 from core.storage import get_stats, load_articles, save_articles
+from features.feature_feed_presets_library.implementation.feeds_presets import get_preset_feeds
+from features.feature_gui_reader_pro.implementation.reader_pro_components import (
+    calculate_reading_time_minutes,
+    get_category_color,
+)
+from features.feature_systemd_scheduler.implementation.scheduler import (
+    get_timer_status,
+    install_systemd_timer,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "feeds.json"
@@ -103,6 +113,13 @@ QPushButton#danger {
     min-height: 44px; font-weight: 600;
 }
 QPushButton#danger:hover { background: #4e2020; color: #ff7b72; border-color: #f85149; }
+
+QPushButton#chip {
+    background: #161b22; color: #58a6ff; border: 1px solid #30363d;
+    border-radius: 18px; padding: 6px 14px; font-size: 14px; font-weight: 600;
+    min-height: 36px; min-width: 60px;
+}
+QPushButton#chip:hover { background: #1f6feb; color: #ffffff; border-color: #58a6ff; }
 
 /* Tables */
 QTableWidget {
@@ -211,6 +228,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self.load_feeds()
         self.refresh()
+        self.refresh_systemd_status()
         self._log("RSS Engine initialized and ready.")
 
     def _build_ui(self):
@@ -273,7 +291,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.tabs)
 
         # -------------------------------------------------------------
-        # Tab 1: Articles Explorer (Reader Dashboard)
+        # Tab 1: Articles Explorer (Master-Detail Split Reader)
         # -------------------------------------------------------------
         tab_art = QWidget()
         art_l = QVBoxLayout(tab_art)
@@ -359,22 +377,50 @@ class MainWindow(QMainWindow):
         splitter.addWidget(reader_box)
         splitter.setSizes([720, 480])
         art_l.addWidget(splitter, 1)
-        self.tabs.addTab(tab_art, "Articles Explorer")
+        self.tabs.addTab(tab_art, "📰 Articles Explorer")
 
         # -------------------------------------------------------------
-        # Tab 2: Feeds & Operations Hub (Reworked Minimal & Accurate)
+        # Tab 2: Subscriptions Hub (Grid + Collapsible Add/Presets Drawer)
         # -------------------------------------------------------------
         tab_feed = QWidget()
         feed_l = QVBoxLayout(tab_feed)
         feed_l.setContentsMargins(10, 10, 10, 10)
         feed_l.setSpacing(10)
 
-        # Minimal Add Feed Bar Card
-        add_box = QFrame()
-        add_box.setObjectName("card")
-        add_v = QVBoxLayout(add_box)
-        add_v.setContentsMargins(12, 12, 12, 12)
-        add_v.setSpacing(8)
+        # Subscriptions Catalog Header & Control Bar
+        catalog_header = QHBoxLayout()
+        catalog_header.setSpacing(10)
+
+        catalog_title = QLabel("📡 Subscriptions Catalog")
+        catalog_title.setStyleSheet("color: #e6edf3; font-size: 16px; font-weight: bold;")
+
+        self.in_filter = QLineEdit()
+        self.in_filter.setPlaceholderText("Filter feeds by name or URL...")
+        self.in_filter.textChanged.connect(self.refresh_table)
+
+        self.cb_cat_filter = QComboBox()
+        self.cb_cat_filter.addItem("All Categories")
+        self.cb_cat_filter.setMinimumWidth(180)
+        self.cb_cat_filter.currentIndexChanged.connect(self.refresh_table)
+
+        self.btn_toggle_drawer = QPushButton("➕ New Feed / Presets ▾")
+        self.btn_toggle_drawer.setObjectName("primary_blue")
+        self.btn_toggle_drawer.clicked.connect(self.toggle_add_drawer)
+
+        catalog_header.addWidget(catalog_title)
+        catalog_header.addStretch()
+        catalog_header.addWidget(self.in_filter, 1)
+        catalog_header.addWidget(self.cb_cat_filter)
+        catalog_header.addWidget(self.btn_toggle_drawer)
+        feed_l.addLayout(catalog_header)
+
+        # Collapsible Add & Presets Drawer Card
+        self.drawer_box = QFrame()
+        self.drawer_box.setObjectName("card")
+        self.drawer_box.setVisible(False)
+        drawer_v = QVBoxLayout(self.drawer_box)
+        drawer_v.setContentsMargins(12, 12, 12, 12)
+        drawer_v.setSpacing(10)
 
         add_top = QHBoxLayout()
         add_top.setSpacing(10)
@@ -402,38 +448,36 @@ class MainWindow(QMainWindow):
         add_top.addWidget(self.in_cat)
         add_top.addWidget(self.cb_freq)
         add_top.addWidget(self.btn_add)
-        add_v.addLayout(add_top)
+        drawer_v.addLayout(add_top)
 
-        feed_l.addWidget(add_box)
+        # Quick Import Presets Chips Row
+        presets_l = QHBoxLayout()
+        presets_l.setSpacing(8)
+        lbl_preset = QLabel("Quick Import:")
+        lbl_preset.setStyleSheet("color: #8b949e; font-size: 14px; font-weight: 600;")
+        presets_l.addWidget(lbl_preset)
 
-        # Minimal Filter Header & Table Section
-        catalog_header = QHBoxLayout()
-        catalog_header.setSpacing(10)
+        for preset in get_preset_feeds():
+            p_name = preset.get("name")
+            p_url = preset.get("url")
+            p_cat = preset.get("category", "General")
+            btn_chip = QPushButton(f"+ {p_name}")
+            btn_chip.setObjectName("chip")
+            btn_chip.setToolTip(f"Import {p_name} ({p_cat})\n{p_url}")
+            btn_chip.clicked.connect(
+                lambda _, n=p_name, u=p_url, c=p_cat: self.import_preset(n, u, c)
+            )
+            presets_l.addWidget(btn_chip)
 
-        catalog_title = QLabel("📡 Subscriptions Catalog")
-        catalog_title.setStyleSheet("color: #e6edf3; font-size: 16px; font-weight: bold;")
+        presets_l.addStretch()
+        drawer_v.addLayout(presets_l)
+        feed_l.addWidget(self.drawer_box)
 
-        self.in_filter = QLineEdit()
-        self.in_filter.setPlaceholderText("Filter feeds by name or URL...")
-        self.in_filter.textChanged.connect(self.refresh_table)
-
-        self.cb_cat_filter = QComboBox()
-        self.cb_cat_filter.addItem("All Categories")
-        self.cb_cat_filter.setMinimumWidth(180)
-        self.cb_cat_filter.currentIndexChanged.connect(self.refresh_table)
-
-        catalog_header.addWidget(catalog_title)
-        catalog_header.addStretch()
-        catalog_header.addWidget(self.in_filter, 1)
-        catalog_header.addWidget(self.cb_cat_filter)
-        feed_l.addLayout(catalog_header)
-
-        # Reworked Table with 6 Accurate Columns & Proportional Sizing
+        # Subscriptions Table
         self.table_feeds = QTableWidget()
         self.table_feeds.setColumnCount(6)
         self.table_feeds.setHorizontalHeaderLabels(["Name", "RSS Endpoint URL", "Category", "Interval", "Active", "Actions"])
-        
-        # Accurate column sizing
+
         header = self.table_feeds.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
@@ -441,24 +485,84 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        
+
         self.table_feeds.setColumnWidth(0, 190)
         self.table_feeds.verticalHeader().setVisible(False)
         self.table_feeds.verticalHeader().setDefaultSectionSize(48)
         self.table_feeds.setAlternatingRowColors(True)
         feed_l.addWidget(self.table_feeds, 1)
 
-        # Minimal Operations & Console Section
+        self.tabs.addTab(tab_feed, "📡 Subscriptions Hub")
+
+        # -------------------------------------------------------------
+        # Tab 3: Operations & System (Telemetry & Systemd Console)
+        # -------------------------------------------------------------
+        tab_ops = QWidget()
+        ops_l = QVBoxLayout(tab_ops)
+        ops_l.setContentsMargins(10, 10, 10, 10)
+        ops_l.setSpacing(12)
+
+        # Systemd Status & Control Card
+        card_systemd = QFrame()
+        card_systemd.setObjectName("card")
+        sys_v = QVBoxLayout(card_systemd)
+        sys_v.setContentsMargins(14, 12, 14, 12)
+        sys_v.setSpacing(10)
+
+        sys_header = QHBoxLayout()
+        sys_title = QLabel("⚙️ Linux Systemd Background Scheduler Daemon")
+        sys_title.setStyleSheet("color: #e6edf3; font-size: 16px; font-weight: bold;")
+        sys_header.addWidget(sys_title)
+        sys_header.addStretch()
+
+        self.btn_refresh_sys = QPushButton("🔄 Refresh Status")
+        self.btn_refresh_sys.clicked.connect(self.refresh_systemd_status)
+        sys_header.addWidget(self.btn_refresh_sys)
+
+        self.btn_install_timer = QPushButton("⚡ Install / Enable 12-Hour Systemd Timer")
+        self.btn_install_timer.setObjectName("accent")
+        self.btn_install_timer.clicked.connect(self.handle_install_systemd)
+        sys_header.addWidget(self.btn_install_timer)
+
+        sys_v.addLayout(sys_header)
+
+        status_box = QHBoxLayout()
+        status_box.setSpacing(12)
+
+        self.lbl_sys_service = QLabel("Service: Checking...")
+        self.lbl_sys_service.setStyleSheet(
+            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 14px; font-weight: 600;"
+        )
+
+        self.lbl_sys_timer = QLabel("Timer: Checking...")
+        self.lbl_sys_timer.setStyleSheet(
+            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 14px; font-weight: 600;"
+        )
+
+        self.lbl_sys_enabled = QLabel("Enabled: Checking...")
+        self.lbl_sys_enabled.setStyleSheet(
+            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 14px; font-weight: 600;"
+        )
+
+        status_box.addWidget(self.lbl_sys_service)
+        status_box.addWidget(self.lbl_sys_timer)
+        status_box.addWidget(self.lbl_sys_enabled)
+        status_box.addStretch()
+        sys_v.addLayout(status_box)
+
+        ops_l.addWidget(card_systemd)
+
+        # Dedicated Operations Log Section
         ops_box = QFrame()
         ops_box.setObjectName("card")
-        ops_l = QVBoxLayout(ops_box)
-        ops_l.setContentsMargins(12, 10, 12, 10)
-        ops_l.setSpacing(8)
+        ops_v = QVBoxLayout(ops_box)
+        ops_v.setContentsMargins(14, 12, 14, 12)
+        ops_v.setSpacing(8)
 
         sched_l = QHBoxLayout()
         sched_l.setSpacing(10)
 
-        ops_title = QLabel("⚙️ Operations Log")
+        ops_title = QLabel("📜 Live Operations Log")
         ops_title.setStyleSheet("color: #8b949e; font-size: 15px; font-weight: bold;")
 
         self.btn_clear = QPushButton("🧹 Clear Log")
@@ -467,17 +571,21 @@ class MainWindow(QMainWindow):
         sched_l.addWidget(ops_title)
         sched_l.addStretch()
         sched_l.addWidget(self.btn_clear)
-        ops_l.addLayout(sched_l)
+        ops_v.addLayout(sched_l)
 
         self.log_box = QTextEdit()
         self.log_box.setObjectName("log_console")
         self.log_box.setReadOnly(True)
-        self.log_box.setMaximumHeight(120)
-        ops_l.addWidget(self.log_box)
+        ops_v.addWidget(self.log_box, 1)
 
-        feed_l.addWidget(ops_box)
+        ops_l.addWidget(ops_box, 1)
 
-        self.tabs.addTab(tab_feed, "Feeds & Operations Hub")
+        self.tabs.addTab(tab_ops, "⚙️ Operations & System")
+
+    def toggle_add_drawer(self):
+        visible = not self.drawer_box.isVisible()
+        self.drawer_box.setVisible(visible)
+        self.btn_toggle_drawer.setText("➖ Hide Drawer" if visible else "➕ New Feed / Presets ▾")
 
     def _log(self, msg):
         ts = datetime.now().strftime("%H:%M:%S")
@@ -486,6 +594,73 @@ class MainWindow(QMainWindow):
 
     def clear_log(self):
         self.log_box.clear()
+
+    def refresh_systemd_status(self):
+        try:
+            st = get_timer_status()
+            inst = st.get("installed", False)
+            act = st.get("active", False)
+            ena = st.get("enabled", False)
+
+            if inst:
+                self.lbl_sys_service.setText("Service Unit: Installed")
+                self.lbl_sys_service.setStyleSheet(
+                    "background: #0d1117; border: 1px solid #238636; border-radius: 6px; padding: 8px 14px; color: #3fb950; font-weight: 600;"
+                )
+            else:
+                self.lbl_sys_service.setText("Service Unit: Not Installed")
+                self.lbl_sys_service.setStyleSheet(
+                    "background: #0d1117; border: 1px solid #da3633; border-radius: 6px; padding: 8px 14px; color: #f85149; font-weight: 600;"
+                )
+
+            if act:
+                self.lbl_sys_timer.setText("Timer Status: Active")
+                self.lbl_sys_timer.setStyleSheet(
+                    "background: #0d1117; border: 1px solid #238636; border-radius: 6px; padding: 8px 14px; color: #3fb950; font-weight: 600;"
+                )
+            else:
+                self.lbl_sys_timer.setText("Timer Status: Inactive")
+                self.lbl_sys_timer.setStyleSheet(
+                    "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 14px; color: #8b949e; font-weight: 600;"
+                )
+
+            if ena:
+                self.lbl_sys_enabled.setText("Systemd Auto-Start: Enabled")
+                self.lbl_sys_enabled.setStyleSheet(
+                    "background: #0d1117; border: 1px solid #238636; border-radius: 6px; padding: 8px 14px; color: #3fb950; font-weight: 600;"
+                )
+            else:
+                self.lbl_sys_enabled.setText("Systemd Auto-Start: Disabled")
+                self.lbl_sys_enabled.setStyleSheet(
+                    "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 14px; color: #8b949e; font-weight: 600;"
+                )
+        except Exception as e:
+            self._log(f"Error checking systemd status: {e}")
+
+    def handle_install_systemd(self):
+        ok = install_systemd_timer()
+        if ok:
+            self._log("Successfully installed and launched systemd user timer (rss-scraper.timer).")
+            QMessageBox.information(
+                self,
+                "Systemd Timer Installed",
+                "Systemd background timer installed and started successfully!\n"
+                "Feed scraper will execute automatically every 12 hours.",
+            )
+        else:
+            self._log("Failed to install systemd user timer.")
+            QMessageBox.critical(
+                self,
+                "Installation Failed",
+                "Unable to install systemd user units. Check system logs for details.",
+            )
+        self.refresh_systemd_status()
+
+    def import_preset(self, name: str, url: str, category: str):
+        self.in_name.setText(name)
+        self.in_url.setText(url)
+        self.in_cat.setText(category)
+        self.add_feed()
 
     def load_feeds(self):
         if not self.config_path.exists():
@@ -570,14 +745,7 @@ class MainWindow(QMainWindow):
 
             # Column 2: Category Badging
             cat_item = QTableWidgetItem(cat)
-            if "tech" in cat.lower():
-                cat_item.setForeground(QColor("#58a6ff"))
-            elif "finan" in cat.lower() or "econ" in cat.lower():
-                cat_item.setForeground(QColor("#3fb950"))
-            elif "news" in cat.lower() or "world" in cat.lower():
-                cat_item.setForeground(QColor("#d29922"))
-            else:
-                cat_item.setForeground(QColor("#a371f7"))
+            cat_item.setForeground(QColor(get_category_color(cat)))
             cat_item.setFlags(cat_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table_feeds.setItem(row, 2, cat_item)
 
@@ -654,14 +822,7 @@ class MainWindow(QMainWindow):
             cat_item = QTableWidgetItem(cat_val)
             dt_item = QTableWidgetItem(dt)
 
-            if "tech" in cat_val.lower():
-                cat_item.setForeground(QColor("#58a6ff"))
-            elif "finan" in cat_val.lower() or "econ" in cat_val.lower():
-                cat_item.setForeground(QColor("#3fb950"))
-            elif "news" in cat_val.lower() or "world" in cat_val.lower():
-                cat_item.setForeground(QColor("#d29922"))
-            else:
-                cat_item.setForeground(QColor("#a371f7"))
+            cat_item.setForeground(QColor(get_category_color(cat_val)))
 
             for col, item in enumerate([title_item, src_item, cat_item, dt_item]):
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -693,8 +854,7 @@ class MainWindow(QMainWindow):
         else:
             body = full_text
 
-        word_count = len(body.split())
-        read_time = max(1, round(word_count / 200))
+        read_time = calculate_reading_time_minutes(body)
         meta.append(f"⏱️ ~{read_time} min read")
 
         self.lbl_reader_meta.setText("   •   ".join(meta))
@@ -754,6 +914,14 @@ class MainWindow(QMainWindow):
             return
         if not url.startswith("http"):
             url = "https://" + url
+
+        # Avoid duplicates by URL or Name
+        for existing in self.feeds:
+            if existing.get("url", "").rstrip("/") == url.rstrip("/"):
+                self._log(f"Feed already subscribed: {name}")
+                self.in_name.clear()
+                self.in_url.clear()
+                return
 
         fid = re.sub(r"[^a-zA-Z0-9_]+", "_", name.lower()).strip("_") or f"f{len(self.feeds)}"
         self.feeds.append({"id": fid, "name": name, "url": url, "category": cat, "fetch_interval_hours": h, "enabled": True})
