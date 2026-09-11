@@ -1,10 +1,9 @@
 """
-Unit tests for Cookie Manager and Multi-Proxy Pool Manager modules.
+Unit tests for Cookie Manager module.
 """
 
 import pytest
 from core.cookie_manager import parse_cookie_header, format_cookie_header
-from core.proxy_manager import ProxyManager, ProxyState
 
 
 def test_parse_cookie_header():
@@ -29,23 +28,3 @@ def test_format_cookie_header():
     assert "sessionid=xyz123" in header_str
     assert "user_token=abc456" in header_str
     assert "other=123" not in header_str
-
-
-def test_proxy_manager_rotation_and_failover():
-    """Verify round-robin rotation and automatic deactivation upon failures."""
-    manager = ProxyManager(["http://proxy1:8080", "http://proxy2:8080"], health_check_interval=1.0)
-    
-    # Round-robin selection
-    p1 = manager.get_next_proxy()
-    p2 = manager.get_next_proxy()
-    assert p1.uri == "http://proxy1:8080"
-    assert p2.uri == "http://proxy2:8080"
-
-    # Mark proxy1 as failed 3 times
-    manager.mark_proxy_failed("http://proxy1:8080")
-    manager.mark_proxy_failed("http://proxy1:8080")
-    manager.mark_proxy_failed("http://proxy1:8080")
-
-    # Only proxy2 should remain active
-    next_p = manager.get_next_proxy()
-    assert next_p.uri == "http://proxy2:8080"

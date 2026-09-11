@@ -1,9 +1,9 @@
 """
 Feed fetcher engine supporting RSS 2.0 and Atom feeds.
 Features a Tiered Dual-Engine Fetcher:
-  Tier 1: Fast urllib.request with dynamic Chrome Client Hints (Sec-Ch-Ua) and Proxy Manager.
+  Tier 1: Fast urllib.request with dynamic Chrome Client Hints (Sec-Ch-Ua).
   Tier 2: Evasion-hardened Playwright stealth browser with CDP request replaying,
-          cookie synchronization, proxy failover, and interactive headless=False fallback.
+          cookie synchronization, and interactive headless=False fallback.
 """
 
 import urllib.request
@@ -21,8 +21,6 @@ from .cleaner import clean_html, parse_to_iso
 from .storage import generate_article_id
 from .header_generator import get_client_hints_headers, USER_AGENTS
 from .stealth_fetcher import fetch_with_stealth_browser, is_stealth_available
-from .proxy_manager import global_proxy_manager
-from .cookie_manager import parse_cookie_header
 
 DEFAULT_USER_AGENT = USER_AGENTS[0]
 
@@ -131,16 +129,12 @@ def _fetch_url_bytes(
     url: str,
     timeout: int = 10,
     headers: Optional[Dict[str, str]] = None,
-    proxy_uri: Optional[str] = None,
 ) -> bytes:
-    """Helper that executes HTTP GET request with de-compression & proxy support."""
+    """Helper that executes HTTP GET request with de-compression support."""
     req_headers = headers or get_browser_headers()
     req = urllib.request.Request(url, headers=req_headers)
 
-    proxy_handler = global_proxy_manager.get_urllib_handler(proxy_uri)
-    opener = urllib.request.build_opener(proxy_handler)
-
-    with opener.open(req, timeout=timeout) as response:
+    with urllib.request.urlopen(req, timeout=timeout) as response:
         content_encoding = response.info().get("Content-Encoding", "").lower()
         raw_bytes = response.read()
         if content_encoding == "gzip" or raw_bytes[:2] == b"\x1f\x8b":
@@ -179,9 +173,9 @@ def _parse_xml_bytes(raw_data: bytes, feed_config: Dict[str, Any], extract_full_
 def fetch_feed(feed_config: Dict[str, Any], extract_full_text: bool = False, timeout: int = 10) -> List[Dict[str, Any]]:
     """
     Fetches RSS/Atom XML from feed_config['url'] using a Tiered Dual-Engine approach:
-      Tier 1: Fast urllib.request with Client Hints headers and proxy support.
+      Tier 1: Fast urllib.request with Client Hints headers.
       Tier 2: Evasion-hardened Playwright stealth browser with CDP response interception,
-              cookie synchronization, proxy failover, and interactive headless=False fallback.
+              cookie synchronization, and interactive headless=False fallback for Cloudflare challenges.
     """
     url = feed_config.get("url")
     if not url:
@@ -190,7 +184,6 @@ def fetch_feed(feed_config: Dict[str, Any], extract_full_text: bool = False, tim
     raw_data = None
     last_err = None
     cookie_str = feed_config.get("cookie")
-    proxy_uri = feed_config.get("proxy")
 
     # Tier 1: urllib.request with Client Hints header rotation
     for attempt in range(2):
@@ -199,13 +192,11 @@ def fetch_feed(feed_config: Dict[str, Any], extract_full_text: bool = False, tim
             headers = get_client_hints_headers(ua)
             if cookie_str:
                 headers["Cookie"] = cookie_str
-            raw_data = _fetch_url_bytes(url, timeout=timeout, headers=headers, proxy_uri=proxy_uri)
+            raw_data = _fetch_url_bytes(url, timeout=timeout, headers=headers)
             break
         except Exception as e:
             last_err = e
             err_msg = str(e).lower()
-            if proxy_uri:
-                global_proxy_manager.mark_proxy_failed(proxy_uri)
             if any(code in err_msg for code in ["403", "412", "503", "500", "502", "504", "timed out"]):
                 break
 
@@ -225,7 +216,6 @@ def fetch_feed(feed_config: Dict[str, Any], extract_full_text: bool = False, tim
                 timeout=30,
                 allow_interactive_fallback=True,
                 cookie_str=cookie_str,
-                proxy_uri=proxy_uri,
             )
             last_err = None
         except Exception as stealth_err:
