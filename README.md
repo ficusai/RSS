@@ -256,10 +256,13 @@ touched by each branch so future branch sessions stay in sync with this README.
 | :--- | :--- |
 | `features/feature_systemd_scheduler/implementation/install_systemd_timer.py` | Added — single-function module installing systemd timer and service units (`install_systemd_timer`). |
 | `features/feature_systemd_scheduler/implementation/get_timer_status.py` | Added — single-function module querying systemd timer status (`get_timer_status`). |
+| `features/feature_systemd_scheduler/tests/test_systemd_scheduler.py` | Added — unit test suite with systemd timer status check and mocked unit installation verification. |
 | `features/feature_gui_reader_pro/implementation/get_category_color.py` | Added — single-function module computing category badge color (`get_category_color`). |
 | `features/feature_gui_reader_pro/implementation/calculate_reading_time_minutes.py` | Added — single-function module estimating reading time (`calculate_reading_time_minutes`). |
+| `features/feature_gui_reader_pro/tests/test_gui_reader_pro.py` | Added — unit test suite for category badge hex colors and reading time estimation. |
 | `features/feature_web_scraper_fallback/implementation/clean_html_simple.py` | Added — single-function module stripping HTML tags (`clean_html_simple`). |
 | `features/feature_web_scraper_fallback/implementation/fetch_full_page_text.py` | Added — single-function module crawling full web page text (`fetch_full_page_text`). |
+| `features/feature_web_scraper_fallback/tests/test_web_scraper_fallback.py` | Added — unit test suite for HTML cleaning and mocked webpage text fallback scraping. |
 | `gui/window.py` | Modified — completely overhauled UI into a modern 3-tab layout: Tab 1 Articles Explorer (60/40 Master-Detail Split Reader), Tab 2 Subscriptions Hub (Grid + Collapsible Add & Presets Import Drawer), and Tab 3 Operations & System (Systemd Background Scheduler Telemetry & Dedicated Log Console). |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
