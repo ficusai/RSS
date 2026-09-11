@@ -2,6 +2,16 @@
 
 A high-performance RSS/Atom feed scraping, full-text extraction, deduplication, and analytics management system equipped with a modern PyQt6 Graphical User Interface (GUI), CLI modes, and an automated systemd background scheduler.
 
+## Supported Operating Systems
+
+| Operating System | Supported |
+| :--- | :---: |
+| LINUX | ✅ |
+| WINDOWS | ✅ |
+| MACOS | ✅ |
+| ANDROID | ❌ |
+| IOS | ❌ |
+
 ## Key Features
 
 - **Dual-Format Ingestion**: Full support for both RSS 2.0 (`<item>`) and Atom 1.0 (`<entry>`) feeds.
