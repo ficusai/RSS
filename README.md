@@ -219,6 +219,7 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/stealth-browser-fetcher` | Tiered Dual-Engine stealth scraper with Playwright, CDP request replaying, Client Hints, and Cloudflare challenge fallback. |
 | `feature/readability-extractor` | DOM-based readability & full-text article body extractor stripping layout clutter, popups, and ads. |
 | `feature/tiered-cache-manager` | Tiered memory & response cache manager with lock claiming for concurrency control and thundering herd protection. |
+| `feature/core-storage-fetcher-modular` | Single-function modularization of storage, cleaner, XML parser, transport fetcher, and CLI orchestrator. |
 
 ### Branch-Related File Changes
 
@@ -288,21 +289,31 @@ touched by each branch so future branch sessions stay in sync with this README.
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
-#### `feature/feed-presets-library`
+#### `feature/core-storage-fetcher-modular`
 
 | File | Change |
 | :--- | :--- |
-| `features/feature_feed_presets_library/implementation/preset_data.py` | Added — static catalog definitions for 475 curated feeds & 22 categories (`PRESET_CATEGORIES`, `PRESET_FEEDS`). |
-| `features/feature_feed_presets_library/implementation/get_preset_feeds.py` | Added — single-function module returning copy of preset feed catalog (`get_preset_feeds`). |
-| `features/feature_feed_presets_library/implementation/get_preset_categories.py` | Added — single-function module returning ordered preset categories (`get_preset_categories`). |
-| `features/feature_feed_presets_library/implementation/get_presets_by_category.py` | Added — single-function module for filtering preset feeds by category (`get_presets_by_category`). |
-| `features/feature_feed_presets_library/implementation/search_presets.py` | Added — single-function module for text search across presets (`search_presets`). |
-| `features/feature_feed_presets_library/implementation/feed_already_present.py` | Added — single-function module checking duplicate feed existence (`feed_already_present`). |
-| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Modified — re-exports single-function preset modules and static data. |
-| `config/feeds.json` | Modified — includes active default subscriptions for RSSHub endpoints (36Kr Newsflashes, Zhihu Daily). |
-| `features/feature_feed_presets_library/tests/test_feed_presets.py` | Added — validates catalog size, category cleanliness, URL dedup, filtering, search, and duplicate detection. |
-| `gui/window.py` | Modified — adds the **Feed Presets Library** tab (category combo, search box, presets table, per-feed Add, Add All Presets) and shared `get_category_color` helper. |
-| `README.md` | Modified — documents the presets module, GUI usage, tests, and this branching map. |
+| `core/cleaner/clean_html.py` | Added — single-function module for HTML tag stripping (`clean_html`). |
+| `core/cleaner/parse_to_iso.py` | Added — single-function module for RFC-822/ISO-8601 date parsing (`parse_to_iso`). |
+| `core/storage/paths.py` | Added — path definitions and dynamic getters for storage directory and files. |
+| `core/storage/ensure_dir.py` | Added — single-function module for storage directory validation (`_ensure_dir`). |
+| `core/storage/generate_article_id.py` | Added — single-function module for SHA-256 article ID generation (`generate_article_id`). |
+| `core/storage/load_dedup_state.py` | Added — single-function module for loading deduplication index (`_load_dedup_state`). |
+| `core/storage/save_dedup_state.py` | Added — single-function module for atomic deduplication persistence (`_save_dedup_state`). |
+| `core/storage/is_duplicate.py` | Added — single-function module for duplicate check lookup (`is_duplicate`). |
+| `core/storage/save_articles.py` | Added — single-function module for JSONL article persistence (`save_articles`). |
+| `core/storage/get_stats.py` | Added — single-function module for storage dashboard metrics (`get_stats`). |
+| `core/storage/load_articles.py` | Added — single-function module for article query loading and filtering (`load_articles`). |
+| `core/fetcher/get_browser_headers.py` | Added — single-function module for generating HTTP Client Hints headers (`get_browser_headers`). |
+| `core/fetcher/parse_local_tag.py` | Added — single-function module for XML namespace tag stripping (`parse_local_tag`). |
+| `core/fetcher/parse_item_element.py` | Added — single-function module for XML item/entry element parsing (`parse_item_element`). |
+| `core/fetcher/fetch_url_bytes.py` | Added — single-function module for HTTP GET transport & GZIP decompression (`fetch_url_bytes`). |
+| `core/fetcher/parse_xml_bytes.py` | Added — single-function module for XML document parsing (`parse_xml_bytes`). |
+| `core/fetcher/fetch_feed.py` | Added — single-function module for dual-tier single feed ingestion (`fetch_feed`). |
+| `core/fetcher/fetch_all_feeds.py` | Added — single-function module for multithreaded parallel feed scraping (`fetch_all_feeds`). |
+| `core/run_headless_scrape.py` | Added — single-function module for headless CLI scraper execution (`run_headless_scrape`). |
+| `main.py` | Modified — delegates CLI headless scrape execution to `core/run_headless_scrape.py`. |
+| `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
 
 Note: older draft modules under `features/` that are **not** implemented as Git
 branches (e.g. `web_scraper_fallback`, `systemd_scheduler`, `gui_reader_pro`)
