@@ -279,7 +279,13 @@ touched by each branch so future branch sessions stay in sync with this README.
 
 | File | Change |
 | :--- | :--- |
-| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Added — 475 curated RSS/Atom feeds across 22 categories (including RSSHub endpoints & verified global news feeds) + lookup/duplicate-check API (`get_preset_feeds`, `get_preset_categories`, `get_presets_by_category`, `search_presets`, `feed_already_present`). |
+| `features/feature_feed_presets_library/implementation/preset_data.py` | Added — static catalog definitions for 475 curated feeds & 22 categories (`PRESET_CATEGORIES`, `PRESET_FEEDS`). |
+| `features/feature_feed_presets_library/implementation/get_preset_feeds.py` | Added — single-function module returning copy of preset feed catalog (`get_preset_feeds`). |
+| `features/feature_feed_presets_library/implementation/get_preset_categories.py` | Added — single-function module returning ordered preset categories (`get_preset_categories`). |
+| `features/feature_feed_presets_library/implementation/get_presets_by_category.py` | Added — single-function module for filtering preset feeds by category (`get_presets_by_category`). |
+| `features/feature_feed_presets_library/implementation/search_presets.py` | Added — single-function module for text search across presets (`search_presets`). |
+| `features/feature_feed_presets_library/implementation/feed_already_present.py` | Added — single-function module checking duplicate feed existence (`feed_already_present`). |
+| `features/feature_feed_presets_library/implementation/feeds_presets.py` | Modified — re-exports single-function preset modules and static data. |
 | `config/feeds.json` | Modified — includes active default subscriptions for RSSHub endpoints (36Kr Newsflashes, Zhihu Daily). |
 | `features/feature_feed_presets_library/tests/test_feed_presets.py` | Added — validates catalog size, category cleanliness, URL dedup, filtering, search, and duplicate detection. |
 | `gui/window.py` | Modified — adds the **Feed Presets Library** tab (category combo, search box, presets table, per-feed Add, Add All Presets) and shared `get_category_color` helper. |
