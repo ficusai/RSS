@@ -13,7 +13,11 @@ class TestGuiReaderPro(unittest.TestCase):
     def test_get_category_color(self):
         self.assertEqual(get_category_color("Technology"), "#58a6ff")
         self.assertEqual(get_category_color("Finance"), "#3fb950")
+        self.assertEqual(get_category_color("Economics"), "#3fb950")
+        self.assertEqual(get_category_color("Banking"), "#3fb950")
         self.assertEqual(get_category_color("World News"), "#d29922")
+        self.assertEqual(get_category_color("General"), "#a371f7")
+        self.assertEqual(get_category_color(""), "#a371f7")
 
     def test_calculate_reading_time(self):
         short_text = "Word " * 100
@@ -21,6 +25,9 @@ class TestGuiReaderPro(unittest.TestCase):
 
         long_text = "Word " * 600
         self.assertEqual(calculate_reading_time_minutes(long_text), 3)
+
+        self.assertEqual(calculate_reading_time_minutes(""), 1)
+        self.assertEqual(calculate_reading_time_minutes("Some text", wpm=0), 1)
 
 
 if __name__ == "__main__":
