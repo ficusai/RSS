@@ -43,19 +43,19 @@ from core.storage import get_stats, load_articles, save_articles
 CONFIG_PATH = Path("/home/ficus-pro/Documents/RSS/config/feeds.json")
 ASSETS_DIR = Path("/home/ficus-pro/Documents/RSS/assets")
 
-# Modern high-contrast dark theme with consistent 16px visual hierarchy
+# Modern minimal high-contrast dark theme with consistent 16px visual hierarchy
 STYLESHEET = """
 QMainWindow { background-color: #090d16; color: #e6edf3; }
 QWidget { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 16px; color: #e6edf3; }
 
 /* Tabs */
-QTabWidget::pane { border: 1px solid #21262d; border-radius: 10px; background: #0d1117; top: 0; }
+QTabWidget::pane { border: 1px solid #21262d; border-radius: 8px; background: #0d1117; top: 0; }
 QTabBar::tab {
     background: #161b22; color: #8b949e;
     border: 1px solid #21262d; border-bottom: none;
-    border-top-left-radius: 10px; border-top-right-radius: 10px;
-    padding: 16px 32px; font-size: 16px; font-weight: 700;
-    min-height: 52px; margin-right: 4px;
+    border-top-left-radius: 8px; border-top-right-radius: 8px;
+    padding: 12px 24px; font-size: 16px; font-weight: 600;
+    min-height: 44px; margin-right: 4px;
 }
 QTabBar::tab:selected { background: #0d1117; color: #58a6ff; border-top: 3px solid #58a6ff; }
 QTabBar::tab:hover { background: #1c2128; color: #c9d1d9; }
@@ -64,19 +64,14 @@ QTabBar::tab:hover { background: #1c2128; color: #c9d1d9; }
 QFrame#card {
     background-color: #161b22;
     border: 1px solid #21262d;
-    border-radius: 10px;
-}
-QFrame#hero_card {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #161b22, stop:1 #1c2128);
-    border: 1px solid #30363d;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 /* Input Controls */
 QLineEdit {
-    background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
-    padding: 14px 18px; color: #e6edf3; font-size: 16px;
-    min-height: 52px;
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    padding: 10px 14px; color: #e6edf3; font-size: 16px;
+    min-height: 44px;
 }
 QLineEdit:focus { border-color: #58a6ff; background: #11161d; }
 QLineEdit::placeholder { color: #6e7681; }
@@ -84,8 +79,8 @@ QLineEdit::placeholder { color: #6e7681; }
 /* Buttons */
 QPushButton {
     background: #21262d; color: #e6edf3; border: 1px solid #363b42;
-    border-radius: 8px; padding: 14px 24px; font-size: 16px; font-weight: 600;
-    min-height: 52px; min-width: 110px;
+    border-radius: 6px; padding: 10px 20px; font-size: 16px; font-weight: 600;
+    min-height: 44px; min-width: 90px;
 }
 QPushButton:hover { background: #30363d; border-color: #58a6ff; color: #ffffff; }
 QPushButton:pressed { background: #1f6feb; color: #ffffff; }
@@ -93,71 +88,71 @@ QPushButton:disabled { background: #161b22; color: #484f58; border-color: #21262
 
 QPushButton#accent {
     background: #1a5a2e; color: #3fb950; border: 1px solid #238636;
-    min-height: 52px; font-weight: 700;
+    min-height: 44px; font-weight: 600;
 }
 QPushButton#accent:hover { background: #216e39; color: #56d364; border-color: #3fb950; }
 
 QPushButton#primary_blue {
     background: #1f6feb; color: #ffffff; border: 1px solid #388bfd;
-    min-height: 52px; font-weight: 700;
+    min-height: 44px; font-weight: 600;
 }
 QPushButton#primary_blue:hover { background: #388bfd; border-color: #58a6ff; }
 
 QPushButton#danger {
     background: #3d1818; color: #f85149; border: 1px solid #da3633;
-    min-height: 52px; font-weight: 600;
+    min-height: 44px; font-weight: 600;
 }
 QPushButton#danger:hover { background: #4e2020; color: #ff7b72; border-color: #f85149; }
 
 /* Tables */
 QTableWidget {
     background: #0d1117; alternate-background-color: #121720;
-    border: 1px solid #21262d; border-radius: 10px;
+    border: 1px solid #21262d; border-radius: 8px;
     color: #e6edf3; gridline-color: #21262d; font-size: 16px;
     selection-background-color: #1f6feb44; selection-color: #ffffff;
 }
 QHeaderView::section {
     background: #161b22; color: #8b949e; border: none;
-    border-bottom: 2px solid #21262d; padding: 14px 16px;
-    font-weight: 700; font-size: 16px; min-height: 52px;
+    border-bottom: 2px solid #21262d; padding: 10px 14px;
+    font-weight: 700; font-size: 16px; min-height: 46px;
 }
-QTableWidget::item { padding: 14px 16px; min-height: 54px; }
+QTableWidget::item { padding: 10px 14px; min-height: 46px; }
 
 /* Text Editors */
 QTextEdit {
     background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
     color: #e6edf3; font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    font-size: 16px; padding: 18px; line-height: 1.6;
-    min-height: 140px;
+    font-size: 16px; padding: 14px; line-height: 1.6;
+    min-height: 120px;
 }
 
 QTextEdit#log_console {
-    background: #010409; border: 1px solid #21262d; border-radius: 8px;
+    background: #010409; border: 1px solid #21262d; border-radius: 6px;
     color: #7ee787; font-family: "Cascadia Code", "Fira Code", monospace;
-    font-size: 15px; padding: 14px; line-height: 1.4;
+    font-size: 15px; padding: 12px; line-height: 1.4;
 }
 
 /* Progress Bar */
 QProgressBar {
     border: 1px solid #21262d; border-radius: 6px; text-align: center;
-    background: #161b22; height: 10px;
+    background: #161b22; height: 8px;
 }
-QProgressBar::chunk { background: #1f6feb; border-radius: 5px; }
+QProgressBar::chunk { background: #1f6feb; border-radius: 4px; }
 
 /* Dropdowns */
 QComboBox {
-    background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
-    padding: 14px 18px; color: #e6edf3; font-size: 16px;
-    min-height: 52px; max-height: 56px;
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    padding: 10px 14px; color: #e6edf3; font-size: 16px;
+    min-height: 44px; max-height: 48px;
 }
-QComboBox::drop-down { border: none; width: 36px; }
+QComboBox::drop-down { border: none; width: 32px; }
 QComboBox QAbstractItemView {
     background: #161b22; color: #e6edf3; border: 1px solid #30363d;
     selection-background-color: #1f6feb44; font-size: 16px;
-    min-height: 50px; padding: 8px;
+    min-height: 44px; padding: 6px;
 }
 QComboBox QAbstractItemView::item {
-    min-height: 50px; padding: 14px;
+    min-height: 44px; padding: 10px;
 }
 
 /* Scrollbars */
@@ -171,8 +166,8 @@ QScrollBar::handle:horizontal { background: #30363d; border-radius: 5px; min-wid
 QScrollBar::handle:horizontal:hover { background: #484f58; }
 
 /* Checkboxes */
-QCheckBox { spacing: 12px; color: #e6edf3; font-size: 16px; min-height: 52px; padding: 8px; }
-QCheckBox::indicator { width: 24px; height: 24px; border: 2px solid #30363d; border-radius: 6px; background: #0d1117; }
+QCheckBox { spacing: 10px; color: #e6edf3; font-size: 16px; min-height: 44px; padding: 4px; }
+QCheckBox::indicator { width: 22px; height: 22px; border: 2px solid #30363d; border-radius: 5px; background: #0d1117; }
 QCheckBox::indicator:checked { background: #1f6feb; border-color: #1f6feb; }
 """
 
@@ -231,21 +226,20 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
         layout.setSpacing(12)
-        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setContentsMargins(16, 16, 16, 16)
 
-        # Header Hero Card
+        # Minimal Top Header Bar
         hdr = QFrame()
-        hdr.setObjectName("hero_card")
+        hdr.setObjectName("card")
         hdr_layout = QHBoxLayout(hdr)
-        hdr_layout.setContentsMargins(20, 14, 20, 14)
+        hdr_layout.setContentsMargins(16, 10, 16, 10)
 
-        # Logo & App Title
         brand_box = QHBoxLayout()
-        brand_box.setSpacing(12)
+        brand_box.setSpacing(10)
         title_badge = QLabel("⚡ RSS ENGINE")
         title_badge.setFont(QFont("", 16, QFont.Weight.Bold))
         title_badge.setStyleSheet(
-            "color: #ffffff; background: #1f6feb; padding: 6px 14px; border-radius: 6px; font-weight: bold;"
+            "color: #ffffff; background: #1f6feb; padding: 4px 12px; border-radius: 6px; font-weight: bold;"
         )
         subtitle_lbl = QLabel("Feed Tracker & Scraper Pro")
         subtitle_lbl.setFont(QFont("", 16, QFont.Weight.Bold))
@@ -259,21 +253,21 @@ class MainWindow(QMainWindow):
         # Stats Badges
         self.lbl_articles_stat = QLabel("0 Articles")
         self.lbl_articles_stat.setStyleSheet(
-            "background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 6px 16px; color: #58a6ff; font-weight: 600;"
+            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #58a6ff; font-weight: 600;"
         )
         self.lbl_feeds_stat = QLabel("0 Feeds")
         self.lbl_feeds_stat.setStyleSheet(
-            "background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 6px 16px; color: #a371f7; font-weight: 600;"
+            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #a371f7; font-weight: 600;"
         )
         self.lbl_timer_stat = QLabel("Timer: --")
         self.lbl_timer_stat.setStyleSheet(
-            "background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 6px 16px; color: #3fb950; font-weight: 600;"
+            "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #3fb950; font-weight: 600;"
         )
 
         hdr_layout.addWidget(self.lbl_articles_stat)
         hdr_layout.addWidget(self.lbl_feeds_stat)
         hdr_layout.addWidget(self.lbl_timer_stat)
-        hdr_layout.addSpacing(12)
+        hdr_layout.addSpacing(10)
 
         self.btn_sync = QPushButton("🔄 Sync All Feeds")
         self.btn_sync.setObjectName("accent")
@@ -296,12 +290,12 @@ class MainWindow(QMainWindow):
         # -------------------------------------------------------------
         tab_art = QWidget()
         art_l = QVBoxLayout(tab_art)
-        art_l.setContentsMargins(10, 12, 10, 10)
-        art_l.setSpacing(12)
+        art_l.setContentsMargins(10, 10, 10, 10)
+        art_l.setSpacing(10)
 
         # Filter & Search Action Bar
         art_filter = QHBoxLayout()
-        art_filter.setSpacing(12)
+        art_filter.setSpacing(10)
 
         self.input_search = QLineEdit()
         self.input_search.setPlaceholderText("🔍 Search by title, text body, author, or feed name...")
@@ -331,7 +325,7 @@ class MainWindow(QMainWindow):
         self.table_articles.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.table_articles.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         self.table_articles.verticalHeader().setVisible(False)
-        self.table_articles.verticalHeader().setDefaultSectionSize(56)
+        self.table_articles.verticalHeader().setDefaultSectionSize(50)
         self.table_articles.setAlternatingRowColors(True)
         self.table_articles.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table_articles.itemSelectionChanged.connect(self.on_article_sel)
@@ -340,8 +334,8 @@ class MainWindow(QMainWindow):
         reader_box = QFrame()
         reader_box.setObjectName("card")
         reader_l = QVBoxLayout(reader_box)
-        reader_l.setContentsMargins(16, 16, 16, 16)
-        reader_l.setSpacing(12)
+        reader_l.setContentsMargins(14, 14, 14, 14)
+        reader_l.setSpacing(10)
 
         self.lbl_reader_title = QLabel("Select an article to view details")
         self.lbl_reader_title.setWordWrap(True)
@@ -381,115 +375,118 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(tab_art, "Articles Explorer")
 
         # -------------------------------------------------------------
-        # Tab 2: Feeds & Operations Hub
+        # Tab 2: Feeds & Operations Hub (Reworked Minimal & Accurate)
         # -------------------------------------------------------------
         tab_feed = QWidget()
         feed_l = QVBoxLayout(tab_feed)
-        feed_l.setContentsMargins(10, 12, 10, 10)
-        feed_l.setSpacing(12)
+        feed_l.setContentsMargins(10, 10, 10, 10)
+        feed_l.setSpacing(10)
 
-        # Hero Card: Add Feed Form
+        # Minimal Add Feed Bar Card
         add_box = QFrame()
-        add_box.setObjectName("hero_card")
+        add_box.setObjectName("card")
         add_v = QVBoxLayout(add_box)
-        add_v.setContentsMargins(16, 16, 16, 16)
-        add_v.setSpacing(12)
+        add_v.setContentsMargins(12, 12, 12, 12)
+        add_v.setSpacing(8)
 
-        add_header = QLabel("➕ Subscribe to New RSS Feed")
-        add_header.setStyleSheet("color: #58a6ff; font-size: 17px; font-weight: bold;")
-        add_v.addWidget(add_header)
+        add_top = QHBoxLayout()
+        add_top.setSpacing(10)
 
-        row1 = QHBoxLayout()
-        row1.setSpacing(10)
         self.in_name = QLineEdit()
         self.in_name.setPlaceholderText("Feed Name (e.g. TechCrunch)")
         self.in_url = QLineEdit()
-        self.in_url.setPlaceholderText("Feed RSS URL (e.g. https://techcrunch.com/feed/)")
+        self.in_url.setPlaceholderText("RSS URL (e.g. https://techcrunch.com/feed/)")
         self.in_cat = QLineEdit()
         self.in_cat.setText("General")
-        self.in_cat.setPlaceholderText("Category Tag")
-        self.in_cat.setMaximumWidth(220)
-        row1.addWidget(self.in_name, 1)
-        row1.addWidget(self.in_url, 2)
-        row1.addWidget(self.in_cat)
-        add_v.addLayout(row1)
+        self.in_cat.setPlaceholderText("Category")
+        self.in_cat.setMaximumWidth(180)
 
-        row2 = QHBoxLayout()
-        row2.setSpacing(10)
         self.cb_freq = QComboBox()
-        self.cb_freq.addItems(["Interval: 1h", "Interval: 3h", "Interval: 6h", "Interval: 12h", "Interval: 24h"])
+        self.cb_freq.addItems(["1h", "3h", "6h", "12h", "24h"])
         self.cb_freq.setCurrentIndex(3)
+        self.cb_freq.setMaximumWidth(110)
 
         self.cb_preset = QComboBox()
-        self.cb_preset.addItem("⚡ Add Preset Feed...")
+        self.cb_preset.addItem("Presets...")
         for p in PRESET_FEEDS:
             self.cb_preset.addItem(f"{p['name']} ({p['category']})")
         self.cb_preset.currentIndexChanged.connect(self.on_preset)
+        self.cb_preset.setMaximumWidth(180)
 
-        self.btn_add = QPushButton("➕ Add Feed Subscription")
+        self.btn_add = QPushButton("➕ Add Feed")
         self.btn_add.setObjectName("accent")
         self.btn_add.clicked.connect(self.add_feed)
 
-        row2.addWidget(self.cb_freq)
-        row2.addWidget(self.cb_preset, 1)
-        row2.addStretch()
-        row2.addWidget(self.btn_add)
-        add_v.addLayout(row2)
+        add_top.addWidget(self.in_name, 1)
+        add_top.addWidget(self.in_url, 2)
+        add_top.addWidget(self.in_cat)
+        add_top.addWidget(self.cb_freq)
+        add_top.addWidget(self.cb_preset)
+        add_top.addWidget(self.btn_add)
+        add_v.addLayout(add_top)
 
         feed_l.addWidget(add_box)
 
-        # Feed Catalog Filter & Table Section
+        # Minimal Filter Header & Table Section
         catalog_header = QHBoxLayout()
-        catalog_title = QLabel("📡 Active Subscriptions Catalog")
-        catalog_title.setStyleSheet("color: #e6edf3; font-size: 17px; font-weight: bold;")
-        catalog_header.addWidget(catalog_title)
-        catalog_header.addStretch()
+        catalog_header.setSpacing(10)
+
+        catalog_title = QLabel("📡 Subscriptions Catalog")
+        catalog_title.setStyleSheet("color: #e6edf3; font-size: 16px; font-weight: bold;")
 
         self.in_filter = QLineEdit()
-        self.in_filter.setPlaceholderText("Filter subscriptions...")
-        self.in_filter.setMinimumWidth(240)
+        self.in_filter.setPlaceholderText("Filter feeds by name or URL...")
         self.in_filter.textChanged.connect(self.refresh_table)
 
         self.cb_cat_filter = QComboBox()
         self.cb_cat_filter.addItem("All Categories")
-        self.cb_cat_filter.setMinimumWidth(200)
+        self.cb_cat_filter.setMinimumWidth(180)
         self.cb_cat_filter.currentIndexChanged.connect(self.refresh_table)
 
-        catalog_header.addWidget(self.in_filter)
+        catalog_header.addWidget(catalog_title)
+        catalog_header.addStretch()
+        catalog_header.addWidget(self.in_filter, 1)
         catalog_header.addWidget(self.cb_cat_filter)
         feed_l.addLayout(catalog_header)
 
+        # Reworked Table with 6 Accurate Columns & Proportional Sizing
         self.table_feeds = QTableWidget()
-        self.table_feeds.setColumnCount(5)
-        self.table_feeds.setHorizontalHeaderLabels(["Feed Name", "Category", "Fetch Schedule", "Status", "Actions"])
-        self.table_feeds.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.table_feeds.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_feeds.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_feeds.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.table_feeds.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_feeds.setColumnCount(6)
+        self.table_feeds.setHorizontalHeaderLabels(["Name", "RSS Endpoint URL", "Category", "Interval", "Active", "Actions"])
+        
+        # Accurate column sizing
+        header = self.table_feeds.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        
+        self.table_feeds.setColumnWidth(0, 190)
         self.table_feeds.verticalHeader().setVisible(False)
-        self.table_feeds.verticalHeader().setDefaultSectionSize(58)
+        self.table_feeds.verticalHeader().setDefaultSectionSize(48)
         self.table_feeds.setAlternatingRowColors(True)
         feed_l.addWidget(self.table_feeds, 1)
 
-        # Operations & Console Section
+        # Minimal Operations & Console Section
         ops_box = QFrame()
         ops_box.setObjectName("card")
         ops_l = QVBoxLayout(ops_box)
-        ops_l.setContentsMargins(14, 14, 14, 14)
-        ops_l.setSpacing(10)
+        ops_l.setContentsMargins(12, 10, 12, 10)
+        ops_l.setSpacing(8)
 
         sched_l = QHBoxLayout()
         sched_l.setSpacing(10)
 
-        ops_title = QLabel("⚙️ Diagnostics & Automation Console")
-        ops_title.setStyleSheet("color: #8b949e; font-size: 16px; font-weight: bold;")
+        ops_title = QLabel("⚙️ Operations Log")
+        ops_title.setStyleSheet("color: #8b949e; font-size: 15px; font-weight: bold;")
 
-        self.btn_timer = QPushButton("⚡ Enable 12h Systemd Timer")
+        self.btn_timer = QPushButton("⚡ Enable 12h Scheduler")
         self.btn_timer.setObjectName("accent")
         self.btn_timer.clicked.connect(self.enable_timer)
 
-        self.btn_clear = QPushButton("🧹 Clear Console Log")
+        self.btn_clear = QPushButton("🧹 Clear Log")
         self.btn_clear.clicked.connect(self.clear_log)
 
         sched_l.addWidget(ops_title)
@@ -501,7 +498,7 @@ class MainWindow(QMainWindow):
         self.log_box = QTextEdit()
         self.log_box.setObjectName("log_console")
         self.log_box.setReadOnly(True)
-        self.log_box.setMaximumHeight(150)
+        self.log_box.setMaximumHeight(120)
         ops_l.addWidget(self.log_box)
 
         feed_l.addWidget(ops_box)
@@ -554,11 +551,11 @@ class MainWindow(QMainWindow):
             self.lbl_timer_stat.setText(f"⏱️ Timer: {timer_s}")
             if timer.get("active"):
                 self.lbl_timer_stat.setStyleSheet(
-                    "background: #1a5a2e; border: 1px solid #238636; border-radius: 6px; padding: 6px 16px; color: #3fb950; font-weight: bold;"
+                    "background: #1a5a2e; border: 1px solid #238636; border-radius: 6px; padding: 4px 14px; color: #3fb950; font-weight: bold;"
                 )
             else:
                 self.lbl_timer_stat.setStyleSheet(
-                    "background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 6px 16px; color: #8b949e; font-weight: bold;"
+                    "background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 4px 14px; color: #8b949e; font-weight: bold;"
                 )
         except Exception:
             pass
@@ -595,25 +592,43 @@ class MainWindow(QMainWindow):
 
             self.table_feeds.insertRow(row)
 
-            # Name Item
+            # Column 0: Feed Name
             name_item = QTableWidgetItem(name)
             name_item.setFont(QFont("", 16, QFont.Weight.Bold))
+            name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table_feeds.setItem(row, 0, name_item)
 
-            # Category Item
-            cat_item = QTableWidgetItem(cat)
-            self.table_feeds.setItem(row, 1, cat_item)
+            # Column 1: RSS Endpoint URL
+            url_item = QTableWidgetItem(url)
+            url_item.setForeground(QColor("#8b949e"))
+            url_item.setToolTip(url)
+            url_item.setFlags(url_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table_feeds.setItem(row, 1, url_item)
 
-            # Interval ComboBox
+            # Column 2: Category Badging
+            cat_item = QTableWidgetItem(cat)
+            if "tech" in cat.lower():
+                cat_item.setForeground(QColor("#58a6ff"))
+            elif "finan" in cat.lower() or "econ" in cat.lower():
+                cat_item.setForeground(QColor("#3fb950"))
+            elif "news" in cat.lower() or "world" in cat.lower():
+                cat_item.setForeground(QColor("#d29922"))
+            else:
+                cat_item.setForeground(QColor("#a371f7"))
+            cat_item.setFlags(cat_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table_feeds.setItem(row, 2, cat_item)
+
+            # Column 3: Interval Dropdown
             freq_cb = QComboBox()
             freq_cb.addItems(["1h", "3h", "6h", "12h", "24h"])
             h = feed.get("fetch_interval_hours", 12)
             freq_cb.setCurrentIndex(freq_map.get(h, 3))
             freq_cb.currentIndexChanged.connect(lambda i, fid=fid: self.set_freq(fid, [1, 3, 6, 12, 24][i]))
-            freq_cb.setMinimumHeight(48)
-            self.table_feeds.setCellWidget(row, 2, freq_cb)
+            freq_cb.setMinimumHeight(38)
+            freq_cb.setMaximumWidth(90)
+            self.table_feeds.setCellWidget(row, 3, freq_cb)
 
-            # Active Checkbox
+            # Column 4: Active Checkbox
             cb_w = QWidget()
             cb_l = QHBoxLayout(cb_w)
             cb_l.setContentsMargins(0, 0, 0, 0)
@@ -621,28 +636,28 @@ class MainWindow(QMainWindow):
             cb = QCheckBox()
             cb.setChecked(feed.get("enabled", True))
             cb.toggled.connect(lambda on, fid=fid: self.toggle(fid, on))
-            cb.setMinimumHeight(48)
+            cb.setMinimumHeight(38)
             cb_l.addWidget(cb)
-            self.table_feeds.setCellWidget(row, 3, cb_w)
+            self.table_feeds.setCellWidget(row, 4, cb_w)
 
-            # Action Buttons
+            # Column 5: Action Buttons (Ping & Delete)
             act_w = QWidget()
             act_l = QHBoxLayout(act_w)
-            act_l.setContentsMargins(4, 4, 4, 4)
-            act_l.setSpacing(8)
+            act_l.setContentsMargins(2, 2, 2, 2)
+            act_l.setSpacing(6)
             pbtn = QPushButton("Ping")
             pbtn.setObjectName("accent")
-            pbtn.setMinimumHeight(48)
+            pbtn.setMinimumHeight(38)
             pbtn.clicked.connect(lambda _, fid=fid: self.ping(fid))
 
             dbtn = QPushButton("Delete")
             dbtn.setObjectName("danger")
-            dbtn.setMinimumHeight(48)
+            dbtn.setMinimumHeight(38)
             dbtn.clicked.connect(lambda _, fid=fid: self.delete_feed(fid))
 
             act_l.addWidget(pbtn)
             act_l.addWidget(dbtn)
-            self.table_feeds.setCellWidget(row, 4, act_w)
+            self.table_feeds.setCellWidget(row, 5, act_w)
             row += 1
 
     def refresh_articles(self):
@@ -676,7 +691,6 @@ class MainWindow(QMainWindow):
             cat_item = QTableWidgetItem(cat_val)
             dt_item = QTableWidgetItem(dt)
 
-            # Category Color Badging
             if "tech" in cat_val.lower():
                 cat_item.setForeground(QColor("#58a6ff"))
             elif "finan" in cat_val.lower() or "econ" in cat_val.lower():
@@ -710,7 +724,6 @@ class MainWindow(QMainWindow):
 
         body = a.get("text_clean") or a.get("summary_raw") or "No article preview content available."
 
-        # Calculate estimated reading time
         word_count = len(body.split())
         read_time = max(1, round(word_count / 200))
         meta.append(f"⏱️ ~{read_time} min read")
