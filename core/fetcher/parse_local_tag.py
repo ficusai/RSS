@@ -4,6 +4,8 @@ import xml.etree.ElementTree as ET
 
 def parse_local_tag(elem: ET.Element) -> str:
     """Returns local tag name without XML namespace."""
+    if not isinstance(elem.tag, str):
+        return ""
     if elem.tag.startswith("{"):
         return elem.tag.split("}", 1)[1].lower()
     return elem.tag.lower()

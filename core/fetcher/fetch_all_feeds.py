@@ -34,7 +34,7 @@ def fetch_all_feeds(
                 if progress_callback:
                     progress_callback(f"[OK] {feed_name}: Scraped {len(articles)} item(s)")
             except Exception as e:
-                err_info = {"feed_name": feed_name, "url": feed.get("url"), "error": str(e)}
+                err_info = {"feed_name": feed_name, "feed_url": feed.get("url"), "url": feed.get("url"), "error": str(e)}
                 errors.append(err_info)
                 if progress_callback:
                     progress_callback(f"[ERROR] {feed_name}: {e}")

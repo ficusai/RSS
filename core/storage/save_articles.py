@@ -44,7 +44,7 @@ def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
                 art.get("feed_url", ""),
                 art.get("url", ""),
                 art.get("title", ""),
-                art.get("article_id", "")
+                art.get("guid", "")
             )
             art["article_id"] = art_id
 

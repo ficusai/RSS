@@ -10,8 +10,8 @@ def clean_html(html_str: str) -> str:
     if not html_str or not isinstance(html_str, str):
         return ""
 
-    text = html.unescape(html_str)
-    text = re.sub(r"<(script|style)[^>]*>.*?</\1>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<(script|style)[^>]*>.*?</\1>", "", html_str, flags=re.DOTALL | re.IGNORECASE)
     text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()

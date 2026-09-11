@@ -594,13 +594,8 @@ class MainWindow(QMainWindow):
 
         self.tabs.addTab(tab_ops, "⚙️ Operations & System")
 
-    def toggle_add_drawer(self):
-        visible = not self.drawer_box.isVisible()
-        self.drawer_box.setVisible(visible)
-        self.btn_toggle_drawer.setText("➖ Hide Drawer" if visible else "➕ New Feed / Presets ▾")
-
         # -------------------------------------------------------------
-        # Tab 3: Feed Presets Library
+        # Tab 4: Feed Presets Library
         # -------------------------------------------------------------
         tab_presets = QWidget()
         presets_l = QVBoxLayout(tab_presets)
@@ -655,9 +650,14 @@ class MainWindow(QMainWindow):
         presets_note.setStyleSheet("color: #8b949e; font-size: 14px; padding: 4px 8px;")
         presets_l.addWidget(presets_note)
 
-        self.tabs.addTab(tab_presets, "Feed Presets Library")
+        self.tabs.addTab(tab_presets, "📚 Feed Presets Library")
         self.load_preset_categories()
         self.refresh_presets_table()
+
+    def toggle_add_drawer(self):
+        visible = not self.drawer_box.isVisible()
+        self.drawer_box.setVisible(visible)
+        self.btn_toggle_drawer.setText("➖ Hide Drawer" if visible else "➕ New Feed / Presets ▾")
 
     def _log(self, msg):
         ts = datetime.now().strftime("%H:%M:%S")

@@ -13,6 +13,6 @@ def feed_already_present(preset: Dict[str, str], existing: Optional[List[Dict[st
     for feed in existing:
         feed_url = (feed.get("url") or "").strip().rstrip("/")
         feed_name = (feed.get("name") or "").strip().lower()
-        if feed_url == preset_url or feed_name == preset_name:
+        if (preset_url and feed_url == preset_url) or (preset_name and feed_name == preset_name):
             return True
     return False

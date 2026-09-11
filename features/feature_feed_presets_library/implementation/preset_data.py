@@ -118,7 +118,7 @@ PRESET_FEEDS: List[Dict[str, str]] = [
     # --- Central Banks ---
     {"name": "Atlanta Fed", "url": "https://www.atlantafed.org/rss/news", "category": "Central Banks"},
     {"name": "Bank of Canada", "url": "https://www.bankofcanada.ca/feed/", "category": "Central Banks"},
-    {"name": "Bank of Canada", "url": "https://www.bankofcanada.ca/rss-feeds/", "category": "Central Banks"},
+    {"name": "Bank of Canada (RSS Feeds)", "url": "https://www.bankofcanada.ca/rss-feeds/", "category": "Central Banks"},
     {"name": "Bank of England", "url": "https://www.bankofengland.co.uk/rss/news", "category": "Central Banks"},
     {"name": "Bank of England Speeches", "url": "https://www.bankofengland.co.uk/rss/speeches", "category": "Central Banks"},
     {"name": "Bank of Italy", "url": "https://www.bancaditalia.it/rss/index.xml?p=comunicati", "category": "Central Banks"},
