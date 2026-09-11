@@ -27,7 +27,7 @@ Consolidating news, research, and technical blogs across disparate websites ofte
 * **Cleaning**: Strips raw HTML, unescapes HTML entities, normalizes timestamps into ISO-8601 UTC, and scrubs script tags.
 * **Storage**: Deduplicates entries via SHA-256 hashes and appends entries to UTF-8 JSON Lines datasets (`scraped_articles.jsonl`).
 * **Reader & Operations**: Browse, search, and manage feed subscriptions inside a PyQt6 desktop application.
-* **Presets Library**: Jump-start a subscription catalog with 239 curated feeds spanning markets, macro, tech, AI, geopolitics, and more.
+* **Presets Library**: Jump-start a subscription catalog with 475 curated feeds spanning markets, macro, tech, AI, geopolitics, and more.
 
 ---
 
@@ -38,7 +38,7 @@ Consolidating news, research, and technical blogs across disparate websites ofte
 * **SHA-256 Cryptographic Deduplication**: Maintains `dedup_state.json` to prevent storing identical articles across feed refreshes.
 * **Append-Friendly JSON Lines Storage**: Uses `.jsonl` streaming format (`SCRAPED-RESULTS/scraped_articles.jsonl`) for fast querying without loading monolithic files into memory.
 * **PyQt6 Dark Theme Dashboard**: Interactive reader UI featuring search, category filter dropdowns, reading time estimators, and subscription management tables.
-* **Feed Presets Library Tab**: Dedicated GUI tab with a 239-feed curated catalog — category filter, live search, per-feed **Add**, and bulk **Add All Presets** import.
+* **Feed Presets Library Tab**: Dedicated GUI tab with a 475-feed curated catalog — category filter, live search, per-feed **Add**, and bulk **Add All Presets** import.
 * **Web Scraper Fallback Module**: Automatically crawls full web page HTML when feeds only supply short preview snippets.
 * **Systemd Background Scheduler**: Unattended Linux background timer (`rss-scraper.timer`) executing 12-hour background updates.
 * **Headless CLI Scraping**: Execute `--headless` or `--scrape` commands for server automation and cron jobs.
@@ -90,7 +90,7 @@ RSS/
 ├── features/               # Modular feature implementations
 │   ├── feature_web_scraper_fallback/
 │   ├── feature_systemd_scheduler/
-│   ├── feature_feed_presets_library/   # 239 curated feeds, 22 categories
+│   ├── feature_feed_presets_library/   # 475 curated feeds, 22 categories
 │   └── feature_gui_reader_pro/
 ├── tests/                  # Core PyTest / unittest suite
 │   └── test_rss.py
@@ -150,11 +150,11 @@ python3 main.py --headless
 
 > Standalone module, disabled in the core release branch.
 
-The **Feed Presets Library** ships as a Git branch (`feature/feed-presets-library`). It bundles **239 curated RSS/Atom feeds across 22 industry categories** extracted from market-intelligence catalogs and offers a dedicated GUI tab:
+The **Feed Presets Library** ships as a Git branch (`feature/feed-presets-library`). It bundles **475 curated RSS/Atom feeds across 22 industry categories** extracted from market-intelligence catalogs, RSSHub endpoints, and global news feeds, offering a dedicated GUI tab:
 
 | Feature | Description |
 | :--- | :--- |
-| **Curated Catalog** | 239 verified feeds, deduplicated by URL, sourced from finance, macro, technology, AI research, geopolitics, commodities, health, and more. |
+| **Curated Catalog** | 475 verified feeds, deduplicated by URL, sourced from finance, macro, technology, AI research, geopolitics, commodities, health, and more. |
 | **Category Filter** | Browse by industry (`Technology`, `Central Banks`, `Commodities & Energy`, `Crypto & Forex`, `Science & Space`, …). |
 | **Live Search** | Filter presets instantly by feed name, URL, or category. |
 | **Per-Feed Add** | Subscribe to a single preset feed with one click; already-subscribed feeds are flagged `Subscribed`. |
@@ -165,7 +165,7 @@ The module wraps the catalog in a small, dependency-free Python API under
 
 ```python
 from features.feature_feed_presets_library.implementation.feeds_presets import (
-    get_preset_feeds,          # -> all 239 feeds
+    get_preset_feeds,          # -> all 475 feeds
     get_preset_categories,     # -> 22 category names
     get_presets_by_category,   # -> filter by category ("all" for everything)
     search_presets,            # -> text search over name/url/category
@@ -197,7 +197,7 @@ python3 -m unittest features/feature_feed_presets_library/tests/test_feed_preset
 python3 -m py_compile main.py core/*.py gui/*.py
 ```
 
-The presets test suite validates catalog completeness (≥ 200 feeds), URL deduplication, clean category naming, per-category filtering, text search, and duplicate detection against an active subscription list.
+The presets test suite validates catalog completeness (≥ 400 feeds), URL deduplication, clean category naming, per-category filtering, text search, and duplicate detection against an active subscription list.
 
 ---
 
@@ -215,7 +215,7 @@ All commits within this repository maintain strict local directory boundary isol
 | :--- | :--- |
 | `RSS-0.1v-linux-native` | Core release engine — lightweight RSS reader, scraper, storage, and dashboard. |
 | `feature/gui-minimal-3tab` | Streamlined 3-tab GUI architecture (Articles Explorer split reader, Subscriptions Hub with collapsible presets drawer, Systemd Operations & Logs console). |
-| `feature/feed-presets-library` | Bundles the 247-feed preset catalog (including RSSHub endpoints) + dedicated GUI presets tab. |
+| `feature/feed-presets-library` | Bundles the 475-feed preset catalog (including RSSHub endpoints & verified global news feeds) + dedicated GUI presets tab. |
 | `feature/stealth-browser-fetcher` | Tiered Dual-Engine stealth scraper with Playwright, CDP request replaying, Client Hints, and Cloudflare challenge fallback. |
 
 ### Branch-Related File Changes
