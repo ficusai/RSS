@@ -169,6 +169,7 @@ def is_duplicate(article_id: str, state: Optional[Dict[str, Any]] = None) -> boo
 def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
     """
     Appends non-duplicate articles to JSONL file and updates dedup_state.json.
+    Updates existing records if incoming article has complete text content missing in stored record.
     Returns (new_articles_count, total_seen_count).
     """
     _ensure_dir()
@@ -177,6 +178,25 @@ def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
 
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     new_articles = []
+    update_map = {}
+
+    # Load existing articles if file exists to check for incomplete records
+    existing_records = {}
+    if ARTICLES_FILE.exists():
+        try:
+            with open(ARTICLES_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    line_str = line.strip()
+                    if line_str:
+                        try:
+                            item = json.loads(line_str)
+                            aid = item.get("article_id")
+                            if aid:
+                                existing_records[aid] = item
+                        except Exception:
+                            pass
+        except Exception:
+            pass
 
     for art in articles:
         art_id = art.get("article_id")
@@ -192,19 +212,37 @@ def save_articles(articles: List[Dict[str, Any]]) -> Tuple[int, int]:
         if art_id not in seen_ids:
             seen_ids[art_id] = now_iso
             new_articles.append(art)
+            existing_records[art_id] = art
+        elif art_id in existing_records:
+            # Check if incoming art has richer content or new preview/full_text_clean fields
+            old_art = existing_records[art_id]
+            old_len = len(old_art.get("text_clean") or "")
+            new_len = len(art.get("text_clean") or "")
+            missing_preview = not old_art.get("preview") and art.get("preview")
 
-    if new_articles:
+            if new_len > old_len or missing_preview:
+                existing_records[art_id] = art
+                update_map[art_id] = art
+
+    if update_map:
+        # Rewrite file atomically with updated records and new articles
+        temp_file = ARTICLES_FILE.with_suffix(".jsonl.tmp")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            for aid, record in existing_records.items():
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        temp_file.replace(ARTICLES_FILE)
+    elif new_articles:
         with open(ARTICLES_FILE, "a", encoding="utf-8") as f:
             for art in new_articles:
                 f.write(json.dumps(art, ensure_ascii=False) + "\n")
 
     state["seen_ids"] = seen_ids
     state["last_scrape_timestamp"] = now_iso
-    state["total_scraped"] = state.get("total_scraped", 0) + len(new_articles)
+    state["total_scraped"] = len(seen_ids)
     _save_dedup_state(state)
 
     total_seen = len(seen_ids)
-    return len(new_articles), total_seen
+    return len(new_articles) + len(update_map), total_seen
 
 
 # WHAT: Reads storage metrics and returns a summary dictionary for the GUI dashboard.

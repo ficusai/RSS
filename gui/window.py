@@ -722,7 +722,13 @@ class MainWindow(QMainWindow):
         if a.get("published_at_iso"):
             meta.append(f"📅 {a['published_at_iso'][:10]}")
 
-        body = a.get("text_clean") or a.get("summary_raw") or "No article preview content available."
+        preview_text = a.get("preview") or ""
+        full_text = a.get("full_text_clean") or a.get("text_clean") or a.get("summary_raw") or "No article content available."
+
+        if preview_text and preview_text != full_text and len(full_text) > len(preview_text) + 50:
+            body = f"📌 PREVIEW SUMMARY:\n{preview_text}\n\n{'=' * 45}\n📖 FULL ARTICLE CONTENT:\n{full_text}"
+        else:
+            body = full_text
 
         word_count = len(body.split())
         read_time = max(1, round(word_count / 200))
