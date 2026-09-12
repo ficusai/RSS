@@ -146,7 +146,7 @@ class TestLayer1_Structural:
         module_path = "gui._26_article_link_open_in_browser.open_article_in_browser"
         assert_source_imports(
             importlib.util.find_spec(module_path).origin,
-            {"PyQt6.QtCore", "Py Qt6.QtGui"},
+            {"PyQt6.QtCore", "PyQt6.QtGui"},
         )
 
 

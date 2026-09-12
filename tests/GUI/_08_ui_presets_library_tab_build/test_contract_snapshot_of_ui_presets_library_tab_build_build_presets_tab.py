@@ -10,7 +10,47 @@ Do NOT patch this test. Instead:
   2. If intentional, regenerate this test file.
   3. If unintentional, revert the source change.
 """
-# WHAT: / OPTIONS: / DEFAULTS: / OUTPUT/EFFECT: / ERRORS/EDGE CASES: / HOW TO TEST:
+# ==============================================================================
+# WHAT THIS TEST FILE VERIFIES
+# This test file verifies the contract of gui._08_ui_presets_library_tab_build
+# build_presets_tab. It checks that the source module file exists, imports
+# correctly, has the expected AST-import set (PyQt6.QtWidgets plus the two
+# imported helper functions), that build_presets_tab has the correct signature,
+# and that calling it with a MagicMock window produces the expected Qt widget
+# hierarchy: a QTableWidget with 5 columns and exact headers, a QComboBox
+# category dropdown, a QPushButton for 'Add All Presets', and the correct tab
+# label "📚 Feed Presets Library". It also verifies that
+# load_preset_categories and refresh_presets_table are called at the end.
+# ==============================================================================
+# ==============================================================================
+# LAYER BREAKDOWN
+#   Layer 1 — Module-level contract checks:
+#     * test_file_exists: source .py file is present on disk.
+#     * test_import_health: the module can be imported without error.
+#     * test_ast_imports: the expected imports present via AST.
+#     * test_build_presets_tab_signature: func(window) -> None signature.
+#   Layer 2 — Behavioural contract checks (mocked Qt):
+#     * test_table_presets_columns_5: table_presets columnCount == 5.
+#     * test_table_presets_headers: table_presets headers exact match.
+#     * test_preset_combo_cat_created: preset_combo_cat QComboBox created with minimum width.
+#     * test_add_all_presets_button_connected: btn_add_all_presets.clicked.connect(window.add_all_presets).
+#     * test_load_preset_categories_wired: load_preset_categories and refresh_presets_table called at end.
+#     * test_tab_label: tab label is "📚 Feed Presets Library".
+# ==============================================================================
+# ==============================================================================
+# LAYER WHAT EACH TEST CHECKS
+#   Layer 1 tests verify the module's structural contract (file presence, import
+#   health, static import set, function signature).
+#   Layer 2 tests verify the runtime widget-creation contract by mocking Qt
+#   classes and asserting on constructor calls, attribute assignments, signal
+#   connections, table column/header values, and helper-function call ordering.
+# ==============================================================================
+# OVERVIEW OF IMPORTS
+# import ast: abstract syntax tree parser; used to verify source-module imports statically.
+# import inspect: runtime introspection; used to inspect function signatures.
+# import sys: Python runtime; used to prepend the repo root to sys.path.
+# import Path from pathlib: filesystem path builder; used to resolve the source-module file path.
+# import MagicMock, patch from unittest.mock: test doubles; used to replace Qt widgets and module functions during Layer 2 tests.
 import ast
 import inspect
 import sys
@@ -22,28 +62,79 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 
 def _module_path():
+    r"""Return the absolute Path to the source module under test.
+
+    WHAT: Builds the filesystem path to the source .py file.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: A pathlib.Path pointing to gui/_08_ui_presets_library_tab_build/build_presets_tab.py.
+    EFFECT: None (pure function).
+    ERRORS/EDGE CASES: Should never fail; returns a Path even if the file does not exist.
+    EDGE CASES: None.
+    """
     return Path(__file__).resolve().parents[3] / "gui" / "_08_ui_presets_library_tab_build" / "build_presets_tab.py"
 
 
 def _import_module():
+    r"""Import and return the source module under test.
+
+    WHAT: Dynamically imports the GUI source module so tests can inspect it.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: The imported module object.
+    EFFECT: Side-effect of importing the module (may run module-level code).
+    ERRORS/EDGE CASES: ImportError if the module is missing or has a syntax error.
+    EDGE CASES: The sys.path insertion above ensures the repo root is on the path.
+    """
     import gui._08_ui_presets_library_tab_build.build_presets_tab as mod
     return mod
 
 
 def test_file_exists():
-    """Layer 1 — file existence."""
+    r"""Layer 1 — file existence.
+
+    WHAT: Verifies the source module file exists on disk.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: Raises AssertionError if the source file is missing.
+    ERRORS/EDGE CASES: FileNotFoundError if the path resolves incorrectly.
+    EDGE CASES: None.
+    HOW TO TEST: Call _module_path() and check .exists().
+    """
     p = _module_path()
     assert p.exists(), f"Source file missing: {p}"
 
 
 def test_import_health():
-    """Layer 1 — import health."""
+    r"""Layer 1 — import health.
+
+    WHAT: Verifies the source module can be imported without raising.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: The imported module object.
+    EFFECT: Module-level code executes (side-effect).
+    ERRORS/EDGE CASES: ImportError or ModuleNotFoundError on bad module.
+    EDGE CASES: None.
+    HOW TO TEST: Call _import_module() and assert result is not None.
+    """
     mod = _import_module()
     assert mod is not None
 
 
 def test_ast_imports():
-    """Layer 1 — AST-verified imports."""
+    r"""Layer 1 — AST-verified imports.
+
+    WHAT: Verifies the expected PyQt6.QtWidgets and two gui submodule imports are
+          present in the source AST.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: Raises AssertionError if any expected import is missing.
+    ERRORS/EDGE CASES: SyntaxError if source file has invalid Python.
+    EDGE CASES: None.
+    HOW TO TEST: Parse the source AST and walk for Import/ImportFrom nodes.
+    """
     expected = {
         "PyQt6.QtWidgets",
         "gui._30_preset_categories_load_dropdown.load_preset_categories",
@@ -63,7 +154,17 @@ def test_ast_imports():
 
 
 def test_build_presets_tab_signature():
-    """Layer 1 — build_presets_tab(window) -> None."""
+    r"""Layer 1 — build_presets_tab(window) -> None.
+
+    WHAT: Verifies the exact function signature of build_presets_tab.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: Raises AssertionError if signature differs.
+    ERRORS/EDGE CASES: AttributeError if the function does not exist on the module.
+    EDGE CASES: None.
+    HOW TO TEST: Use inspect.signature and compare parameters + return annotation.
+    """
     mod = _import_module()
     func = mod.build_presets_tab
     sig = inspect.signature(func)
@@ -74,7 +175,19 @@ def test_build_presets_tab_signature():
 
 
 def test_table_presets_columns_5():
-    """Layer 2 — table_presets columns + headers exact (5 columns)."""
+    r"""Layer 2 — table_presets columns + headers exact (5 columns).
+
+    WHAT: Verifies that build_presets_tab creates a QTableWidget with exactly
+          5 columns (columnCount == 5).
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: AssertionError if columnCount was not called with 5.
+    ERRORS/EDGE CASES: None.
+    EDGE CASES: None.
+    HOW TO TEST: Patch QTableWidget; call build_presets_tab; assert
+                 columnCount.assert_called_once_with(5).
+    """
     mod = _import_module()
     window = MagicMock()
     table_mock = MagicMock()
@@ -95,7 +208,19 @@ def test_table_presets_columns_5():
 
 
 def test_table_presets_headers():
-    """Layer 2 — table_presets headers exact."""
+    r"""Layer 2 — table_presets headers exact.
+
+    WHAT: Verifies that build_presets_tab sets the QTableWidget horizontal header
+          labels to exactly ['Name', 'RSS Endpoint URL', 'Category', 'Status', 'Actions'].
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: AssertionError if headers do not match exactly.
+    ERRORS/EDGE CASES: None.
+    EDGE CASES: None.
+    HOW TO TEST: Patch QTableWidget; call build_presets_tab; assert
+                 setHorizontalHeaderLabels was called once with the exact list.
+    """
     mod = _import_module()
     window = MagicMock()
     table_mock = MagicMock()
@@ -118,7 +243,19 @@ def test_table_presets_headers():
 
 
 def test_preset_combo_cat_created():
-    """Layer 2 — preset_combo_cat created."""
+    r"""Layer 2 — preset_combo_cat created.
+
+    WHAT: Verifies that build_presets_tab creates a QComboBox for category
+          selection (window.preset_combo_cat) and calls setMinimumWidth on it.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: AssertionError if setMinimumWidth was not called.
+    ERRORS/EDGE CASES: None.
+    EDGE CASES: None.
+    HOW TO TEST: Patch QComboBox; call build_presets_tab; assert
+                 setMinimumWidth was called once.
+    """
     mod = _import_module()
     window = MagicMock()
     with patch("gui._08_ui_presets_library_tab_build.build_presets_tab.QTableWidget") as MockTable, \
@@ -144,7 +281,21 @@ def test_preset_combo_cat_created():
 
 
 def test_add_all_presets_button_connected():
-    """Layer 2 — 'Add All Presets' button connected to window.add_all_presets."""
+    r"""Layer 2 — 'Add All Presets' button connected to window.add_all_presets.
+
+    WHAT: Verifies that build_presets_tab creates a 'Add All Presets' QPushButton
+          (with objectName 'accent') and connects its clicked signal to
+          window.add_all_presets.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: AssertionError if clicked.connect was not called with window.add_all_presets.
+    ERRORS/EDGE CASES: None.
+    EDGE CASES: None.
+    HOW TO TEST: Patch QPushButton; provide a mock clicked.connect; call the
+                 function; assert clicked.connect was called once with
+                 window.add_all_presets.
+    """
     mod = _import_module()
     window = MagicMock()
     window.add_all_presets = MagicMock()
@@ -173,7 +324,20 @@ def test_add_all_presets_button_connected():
 
 
 def test_load_preset_categories_wired():
-    """Layer 2 — load_preset_categories called at end."""
+    r"""Layer 2 — load_preset_categories called at end.
+
+    WHAT: Verifies that build_presets_tab calls load_preset_categories(window)
+          and refresh_presets_table(window) after creating the widget hierarchy.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: AssertionError if either helper is not called exactly once with window.
+    ERRORS/EDGE CASES: None.
+    EDGE CASES: None.
+    HOW TO TEST: Patch both helper functions; call build_presets_tab; assert
+                 mock_load.assert_called_once_with(window) and
+                 mock_refresh.assert_called_once_with(window).
+    """
     mod = _import_module()
     window = MagicMock()
     with patch("gui._08_ui_presets_library_tab_build.build_presets_tab.QTableWidget") as MockTable, \
@@ -200,7 +364,20 @@ def test_load_preset_categories_wired():
 
 
 def test_tab_label():
-    """Layer 2 — Tab label '📚 Feed Presets Library'."""
+    r"""Layer 2 — Tab label '📚 Feed Presets Library'.
+
+    WHAT: Verifies that build_presets_tab registers itself with the exact label
+          '📚 Feed Presets Library'.
+    OPTIONS: None.
+    DEFAULTS: N/A.
+    OUTPUT: None (assertion-based).
+    EFFECT: AssertionError if the tab label string does not match exactly.
+    ERRORS/EDGE CASES: None.
+    EDGE CASES: None.
+    HOW TO TEST: Patch QTableWidget/QComboBox/QPushButton; provide window.tabs
+                 as MagicMock; call build_presets_tab; assert
+                 window.tabs.addTab was called once with the correct label.
+    """
     mod = _import_module()
     window = MagicMock()
     window.tabs = MagicMock()
