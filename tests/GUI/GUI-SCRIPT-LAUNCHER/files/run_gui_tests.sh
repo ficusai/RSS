@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Resolve directories relative to THIS script's location
 LAUNCHER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${LAUNCHER_DIR}/../../../../.." && pwd)"
+PROJECT_ROOT="$(cd "${LAUNCHER_DIR}/../../../.." && pwd)"
 
 export QT_QPA_PLATFORM=offscreen
 export PYTHONPATH="${PROJECT_ROOT}:${LAUNCHER_DIR}:${PYTHONPATH:-}"
