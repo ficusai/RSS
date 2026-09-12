@@ -41,7 +41,7 @@ def build_main_window_ui(window) -> None:
     layout.addWidget(window.progress, 0, Qt.AlignmentFlag.AlignRight)
 
     window.tabs = QTabWidget()
-    layout.addWidget(window.tabs)
+    layout.addWidget(window.tabs, 1)  # stretch: QTabWidget fills all remaining window space
 
     build_articles_tab(window)
     build_subscriptions_tab(window)
