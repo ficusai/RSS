@@ -5,4 +5,5 @@ See master workspace repository configuration and rules at:
 
 - **Primary Branch**: `RSS-0.1v-linux-native`
 - **Active Presets Branch**: `feature/feed-presets-library` (475 curated RSS/Atom feeds across 22 categories)
+- **Active Refactor Branch**: `feature/gui-atomic-modular-refactor` (monolithic `gui/window.py` decomposed into 39 atomic per-function modules; GUI entry via `gui.window.MainWindow` facade and `gui._38_bootstrap_launch_window.launch_gui_window()`)
 - **Mandatory Branch File Documentation**: Feature branches MUST record all branch-related file changes in this project's public `README.md` (under `## Branch-Related File Changes`) before pushing to remote GitHub.

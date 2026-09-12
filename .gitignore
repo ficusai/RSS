@@ -1,5 +1,32 @@
+# WHAT: This file tells Git (the version control system) which files and
+#       folders to IGNORE — meaning Git will not track them, show them in
+#       "git status", or include them when you push code to GitHub.
+#       These are files that are either temporary, generated at runtime, or
+#       specific to your local computer and should not be shared.
+# OPTIONS: Each line is a pattern. Git ignores any file/folder that matches.
+#   - A plain name (e.g. __pycache__/) ignores folders with that exact name.
+#   - A wildcard pattern (e.g. *.pyc) ignores all files ending in .pyc.
+#   - A leading slash (e.g. /secrets.json) ignores only at the repo root.
+#   - A trailing slash (e.g. logs/) means it is a directory.
+# DEFAULTS: N/A (you must explicitly list what to ignore).
+# OUTPUT/EFFECT: These files do not appear in "git status" and are not committed.
+# ERRORS/EDGE CASES: If you accidentally add a pattern that matches source
+#   code files, those files will be hidden from Git (dangerous!).
+# HOW TO TEST: Run "git status" — ignored files should NOT appear in the output.
+#               Run "git check-ignore -v <file>" to see which rule ignores a file.
+
+# __pycache__/: Python's compiled bytecode cache folder (auto-generated, one per source file).
 __pycache__/
+# *.pyc: compiled Python bytecode files (auto-generated, can be re-created).
 *.pyc
+# .DS_Store: macOS folder metadata file (irrelevant on Linux, appears on every Mac).
 .DS_Store
+# *.log: log files produced by the app at runtime (grow over time, not code).
 *.log
+# .venv/: a local Python virtual environment folder (contains installed packages,
+#   specific to this computer, should not be shared).
 .venv/
+# .pytest_cache/: pytest's temporary test cache folder (auto-generated, can be re-created).
+.pytest_cache/
+# .ruff_cache/: ruff linter's cache folder (auto-generated, can be re-created).
+.ruff_cache/

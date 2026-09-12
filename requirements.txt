@@ -1,4 +1,19 @@
 # Ficus RSS Dependencies
+# WHAT: This file lists the Python packages (libraries) that the RSS app
+#       needs to run. When you run "pip install -r requirements.txt",
+#       Python downloads and installs all of these packages automatically.
+# OPTIONS: Each line is a package name with a minimum version number.
+#          The ">=" means "version this number or higher."
+# DEFAULTS: N/A (all listed packages are required).
+# OUTPUT/EFFECT: After installation, these packages are available for import.
+# ERRORS/EDGE CASES:
+#   - If a package fails to install, the app will crash when trying to import it.
+#   - PyQt6 is needed for the GUI; without it, only headless mode works.
+#   - playwright is needed for the stealth browser fallback; without it,
+#     feeds that return 403/503 cannot be downloaded.
+#   - pytest is needed to run tests; without it, "python3 run_tests.py" fails.
+# HOW TO TEST: Run "pip install -r requirements.txt" and verify no errors.
 PyQt6>=6.0.0
 playwright>=1.40.0
+beautifulsoup4>=4.12.0
 pytest>=8.0.0
