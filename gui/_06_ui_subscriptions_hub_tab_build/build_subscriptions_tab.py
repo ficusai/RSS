@@ -37,7 +37,6 @@
 # ==============================================================================
 # Qt.AlignmentFlag: alignment options for widgets in layouts.
 from PyQt6.QtCore import Qt
-# Various Qt widgets:
 from PyQt6.QtWidgets import (
     QHBoxLayout,      # horizontal layout
     QLabel,           # text labels
@@ -49,6 +48,7 @@ from PyQt6.QtWidgets import (
     QFrame,           # bordered container (drawer)
     QVBoxLayout,      # vertical layout
     QWidget,          # base widget
+    QSizePolicy,      # size policy for expanding widgets
 )
 
 # Import the presets library to populate the two-tier quick-import dropdown.
@@ -336,4 +336,5 @@ def build_subscriptions_tab(window) -> None:
     feed_l.addWidget(window.table_feeds, 1)
 
     # Add this tab to the main tab widget.
+    tab_feed.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     window.tabs.addTab(tab_feed, "📡 Subscriptions Hub")

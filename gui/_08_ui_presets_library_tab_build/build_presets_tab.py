@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QHeaderView,
     QVBoxLayout,
     QWidget,
+    QSizePolicy,      # size policy for expanding widgets
 )
 
 from gui._30_preset_categories_load_dropdown.load_preset_categories import load_preset_categories
@@ -78,5 +79,6 @@ def build_presets_tab(window) -> None:
     presets_l.addWidget(presets_note)
 
     window.tabs.addTab(tab_presets, "📚 Feed Presets Library")
+    tab_presets.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     load_preset_categories(window)
     refresh_presets_table(window)

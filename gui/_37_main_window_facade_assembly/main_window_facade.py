@@ -6,6 +6,7 @@
 # OUTPUT/EFFECT: A fully functional PyQt6 QMainWindow.
 # ERRORS/EDGE CASES: Import-time failures if PyQt6 or core features are missing.
 # HOW TO TEST: QT_QPA_PLATFORM=offscreen python3 -c "from gui._37_main_window_facade_assembly.main_window_facade import MainWindow; from PyQt6.QtWidgets import QApplication; app=QApplication([]); w=MainWindow(); print('tabs=', w.tabs.count())"
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMainWindow
 
@@ -176,6 +177,20 @@ class MainWindow(QMainWindow):
     def _run_scrape(self, feeds):
         from gui._35_scrape_run_background_orchestrator.run_scrape_background import run_scrape
         run_scrape(self, feeds)
+
+    # --- Window resize propagation ---
+    def _propagate_tab_sizes(self):
+        """Resize all QTabWidget pages to match the tab widget's current size."""
+        if hasattr(self, "tabs") and self.tabs is not None:
+            tab_rect = self.tabs.rect()
+            for idx in range(self.tabs.count()):
+                page = self.tabs.widget(idx)
+                page.resize(tab_rect.size())
+
+    def resizeEvent(self, event):
+        """Propagate window resize to all QTabWidget page children so tables expand."""
+        super().resizeEvent(event)
+        self._propagate_tab_sizes()
 
     def on_done(self, new, total, errors):
         from gui._36_scrape_finished_signal_handler.on_scrape_done import on_scrape_done

@@ -35,6 +35,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,        # multi-line text display (log console)
     QVBoxLayout,      # vertical layout
     QWidget,          # base widget
+    QSizePolicy,      # size policy for expanding widgets
 )
 
 
@@ -174,4 +175,5 @@ def build_operations_tab(window) -> None:
     ops_l.addWidget(ops_box, 1)  # '1' stretch: card fills remaining height
 
     # Add this tab to the main tab widget.
+    tab_ops.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     window.tabs.addTab(tab_ops, "⚙️ Operations & System")

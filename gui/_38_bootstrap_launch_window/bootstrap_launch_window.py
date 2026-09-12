@@ -17,4 +17,6 @@ def launch_gui_window() -> int:
     app = QApplication(sys.argv)
     win = MainWindow()
     win.show()
+    # Propagate tab page sizes so tables fill the window on first render.
+    win._propagate_tab_sizes()
     return sys.exit(app.exec())

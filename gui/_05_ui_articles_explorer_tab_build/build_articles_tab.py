@@ -50,6 +50,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,        # multi-line text display (article content, read-only)
     QVBoxLayout,      # vertical layout (stacks widgets top-to-bottom)
     QWidget,          # base widget class
+    QSizePolicy,      # size policy for expanding widgets
 )
 
 
@@ -249,4 +250,5 @@ def build_articles_tab(window) -> None:
 
     # Add this tab to the main window's tab widget.
     # "📰 Articles Explorer" is the tab label shown to the user.
+    tab_art.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     window.tabs.addTab(tab_art, "📰 Articles Explorer")
