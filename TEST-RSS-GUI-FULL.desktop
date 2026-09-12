@@ -1,10 +1,9 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=RSS GUI Contract Tests
+Name=TEST-RSS-GUI-FULL
 Comment=Run all 39 GUI contract-drift tests with visual progress
 Exec=/usr/bin/bash /home/ficus-pro/Documents/RSS/tests/GUI/GUI-SCRIPT-LAUNCHER/files/run_gui_tests.sh
-Path=/home/ficus-pro/Documents/RSS/tests/GUI/GUI-SCRIPT-LAUNCHER/files
 Icon=utilities-terminal
 Terminal=false
 Categories=Development;Test;
