@@ -1,0 +1,242 @@
+"""Build the Subscriptions Hub tab (Tab 2)."""
+# ==============================================================================
+# OVERVIEW
+# Tab 2 is the "Subscriptions Hub" — where users manage their RSS feed subscriptions.
+# It contains:
+#   - A search/filter bar at the top
+#   - A collapsible "drawer" for adding new feeds and quick-importing presets
+#   - A table showing all subscribed feeds with controls (interval, enabled, ping, delete)
+#
+# The drawer is hidden by default and toggled by the "New Feed / Presets ▾" button.
+#
+# WHAT: Creates the subscriptions tab with filter bar, collapsible add-drawer,
+#       preset chips for quick import, and a feed management table.
+#
+# OPTIONS: window — MainWindow instance. Stores widget references:
+#            - window.in_filter: search box for filtering feeds
+#            - window.cb_cat_filter: category dropdown
+#            - window.btn_toggle_drawer: button to show/hide the add drawer
+#            - window.drawer_box: collapsible panel with add form + preset chips
+#            - window.in_name, window.in_url, window.in_cat: form inputs
+#            - window.cb_freq: frequency dropdown (1h/3h/6h/12h/24h)
+#            - window.btn_add: add feed button
+#            - window.table_feeds: feed management table
+#
+# DEFAULTS: N/A.
+#
+# OUTPUT/EFFECT: Creates tab_feed widget and adds it as Tab 2 to window.tabs.
+#
+# ERRORS/EDGE CASES: None expected. The get_preset_feeds() import may fail if
+#                    the presets library feature is not installed, but this is
+#                    handled gracefully (empty preset list).
+#
+# HOW TO TEST: build_subscriptions_tab(window); assert window.tabs.count() >= 2
+#              Running the app and clicking Tab 2 should show the subscriptions hub.
+# ==============================================================================
+# Qt.AlignmentFlag: alignment options for widgets in layouts.
+from PyQt6.QtCore import Qt
+# Various Qt widgets:
+from PyQt6.QtWidgets import (
+    QHBoxLayout,      # horizontal layout
+    QLabel,           # text labels
+    QLineEdit,        # text input boxes
+    QComboBox,        # dropdown menus
+    QPushButton,      # clickable buttons
+    QTableWidget,     # spreadsheet-style table
+    QHeaderView,      # column header controls
+    QFrame,           # bordered container (drawer)
+    QVBoxLayout,      # vertical layout
+    QWidget,          # base widget
+)
+
+# Import the presets library to populate quick-import chip buttons.
+# get_preset_feeds() returns a list of dicts with 'name', 'url', 'category' keys.
+from features.feature_feed_presets_library.implementation.feeds_presets import get_preset_feeds
+
+
+def build_subscriptions_tab(window) -> None:
+    """Build and add the Subscriptions Hub tab.
+
+    WHAT: Creates Tab 2 — the feed management interface. Contains a filter bar,
+          a collapsible drawer for adding feeds and importing presets, and a
+          table listing all subscribed feeds with per-row controls.
+
+    OPTIONS:
+      window: MainWindow instance. This function creates and stores the following
+              widget attributes on window:
+                - window.in_filter: search box
+                - window.cb_cat_filter: category filter dropdown
+                - window.btn_toggle_drawer: show/hide drawer button
+                - window.drawer_box: collapsible add-form panel (QFrame)
+                - window.in_name, window.in_url, window.in_cat: form inputs
+                - window.cb_freq: interval dropdown
+                - window.btn_add: add feed button
+                - window.table_feeds: feed table widget
+
+    DEFAULTS: None.
+
+    OUTPUT/EFFECT:
+      - Creates a QWidget (tab_feed) containing:
+        1. Header with title, search, category filter, toggle button
+        2. Collapsible drawer (hidden by default) with:
+           - Add-feed form (name, URL, category, interval, add button)
+           - Quick-import preset chips (one button per preset feed)
+        3. Feed management table with 6 columns: Name, URL, Category, Interval, Active, Actions
+
+    ERRORS/EDGE CASES: None expected. Preset chip creation handles empty preset lists.
+
+    HOW TO TEST:
+      1. Call build_subscriptions_tab(window)
+      2. Verify window.tabs.count() >= 2
+      3. Verify window.drawer_box exists
+      4. Verify window.table_feeds has 6 columns
+    """
+    # QWidget(): creates the tab's container.
+    tab_feed = QWidget()
+
+    # QVBoxLayout: stack widgets vertically (filter bar, drawer, table).
+    feed_l = QVBoxLayout(tab_feed)
+    feed_l.setContentsMargins(10, 10, 10, 10)
+    feed_l.setSpacing(10)
+
+    # --- Header Bar (filter controls) ---
+    catalog_header = QHBoxLayout()
+    catalog_header.setSpacing(10)
+
+    # QLabel("📡 Subscriptions Catalog"): tab title.
+    catalog_title = QLabel("📡 Subscriptions Catalog")
+    catalog_title.setStyleSheet("color: #e6edf3; font-size: 16px; font-weight: bold;")
+
+    # QLineEdit: search box to filter feeds by name or URL.
+    window.in_filter = QLineEdit()
+    window.in_filter.setPlaceholderText("Filter feeds by name or URL...")
+    # textChanged: refresh table as user types.
+    window.in_filter.textChanged.connect(window.refresh_table)
+
+    # QComboBox: dropdown to filter by category.
+    window.cb_cat_filter = QComboBox()
+    window.cb_cat_filter.addItem("All Categories")
+    window.cb_cat_filter.setMinimumWidth(180)
+    # currentIndexChanged: refresh table when category changes.
+    window.cb_cat_filter.currentIndexChanged.connect(window.refresh_table)
+
+    # QPushButton: toggle the add-drawer visibility.
+    window.btn_toggle_drawer = QPushButton("➕ New Feed / Presets ▾")
+    window.btn_toggle_drawer.setObjectName("primary_blue")
+    window.btn_toggle_drawer.clicked.connect(window.toggle_add_drawer)
+
+    # Add controls to header layout (title left, stretch, then filters/button right).
+    catalog_header.addWidget(catalog_title)
+    catalog_header.addStretch()
+    catalog_header.addWidget(window.in_filter, 1)
+    catalog_header.addWidget(window.cb_cat_filter)
+    catalog_header.addWidget(window.btn_toggle_drawer)
+    feed_l.addLayout(catalog_header)
+
+    # --- Collapsible Add & Presets Drawer ---
+    # QFrame(): bordered container for the drawer. Initially hidden.
+    window.drawer_box = QFrame()
+    window.drawer_box.setObjectName("card")
+    window.drawer_box.setVisible(False)  # Hidden by default; toggled by button
+    drawer_v = QVBoxLayout(window.drawer_box)
+    drawer_v.setContentsMargins(12, 12, 12, 12)
+    drawer_v.setSpacing(10)
+
+    # --- Add Feed Form Row ---
+    add_top = QHBoxLayout()
+    add_top.setSpacing(10)
+
+    # QLineEdit: feed name input.
+    window.in_name = QLineEdit()
+    window.in_name.setPlaceholderText("Feed Name (e.g. TechCrunch)")
+
+    # QLineEdit: RSS URL input.
+    window.in_url = QLineEdit()
+    window.in_url.setPlaceholderText("RSS URL (e.g. https://techcrunch.com/feed/)")
+
+    # QLineEdit: category input (defaults to "General").
+    window.in_cat = QLineEdit()
+    window.in_cat.setText("General")  # Default category
+    window.in_cat.setPlaceholderText("Category")
+    window.in_cat.setMaximumWidth(180)
+
+    # QComboBox: fetch interval selection.
+    # addItems(): adds the five available intervals.
+    # setCurrentIndex(3): selects "12h" by default (index 3 of 5 options).
+    window.cb_freq = QComboBox()
+    window.cb_freq.addItems(["1h", "3h", "6h", "12h", "24h"])
+    window.cb_freq.setCurrentIndex(3)
+    window.cb_freq.setMaximumWidth(110)
+
+    # QPushButton: submit the new feed.
+    window.btn_add = QPushButton("➕ Add Feed")
+    window.btn_add.setObjectName("accent")
+    window.btn_add.clicked.connect(window.add_feed)
+
+    # Arrange form controls horizontally.
+    add_top.addWidget(window.in_name, 1)
+    add_top.addWidget(window.in_url, 2)
+    add_top.addWidget(window.in_cat)
+    add_top.addWidget(window.cb_freq)
+    add_top.addWidget(window.btn_add)
+    drawer_v.addLayout(add_top)
+
+    # --- Quick Import Presets Row ---
+    # QLabel("Quick Import:"): section label.
+    presets_l = QHBoxLayout()
+    presets_l.setSpacing(8)
+    lbl_preset = QLabel("Quick Import:")
+    lbl_preset.setStyleSheet("color: #8b949e; font-size: 14px; font-weight: 600;")
+    presets_l.addWidget(lbl_preset)
+
+    # Loop through each preset feed and create a chip button.
+    # get_preset_feeds() returns a list like [{"name": "TechCrunch", "url": "...", "category": "Technology"}, ...]
+    for preset in get_preset_feeds():
+        p_name = preset.get("name")
+        p_url = preset.get("url")
+        p_cat = preset.get("category", "General")  # Default to "General" if missing
+
+        # QPushButton: small rounded chip button for quick import.
+        # setObjectName("chip"): applies the pill-shaped style from STYLESHEET.
+        btn_chip = QPushButton(f"+ {p_name}")
+        btn_chip.setObjectName("chip")
+        # setToolTip(): shows hover text with full details.
+        btn_chip.setToolTip(f"Import {p_name} ({p_cat})\n{p_url}")
+        # clicked.connect: when clicked, import this preset.
+        # Lambda captures p_name, p_url, p_cat by value (not reference) using default args.
+        btn_chip.clicked.connect(lambda _, n=p_name, u=p_url, c=p_cat: window.import_preset(n, u, c))
+        presets_l.addWidget(btn_chip)
+
+    presets_l.addStretch()
+    drawer_v.addLayout(presets_l)
+
+    # Add the drawer to the main tab layout.
+    feed_l.addWidget(window.drawer_box)
+
+    # --- Subscriptions Table ---
+    # QTableWidget(): spreadsheet-style table for managing feeds.
+    window.table_feeds = QTableWidget()
+    window.table_feeds.setColumnCount(6)
+    window.table_feeds.setHorizontalHeaderLabels(["Name", "RSS Endpoint URL", "Category", "Interval", "Active", "Actions"])
+
+    # Configure column resizing:
+    header = window.table_feeds.horizontalHeader()
+    header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)  # Name: user-resizable
+    header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)      # URL: fills remaining space
+    header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Category: auto-size
+    header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Interval: auto-size
+    header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Active: auto-size
+    header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Actions: auto-size
+
+    # Set fixed width for the Name column.
+    window.table_feeds.setColumnWidth(0, 190)
+
+    # Hide row numbers, set row height, enable alternating colors.
+    window.table_feeds.verticalHeader().setVisible(False)
+    window.table_feeds.verticalHeader().setDefaultSectionSize(48)
+    window.table_feeds.setAlternatingRowColors(True)
+
+    feed_l.addWidget(window.table_feeds, 1)
+
+    # Add this tab to the main tab widget.
+    window.tabs.addTab(tab_feed, "📡 Subscriptions Hub")

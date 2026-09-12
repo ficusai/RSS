@@ -194,7 +194,7 @@ python3 -m unittest tests/test_rss.py
 python3 -m unittest features/feature_feed_presets_library/tests/test_feed_presets.py
 
 # Verify Python syntax across all modules
-python3 -m py_compile main.py core/*.py gui/*.py
+find gui -name '*.py' -not -path '*__pycache__*' | xargs python3 -m py_compile main.py
 ```
 
 The presets test suite validates catalog completeness (≥ 400 feeds), URL deduplication, clean category naming, per-category filtering, text search, and duplicate detection against an active subscription list.
@@ -223,6 +223,7 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/scraping-quality-improvements` | Full-text extraction improvements: readability-based article extraction, CDATA/HTML entity parsing, and default `extract_full_text=True` for the headless CLI scraper. |
 | `feature/feed-parsing-unicode-encoding-fixes` | Fixes XML parsing that silently destroyed non-ASCII characters and adds gzip/deflate/brotli decompression so br-only feeds (TechCrunch) parse. |
 | `feature/readability-extraction-quality` | Readability-grade article extraction: block-aware paragraph joining (no broken inline lines), text-density main selection with link-density & boilerplate pruning, smart preview generation (no more "Comments" previews), and an `extractor_version`-gated storage refresh. Requires a full DB rebuild of `SCRAPED-RESULTS`. |
+| `feature/gui-atomic-modular-refactor` | Decomposes monolithic `gui/window.py` (1,362 lines) into 39 atomic per-function modules under `gui/_00_*` … `gui/_38_*`, each in its own folder. `gui/window.py` becomes a thin re-export facade. `main.py` GUI bootstrap delegated to `gui._38_bootstrap_launch_window`. |
 
 ### Branch-Related File Changes
 
@@ -356,6 +357,53 @@ are actually created and pushed.
 | `tests/test_rss.py` | Added — extractor regression tests (inline-tag joins, paragraph structure, boilerplate/by-line/gallery pruning, link-only heading boxes, curly-apostrophe promo, UI fragment tails, "Continue reading", nav intros, header/footer stripping), preview derivation tests (trivial "Comments" description falls back to full-text lead; substantive descriptions stay), and storage tests (cleaner-shorter replacement, no clobbering of long real text, `extractor_version` refresh). |
 | `SCRAPED-RESULTS/scraped_articles.jsonl` | Rebuilt — full DB rebuild from scratch using the finalized extractor: 257 articles, all `extractor_version=2`, zero "Continue reading"/"Most Popular"/"Select an option" artifacts. |
 | `README.md` | Modified — updated Branch Map and Branch-Related File Changes documentation. |
+
+#### `feature/gui-atomic-modular-refactor`
+
+| File | Change |
+| :--- | :--- |
+| `gui/_00_paths_config_constant_definitions/paths_config_constants.py` | Added — `PROJECT_ROOT`, `CONFIG_PATH`, `ASSETS_DIR` constants (fix: `.parents[2]`). |
+| `gui/_01_window_stylesheet_dark_modern_theme/window_stylesheet_apply.py` | Added — `STYLESHEET` QSS string + `apply_window_stylesheet(window)`. |
+| `gui/_02_background_scrape_thread_worker/scrape_thread_worker.py` | Added — `ScrapeThread(QThread)` class with `log_signal` / `finished_signal`. |
+| `gui/_03_ui_assembly_orchestrator/build_main_window_ui.py` | Added — `build_main_window_ui(window)` orchestrator replacing `_build_ui`. |
+| `gui/_04_ui_header_bar_top_section_build/build_header_bar.py` | Added — `build_header_bar(window)` extracting header from `_build_ui`. |
+| `gui/_05_ui_articles_explorer_tab_build/build_articles_tab.py` | Added — `build_articles_tab(window)` relocated from `_build_articles_tab`. |
+| `gui/_06_ui_subscriptions_hub_tab_build/build_subscriptions_tab.py` | Added — `build_subscriptions_tab(window)` relocated from `_build_subscriptions_tab`. |
+| `gui/_07_ui_operations_system_tab_build/build_operations_tab.py` | Added — `build_operations_tab(window)` relocated from `_build_operations_tab`. |
+| `gui/_08_ui_presets_library_tab_build/build_presets_tab.py` | Added — `build_presets_tab(window)` relocated from `_build_presets_tab`. |
+| `gui/_09_feed_identifier_generate_from_name/generate_feed_id.py` | Added — `generate_feed_id(name, fallback_seed)` DRY extraction of feed-ID regex. |
+| `gui/_10_log_append_timestamped_message/append_timestamped_log.py` | Added — `append_log_message(window, msg)`. |
+| `gui/_11_log_clear_console/clear_log_console.py` | Added — `clear_log_console(window)`. |
+| `gui/_12_add_drawer_toggle_visibility/toggle_add_drawer.py` | Added — `toggle_add_drawer(window)`. |
+| `gui/_13_stats_badges_update_live/update_stats_badges.py` | Added — `update_stats_badges(window)` using `core.storage.get_stats`. |
+| `gui/_14_feed_config_load_from_disk/load_feeds.py` | Added — `load_feeds(window)` reading `feeds.json`. |
+| `gui/_15_feed_config_save_to_disk/save_feeds.py` | Added — `save_feeds(window)` writing `feeds.json`. |
+| `gui/_16_refresh_all_views_pipeline/refresh_all_views.py` | Added — `refresh_window(window)` orchestrating all three refresh functions. |
+| `gui/_17_subscriptions_table_refresh_view/refresh_subscriptions_table.py` | Added — `refresh_subscriptions_table(window)` with `blockSignals` guard. |
+| `gui/_18_articles_table_refresh_view/refresh_articles_table.py` | Added — `refresh_articles_table(window)` with `blockSignals` guard. |
+| `gui/_19_feed_add_single_subscription/add_feed_subscription.py` | Added — `add_feed(window)`. |
+| `gui/_20_feed_delete_subscription/delete_feed_subscription.py` | Added — `delete_feed(window, fid)`. |
+| `gui/_21_feed_toggle_enabled_state/toggle_feed_state.py` | Added — `toggle_feed(window, fid, on)`. |
+| `gui/_22_feed_update_interval_frequency/set_feed_frequency.py` | Added — `set_feed_frequency(window, fid, hours)`. |
+| `gui/_23_feed_ping_endpoint_single_scrape/ping_feed_endpoint.py` | Added — `ping_feed(window, fid)`. |
+| `gui/_24_preset_quick_import_single_feed/import_preset_feed.py` | Added — `import_preset(window, name, url, category)`. |
+| `gui/_25_article_selection_reader_update/on_article_selected.py` | Added — `on_article_selected(window)`. |
+| `gui/_26_article_link_open_in_browser/open_article_in_browser.py` | Added — `open_article_in_browser(window)`. |
+| `gui/_27_article_link_copy_to_clipboard/copy_article_link.py` | Added — `copy_article_link(window)`. |
+| `gui/_28_systemd_status_refresh_daemon/refresh_systemd_status.py` | Added — `refresh_systemd_status(window)`. |
+| `gui/_29_systemd_timer_install_handler/handle_install_systemd.py` | Added — `handle_install_systemd(window)`. |
+| `gui/_30_preset_categories_load_dropdown/load_preset_categories.py` | Added — `load_preset_categories(window)`. |
+| `gui/_31_presets_table_refresh_view/refresh_presets_table.py` | Added — `refresh_presets_table(window)`. |
+| `gui/_32_preset_add_single_from_catalog/add_preset_feed.py` | Added — `add_preset_feed(window, preset)`. |
+| `gui/_33_preset_add_all_bulk_import/add_all_presets.py` | Added — `add_all_presets(window)`. |
+| `gui/_34_scrape_start_enabled_feeds/start_scrape.py` | Added — `start_scrape(window)`. |
+| `gui/_35_scrape_run_background_orchestrator/run_scrape_background.py` | Added — `run_scrape(window, feeds)` wiring `ScrapeThread` signals. |
+| `gui/_36_scrape_finished_signal_handler/on_scrape_done.py` | Added — `on_scrape_done(window, new, total, errors)`. |
+| `gui/_37_main_window_facade_assembly/main_window_facade.py` | Added — `MainWindow(QMainWindow)` delegating facade class. |
+| `gui/_38_bootstrap_launch_window/bootstrap_launch_window.py` | Added — `launch_gui_window()` entry point moved from `__main__` block. |
+| `gui/window.py` | Replaced — now a thin re-export facade (`from gui._37_… import MainWindow`). |
+| `main.py` | Modified — GUI bootstrap delegated to `gui._38_bootstrap_launch_window.launch_gui_window()`. |
+| `README.md` | Modified — updated Branch Map, Branch-Related File Changes, and compile command. |
 
 ---
 
