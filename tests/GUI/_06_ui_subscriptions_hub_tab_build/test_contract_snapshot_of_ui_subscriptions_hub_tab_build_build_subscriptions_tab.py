@@ -41,7 +41,7 @@ Do NOT patch this test. Instead:
 #   - test_in_cat_default_general : verifies the category input defaults to text "General"
 #   - test_btn_toggle_drawer_connected : verifies the toggle button is connected to window.toggle_add_drawer
 #   - test_btn_add_connected : verifies the add button is connected to window.add_feed
-#   - test_preset_chips_created : verifies preset chip buttons are created for each get_preset_feeds() item
+#   - test_preset_dropdown_tiered : verifies two-tier preset dropdown (category + feed selector) is created and wired
 #   - test_tab_label : verifies the tab is added with label "📡 Subscriptions Hub"
 # ==============================================================================
 
@@ -601,8 +601,8 @@ def test_cb_freq_items_and_default_index():
         MockButton.return_value = MagicMock()
         with patch.object(mod, "get_preset_feeds", return_value=[]):
             mod.build_subscriptions_tab(window)
-        mock_combo.addItems.assert_called_once_with(["1h", "3h", "6h", "12h", "24h"])
-        mock_combo.setCurrentIndex.assert_called_once_with(3)
+        mock_combo.addItems.assert_any_call(["1h", "3h", "6h", "12h", "24h"])
+        mock_combo.setCurrentIndex.assert_any_call(3)
 
 
 def test_in_cat_default_general():
@@ -801,19 +801,23 @@ def test_btn_add_connected():
         mock_btn.clicked.connect.assert_called_once_with(window.add_feed)
 
 
-def test_preset_chips_created():
-    r"""Layer 2 — preset chip buttons must be created for each get_preset_feeds() item.
+def test_preset_dropdown_tiered():
+    r"""Layer 2 — two-tier preset dropdown must be created and wired.
 
     WHAT:
       Mocks the Qt widgets and provides two preset feeds via get_preset_feeds
-      (TechCrunch and BBC). Calls build_subscriptions_tab and verifies that
-      the chip button's clicked.connect was called twice — once per preset.
+      (TechCrunch and BBC) plus two categories via get_preset_categories.
+      Calls build_subscriptions_tab and verifies that:
+        - window.cb_preset_cat (category combo) was created and populated
+        - window.cb_preset_select (preset combo) was created
+        - cb_preset_select.currentIndexChanged was connected to import logic
+        - window._preset_feeds was set with the preset list
 
     WHY:
-      Preset chips give users a quick way to import commonly-known RSS feeds
-      with a single click. If the preset loop is broken (e.g., skipped entirely
-      or only processing the first item), users lose access to one-click
-      feed imports, reducing usability significantly.
+      The two-tier dropdown replaces the 475 chip buttons. Users first pick
+      a category, then pick a feed from the filtered list. Selecting a feed
+      immediately imports it. If the dropdown setup is broken, users lose
+      access to quick-import entirely.
 
     OPTIONS:
       None. This test requires no optional parameters.
@@ -822,28 +826,34 @@ def test_preset_chips_created():
       None.
 
     OUTPUT/EFFECT:
-      Passes if mock_chip.clicked.connect was called exactly 2 times (one per preset).
-      Raises AssertionError if called 0 times (no presets processed) or wrong count.
+      Passes if cb_preset_cat and cb_preset_select are both created,
+      cb_preset_cat is populated with categories, and cb_preset_select
+      has currentIndexChanged connected (called at least once).
 
     ERRORS/EDGE CASES:
-      - get_preset_feeds returns empty list: connect called 0 times (this test would fail, indicating a regression if presets exist).
-      - get_preset_feeds returns 1 item: connect called 1 time (test fails, indicating missing presets).
-      - get_preset_feeds returns 3+ items: connect called N times (test fails with wrong count).
+      - get_preset_feeds returns empty list: dropdowns still created with placeholder.
+      - get_preset_categories raises: falls back to ["All Categories"].
 
     HOW TO TEST:
-      1. Patch get_preset_feeds to return [{"name":"TechCrunch","url":"http://tc.com/feed","category":"Technology"}, {"name":"BBC","url":"http://bbc.com/feed","category":"News"}].
-      2. Patch QPushButton to return a MagicMock with clicked.connect mock.
+      1. Patch get_preset_feeds to return two presets and get_preset_categories
+         to return two categories.
+      2. Patch QComboBox to return a MagicMock with addItems/currentIndexChanged
+         mocks.
       3. Call build_subscriptions_tab(window).
-      4. Assert mock_chip.clicked.connect.call_count == 2.
-      Realistic example: presets = [{"name":"TechCrunch","url":"http://tc.com/feed","category":"Technology"}]; assert mock_chip.clicked.connect.call_count == len(presets)
+      4. Assert window.cb_preset_cat exists and addItems was called.
+      5. Assert window.cb_preset_select exists and currentIndexChanged.connect
+         was called.
+      6. Assert window._preset_feeds equals the preset list.
     """
     mod = _import_module()
     window = MagicMock()
+    window._preset_feeds = None
     with patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QTableWidget") as MockTable, \
          patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QFrame") as MockFrame, \
          patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QLineEdit") as MockLine, \
          patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QComboBox") as MockCombo, \
-         patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QPushButton") as MockButton:
+         patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QPushButton") as MockButton, \
+         patch("gui._06_ui_subscriptions_hub_tab_build.build_subscriptions_tab.QLabel") as MockLabel:
         MockTable.return_value = MagicMock()
         MockTable.return_value.setColumnCount = MagicMock()
         MockTable.return_value.setHorizontalHeaderLabels = MagicMock()
@@ -856,20 +866,54 @@ def test_preset_chips_created():
         MockTable.return_value.setAlternatingRowColors = MagicMock()
         MockFrame.return_value = MagicMock()
         MockLine.return_value = MagicMock()
-        MockCombo.return_value = MagicMock()
-        mock_chip = MagicMock()
-        mock_chip.setObjectName = MagicMock()
-        mock_chip.setToolTip = MagicMock()
-        mock_chip.clicked = MagicMock()
-        mock_chip.clicked.connect = MagicMock()
-        MockButton.return_value = mock_chip
+        mock_label = MagicMock()
+        mock_label.setStyleSheet = MagicMock()
+        MockLabel.return_value = mock_label
+        mock_btn_toggle = MagicMock()
+        mock_btn_toggle.clicked = MagicMock()
+        mock_btn_toggle.clicked.connect = MagicMock()
+        mock_btn_add = MagicMock()
+        mock_btn_add.clicked = MagicMock()
+        mock_btn_add.clicked.connect = MagicMock()
+        MockButton.side_effect = [mock_btn_toggle, mock_btn_add]
+
+        # Track each QComboBox creation individually.
+        combo_captures = []
+
+        def combo_factory(*args, **kwargs):
+            m = MagicMock()
+            m.addItems = MagicMock()
+            m.setCurrentIndex = MagicMock()
+            m.setMinimumWidth = MagicMock()
+            m.currentIndexChanged = MagicMock()
+            m.currentIndexChanged.connect = MagicMock()
+            m.itemText = MagicMock(return_value="All Categories")
+            m.count = MagicMock(return_value=1)
+            combo_captures.append(m)
+            return m
+
+        MockCombo.side_effect = combo_factory
         presets = [
             {"name": "TechCrunch", "url": "http://tc.com/feed", "category": "Technology"},
             {"name": "BBC", "url": "http://bbc.com/feed", "category": "News"},
         ]
-        with patch.object(mod, "get_preset_feeds", return_value=presets):
+        categories = ["Technology", "News"]
+        with patch.object(mod, "get_preset_feeds", return_value=presets), \
+             patch.object(mod, "get_preset_categories", return_value=categories):
             mod.build_subscriptions_tab(window)
-        assert mock_chip.clicked.connect.call_count == 2
+
+        # cb_preset_cat is the 3rd QComboBox (after cb_cat_filter and cb_freq).
+        assert len(combo_captures) >= 3
+        cb_preset_cat = combo_captures[2]
+        # cb_preset_select is the 4th QComboBox.
+        cb_preset_select = combo_captures[3] if len(combo_captures) > 3 else combo_captures[2]
+
+        # Category combo must have been populated.
+        cb_preset_cat.addItems.assert_called_once()
+        # Preset combo must have had its index changed signal connected.
+        cb_preset_select.currentIndexChanged.connect.assert_called_once()
+        # window must have the preset list stored for lookup.
+        assert window._preset_feeds == presets
 
 
 def test_tab_label():

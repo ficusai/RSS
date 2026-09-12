@@ -10,17 +10,19 @@
 # The drawer is hidden by default and toggled by the "New Feed / Presets ▾" button.
 #
 # WHAT: Creates the subscriptions tab with filter bar, collapsible add-drawer,
-#       preset chips for quick import, and a feed management table.
+#       two-tier preset dropdown (category → feed name), and a feed management table.
 #
 # OPTIONS: window — MainWindow instance. Stores widget references:
 #            - window.in_filter: search box for filtering feeds
 #            - window.cb_cat_filter: category dropdown
 #            - window.btn_toggle_drawer: button to show/hide the add drawer
-#            - window.drawer_box: collapsible panel with add form + preset chips
+#            - window.drawer_box: collapsible panel with add form + preset dropdowns
 #            - window.in_name, window.in_url, window.in_cat: form inputs
 #            - window.cb_freq: frequency dropdown (1h/3h/6h/12h/24h)
 #            - window.btn_add: add feed button
 #            - window.table_feeds: feed management table
+#            - window.cb_preset_cat: category selector for preset quick-import
+#            - window.cb_preset_select: preset feed selector, filtered by category
 #
 # DEFAULTS: N/A.
 #
@@ -49,9 +51,75 @@ from PyQt6.QtWidgets import (
     QWidget,          # base widget
 )
 
-# Import the presets library to populate quick-import chip buttons.
+# Import the presets library to populate the two-tier quick-import dropdown.
 # get_preset_feeds() returns a list of dicts with 'name', 'url', 'category' keys.
-from features.feature_feed_presets_library.implementation.feeds_presets import get_preset_feeds
+# get_preset_categories() returns an ordered list of all category names.
+from features.feature_feed_presets_library.implementation.feeds_presets import (
+    get_preset_feeds,
+    get_preset_categories,
+)
+
+
+def _refresh_preset_dropdown(window, category_index: int) -> None:
+    """Repopulate window.cb_preset_select based on the selected category.
+
+    WHAT: Filters window._preset_feeds by the category at index
+      category_index of window.cb_preset_cat, then clears and refills
+      window.cb_preset_select with matching preset names. Index 0
+      corresponds to "All Categories" and shows all presets.
+    OPTIONS:
+      window — MainWindow instance with cb_preset_cat, cb_preset_select,
+               and _preset_feeds attributes already set up.
+      category_index — integer index returned by QComboBox::currentIndexChanged.
+    DEFAULTS: N/A.
+    OUTPUT/EFFECT: cb_preset_select is cleared, re-populated with matching
+      names (prefixed with a placeholder "— Select a feed —" at index 0),
+      and reset to index 0 so no feed is auto-selected on category change.
+    ERRORS/EDGE CASES: If window._preset_feeds is empty or missing, the
+      dropdown is left with only the placeholder item.
+    """
+    # Re-display the placeholder at index 0.
+    cat_text = window.cb_preset_cat.itemText(category_index) if 0 <= category_index < window.cb_preset_cat.count() else "All Categories"
+    window.cb_preset_select.blockSignals(True)
+    window.cb_preset_select.clear()
+    window.cb_preset_select.addItem("— Select a feed —")
+    presets = window._preset_feeds if hasattr(window, "_preset_feeds") else []
+    if cat_text and cat_text != "All Categories":
+        filtered = [p for p in presets if (p.get("category") or "").strip() == cat_text]
+    else:
+        filtered = presets
+    for p in filtered:
+        window.cb_preset_select.addItem(p.get("name", "Unknown"))
+    window.cb_preset_select.setCurrentIndex(0)
+    window.cb_preset_select.blockSignals(False)
+
+
+def _import_selected_preset(window, preset_index: int) -> None:
+    """Import the preset feed selected at the given index in cb_preset_select.
+
+    WHAT: Looks up the preset dict from window._preset_feeds by the name
+      stored at preset_index in window.cb_preset_select, then calls
+      window.import_preset(name, url, category) to subscribe it.
+      If preset_index is 0 (the placeholder), nothing happens.
+    OPTIONS:
+      window — MainWindow instance with cb_preset_select and _preset_feeds.
+      preset_index — integer index from QComboBox::currentIndexChanged.
+    DEFAULTS: N/A.
+    OUTPUT/EFFECT: Calls window.import_preset if a real preset is selected.
+    ERRORS/EDGE CASES: If the preset cannot be found by name, nothing happens.
+    """
+    if preset_index <= 0:
+        return
+    name = window.cb_preset_select.itemText(preset_index)
+    presets = window._preset_feeds if hasattr(window, "_preset_feeds") else []
+    match = next((p for p in presets if p.get("name") == name), None)
+    if match is None:
+        return
+    window.import_preset(
+        match.get("name", name),
+        match.get("url", ""),
+        match.get("category", "General"),
+    )
 
 
 def build_subscriptions_tab(window) -> None:
@@ -72,6 +140,8 @@ def build_subscriptions_tab(window) -> None:
                 - window.cb_freq: interval dropdown
                 - window.btn_add: add feed button
                 - window.table_feeds: feed table widget
+                - window.cb_preset_cat: category selector for preset import
+                - window.cb_preset_select: preset feed selector dropdown
 
     DEFAULTS: None.
 
@@ -80,10 +150,10 @@ def build_subscriptions_tab(window) -> None:
         1. Header with title, search, category filter, toggle button
         2. Collapsible drawer (hidden by default) with:
            - Add-feed form (name, URL, category, interval, add button)
-           - Quick-import preset chips (one button per preset feed)
+           - Two-tier preset quick-import: category selector → feed name selector
         3. Feed management table with 6 columns: Name, URL, Category, Interval, Active, Actions
 
-    ERRORS/EDGE CASES: None expected. Preset chip creation handles empty preset lists.
+    ERRORS/EDGE CASES: None expected. Preset dropdown handles empty preset lists.
 
     HOW TO TEST:
       1. Call build_subscriptions_tab(window)
@@ -181,34 +251,46 @@ def build_subscriptions_tab(window) -> None:
     add_top.addWidget(window.btn_add)
     drawer_v.addLayout(add_top)
 
-    # --- Quick Import Presets Row ---
-    # QLabel("Quick Import:"): section label.
-    presets_l = QHBoxLayout()
-    presets_l.setSpacing(8)
-    lbl_preset = QLabel("Quick Import:")
-    lbl_preset.setStyleSheet("color: #8b949e; font-size: 14px; font-weight: 600;")
-    presets_l.addWidget(lbl_preset)
+    # --- Two-Tier Preset Quick-Import Dropdown ---
+    # Store all presets on the window for lookup by name during import.
+    try:
+        all_presets = get_preset_feeds()
+    except Exception:
+        all_presets = []
+    window._preset_feeds = all_presets
 
-    # Loop through each preset feed and create a chip button.
-    # get_preset_feeds() returns a list like [{"name": "TechCrunch", "url": "...", "category": "Technology"}, ...]
-    for preset in get_preset_feeds():
-        p_name = preset.get("name")
-        p_url = preset.get("url")
-        p_cat = preset.get("category", "General")  # Default to "General" if missing
+    # QLabel: section label for the preset importer.
+    lbl_import = QLabel("Quick Import:")
+    lbl_import.setStyleSheet("color: #8b949e; font-size: 14px; font-weight: 600;")
+    drawer_v.addWidget(lbl_import)
 
-        # QPushButton: small rounded chip button for quick import.
-        # setObjectName("chip"): applies the pill-shaped style from STYLESHEET.
-        btn_chip = QPushButton(f"+ {p_name}")
-        btn_chip.setObjectName("chip")
-        # setToolTip(): shows hover text with full details.
-        btn_chip.setToolTip(f"Import {p_name} ({p_cat})\n{p_url}")
-        # clicked.connect: when clicked, import this preset.
-        # Lambda captures p_name, p_url, p_cat by value (not reference) using default args.
-        btn_chip.clicked.connect(lambda _, n=p_name, u=p_url, c=p_cat: window.import_preset(n, u, c))
-        presets_l.addWidget(btn_chip)
+    # QComboBox: category selector — populates window.cb_preset_cat.
+    # Starts with "All Categories" then appends each preset category.
+    window.cb_preset_cat = QComboBox()
+    window.cb_preset_cat.setMinimumWidth(200)
+    try:
+        cats = ["All Categories"] + get_preset_categories()
+    except Exception:
+        cats = ["All Categories"]
+    window.cb_preset_cat.addItems(cats)
+    # currentIndexChanged: filter the preset dropdown when the category changes.
+    window.cb_preset_cat.currentIndexChanged.connect(
+        lambda i: _refresh_preset_dropdown(window, i)
+    )
+    drawer_v.addWidget(window.cb_preset_cat)
 
-    presets_l.addStretch()
-    drawer_v.addLayout(presets_l)
+    # QComboBox: preset feed selector — populates window.cb_preset_select.
+    # Populated dynamically based on the selected category from cb_preset_cat.
+    window.cb_preset_select = QComboBox()
+    window.cb_preset_select.setMinimumWidth(280)
+    window.cb_preset_select.addItem("— Select a feed —")
+    # Set current index to 0 so the placeholder is shown initially.
+    window.cb_preset_select.setCurrentIndex(0)
+    # currentIndexChanged: when a preset is picked, look it up and import it.
+    window.cb_preset_select.currentIndexChanged.connect(
+        lambda i: _import_selected_preset(window, i)
+    )
+    drawer_v.addWidget(window.cb_preset_select)
 
     # Add the drawer to the main tab layout.
     feed_l.addWidget(window.drawer_box)

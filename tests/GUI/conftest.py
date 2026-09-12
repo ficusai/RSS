@@ -296,6 +296,7 @@ class WindowStub:
         self.preset_combo_cat.setCurrentText = MagicMock()
         self.in_preset_search = MagicMock()
         self.in_preset_search.text = MagicMock(return_value="")
+        self.import_preset = MagicMock()
         # Systemd badges
         self.lbl_sys_service = MagicMock()
         self.lbl_sys_timer = MagicMock()
