@@ -62,7 +62,7 @@ def test_source_contains_slug_regex():
     """Layer 1 — Source contains import re + slug regex literal."""
     source = _module_path().read_text()
     assert "import re" in source
-    assert re.search(r'r"\[^a-zA-Z0-9_\]\+"', source) or re.search(r"r'\[^a-zA-Z0-9_\]\+'", source), \
+    assert re.search(r'r"\[\^a-zA-Z0-9_\]\+"', source) or re.search(r"r'\[\^a-zA-Z0-9_\]\+'", source), \
         "Source should contain the slug regex literal [^a-zA-Z0-9_]+"
 
 

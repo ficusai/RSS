@@ -38,6 +38,11 @@ LAYER WHAT EACH TEST CHECKS
 # importlib.util: Finds the filesystem path of the source module for AST-based
 #                 import verification in the structural tests.
 import importlib.util
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
 # pytest: Test framework; provides the @pytest.fixture decorator for the qapp
 #         singleton that all PyQt6 widget tests share.
 import pytest

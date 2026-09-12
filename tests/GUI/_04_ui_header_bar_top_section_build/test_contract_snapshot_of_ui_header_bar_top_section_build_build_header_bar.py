@@ -53,7 +53,7 @@ import sys
 # pathlib.Path: Cross-platform filesystem path construction.
 from pathlib import Path
 # unittest.mock.MagicMock: Creates fake objects that记录 all method calls for verification.
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 # NOTE: conftest.py sets QT_QPA_PLATFORM=offscreen before this import.
 # Prevents PyQt6 from trying to open a real display during headless test runs.
@@ -330,18 +330,22 @@ def test_lbl_articles_stat_created():
          patch("gui._04_ui_header_bar_top_section_build.build_header_bar.QHBoxLayout") as MockLayout, \
          patch("gui._04_ui_header_bar_top_section_build.build_header_bar.QFrame") as MockFrame, \
          patch("gui._04_ui_header_bar_top_section_build.build_header_bar.QFont"):
-        MockFrame.return_value = MagicMock()
-        MockFrame.return_value.setObjectName = MagicMock()
-        MockLayout.return_value = MagicMock()
-        # Create mock labels; the 4th one is lbl_articles_stat
-        mock_lbl = MagicMock()
-        mock_lbl.setStyleSheet = MagicMock()
-        mock_lbl.setText = MagicMock()
-        # side_effect: each call to MockLabel returns the next mock in sequence
-        MockLabel.side_effect = [MagicMock(), MagicMock(), MagicMock(), mock_lbl]
-        mod.build_header_bar(window)
-        # Verify setText was called on lbl_articles_stat
-        mock_lbl.setText.assert_called_once()
+         MockFrame.return_value = MagicMock()
+         MockFrame.return_value.setObjectName = MagicMock()
+         MockLayout.return_value = MagicMock()
+         # The source creates 4 QLabels via constructor text (NOT .setText()):
+         #   index 0: title_badge        = QLabel("⚡ RSS ENGINE")
+         #   index 1: subtitle_lbl       = QLabel("Feed Tracker & Scraper Pro")
+         #   index 2: window.lbl_articles_stat = QLabel("0 Articles")
+         #   index 3: window.lbl_feeds_stat    = QLabel("0 Feeds")
+         lbl_mocks = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
+         lbl_mocks[2].setStyleSheet = MagicMock()
+         lbl_mocks[3].setStyleSheet = MagicMock()
+         MockLabel.side_effect = lbl_mocks
+         mod.build_header_bar(window)
+         # Verify lbl_articles_stat (3rd label) was constructed with "0 Articles"
+         assert MockLabel.call_args_list[2] == call("0 Articles")
+         assert window.lbl_articles_stat is lbl_mocks[2]
 
 
 def test_btn_sync_text_and_object_name():

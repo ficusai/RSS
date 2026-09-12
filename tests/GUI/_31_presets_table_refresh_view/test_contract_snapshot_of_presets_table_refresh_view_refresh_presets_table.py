@@ -47,6 +47,11 @@ LAYER WHAT EACH TEST CHECKS
 # ==============================================================================
 # importlib.util: Finds the filesystem path of the source module for import checks.
 import importlib.util
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
 # pytest: Test framework; provides the @pytest.fixture decorator for the qapp fixture.
 import pytest
 # unittest.mock.MagicMock: Creates fake objects that record every method call.

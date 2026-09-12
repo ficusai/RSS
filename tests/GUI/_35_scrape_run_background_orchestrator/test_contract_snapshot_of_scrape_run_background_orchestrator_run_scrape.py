@@ -13,6 +13,15 @@ Structural contract:
 # WHAT: Verifies the run_scrape GUI contract — creates ScrapeThread, wires
 #       signals, disables button, shows progress bar, and starts the thread.
 #
+# LAYER BREAKDOWN:
+#   Layer 1 (Structural):  test_signature, test_source_imports
+#   Layer 2 (Behavioral): test_creates_thread_and_wires_signals
+#
+# LAYER WHAT EACH TEST CHECKS:
+#   test_signature          — function params (window, feeds), kind, default, return annotation
+#   test_source_imports     — required modules imported via AST
+#   test_creates_thread_and_wires_signals — button disabled, progress shown, thread started, signals wired
+#
 # OPTIONS:
 #   window: MainWindow stub with btn_sync, progress, and other required attrs.
 #   feeds: list of feed dicts to scrape.
@@ -28,6 +37,11 @@ Structural contract:
 import importlib.util
 import pytest
 from unittest.mock import MagicMock, patch, call as mock_call
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
 
 # offscreen platform required for all PyQt6 widget testing
 import os
@@ -45,7 +59,22 @@ def qapp():
 
 
 def _make_window():
-    """Build a minimal WindowStub for run_scrape."""
+    r"""Build a minimal WindowStub for run_scrape.
+
+    WHAT: Constructs a stub window whose btn_sync, progress, and scrape_thread
+          attributes are pre-mocked so run_scrape can manipulate them safely.
+
+    OPTIONS:
+      None — all attributes are auto-created with sensible defaults.
+
+    DEFAULTS: btn_sync and progress are MagicMock instances; scrape_thread is None.
+
+    OUTPUT/EFFECT: Returns a WindowStub ready for run_scrape tests.
+
+    ERRORS/EDGE CASES: None — stub is intentionally minimal.
+
+    HOW TO TEST: Inspect w.btn_sync, w.progress, w.scrape_thread after creation.
+    """
     from tests.GUI.conftest import WindowStub
     w = WindowStub()
     w.btn_sync = MagicMock()
@@ -59,10 +88,39 @@ def _make_window():
 # ===========================================================================
 
 class TestLayer1_Structural:
-    """Structural / signature / import contract checks."""
+    r"""Structural / signature / import contract checks.
+
+    WHAT: Verifies that the source module's public API matches the declared
+          contract — function signature with two parameters, return type, and
+          required imports — without executing any thread-creation logic.
+
+    OPTIONS:
+      None — purely static, no Qt event loop needed.
+
+    DEFAULTS: N/A.
+
+    OUTPUT/EFFECT: Assertions pass if signature, imports, and callable contract hold.
+
+    ERRORS/EDGE CASES: Any mismatch raises AssertionError indicating contract drift.
+
+    HOW TO TEST: Run pytest on this class alone; all tests are fast and deterministic.
+    """
 
     def test_signature(self):
-        """assert run_scrape(window, feeds) -> None."""
+        r"""WHAT: Confirm run_scrape accepts exactly two positional-or-keyword
+                  parameters named 'window' and 'feeds', and annotates return as None.
+
+        OPTIONS:
+          None — inspects the real function object directly.
+
+        DEFAULTS: N/A.
+
+        OUTPUT/EFFECT: params list and return_annotation asserted.
+
+        ERRORS/EDGE CASES: Extra/missing params, wrong kind, or missing return annotation → fail.
+
+        HOW TO TEST: Import the function and call inspect.signature on it.
+        """
         import inspect
         from gui._35_scrape_run_background_orchestrator.run_scrape_background import run_scrape
         sig = inspect.signature(run_scrape)
@@ -74,7 +132,21 @@ class TestLayer1_Structural:
         assert sig.return_annotation is None
 
     def test_source_imports(self):
-        """Source must import append_log_message, on_scrape_done, ScrapeThread."""
+        r"""WHAT: Ensure the source module imports append_log_message, on_scrape_done,
+                  and ScrapeThread, confirming all three dependency contracts are
+                  declared in the source AST.
+
+        OPTIONS:
+          None — uses assert_source_imports helper from conftest.
+
+        DEFAULTS: N/A.
+
+        OUTPUT/EFFECT: Assertion passes if all three module paths appear in source AST.
+
+        ERRORS/EDGE CASES: Missing import → assert_source_imports raises AssertionError.
+
+        HOW TO TEST: Run this test; it reads the .py file and walks the AST.
+        """
         from tests.GUI.conftest import assert_source_imports
         module_path = "gui._35_scrape_run_background_orchestrator.run_scrape_background"
         assert_source_imports(
@@ -92,11 +164,47 @@ class TestLayer1_Structural:
 # ===========================================================================
 
 class TestLayer2_Behavioral:
-    """Behavioral smoke tests against the real function."""
+    r"""Behavioral smoke tests against the real function.
+
+    WHAT: Executes run_scrape with a mocked ScrapeThread and asserts that the
+          function correctly disables the sync button, shows the progress bar,
+          constructs and starts the thread exactly once, and wires both signals.
+
+    OPTIONS:
+      qapp fixture: provides a QApplication instance for PyQt6 widget tests.
+      MockScrapeThread patch: controls ScrapeThread construction and returns a mock thread.
+      _make_window(): provides stub with btn_sync, progress, scrape_thread = None.
+
+    DEFAULTS: Uses _make_window() with one synthetic feed dict.
+
+    OUTPUT/EFFECT: Button state changes, progress bar visible, thread started, signals connected.
+
+    ERRORS/EDGE CASES: None expected — this is the primary orchestration scenario.
+
+    HOW TO TEST: Run pytest on this class; all tests require the qapp fixture.
+    """
 
     @patch("gui._35_scrape_run_background_orchestrator.run_scrape_background.ScrapeThread")
     def test_creates_thread_and_wires_signals(self, MockScrapeThread, qapp):
-        """Btn disabled, progress shown, thread constructed once, started, signals wired."""
+        r"""WHAT: run_scrape must disable the sync button, update its text to
+                  indicate running state, show the progress bar, construct exactly
+                  one ScrapeThread, start it, and connect both signals once each.
+
+        OPTIONS:
+          qapp: required for PyQt6 widget creation.
+          MockScrapeThread: patched constructor returning a mock thread with log_signal
+                            and finished_signal attributes.
+          _make_window(): provides stub with btn_sync, progress, scrape_thread = None.
+          feeds: single-element list with a synthetic feed dict.
+
+        DEFAULTS: Button text becomes "⏳ Syncing..."; progress range set to (0, 0) (indeterminate).
+
+        OUTPUT/EFFECT: All UI state changes and thread lifecycle calls verified.
+
+        ERRORS/EDGE CASES: None — this is the primary success scenario.
+
+        HOW TO TEST: Patch ScrapeThread, create window, call run_scrape(w, feeds), assert calls.
+        """
         from gui._35_scrape_run_background_orchestrator.run_scrape_background import run_scrape
 
         mock_thread = MagicMock()

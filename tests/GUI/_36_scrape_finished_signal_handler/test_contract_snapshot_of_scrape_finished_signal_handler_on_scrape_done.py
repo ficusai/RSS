@@ -49,6 +49,11 @@ import pytest
 #                          we can verify calls without running real code.
 from unittest.mock import MagicMock, patch
 
+# sys: extends Python's import search path so `import gui.*` works from here.
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
 # offscreen platform required for all PyQt6 widget testing
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

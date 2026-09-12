@@ -44,6 +44,11 @@ import inspect
 #     PyQt6 import, enabling headless GUI testing without a display server.
 import os
 
+# sys: extends Python's import search path so `import gui.*` and `import tests.*` work.
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
 # offscreen platform required for all PyQt6 widget testing
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
