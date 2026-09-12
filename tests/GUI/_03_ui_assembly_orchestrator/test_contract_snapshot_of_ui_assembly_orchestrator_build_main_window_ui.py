@@ -18,7 +18,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 # PyQt6.QtWidgets.QApplication: Required before any Qt widget construction.
 from PyQt6.QtWidgets import QApplication
-QApplication.instance() or QApplication([])
+_qapp = QApplication.instance() or QApplication([])
 
 # NOTE: conftest.py sets QT_QPA_PLATFORM=offscreen before this import.
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
