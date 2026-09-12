@@ -34,12 +34,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtWidgets import QApplication  # noqa: E402  # offscreen platform
 
-
-@pytest.fixture(scope="module")
-def qapp():
-    """Create a single QApplication instance for the module."""
-    app = QApplication([])
-    yield app
+# Module-level QApplication instance. Kept at module scope so pytest never
+# tears it down (which would crash PyQt6 on Python 3.14 during interpreter
+# shutdown). The real QApplication is only needed as a side-effect of importing
+# PyQt6; the tests themselves never use the instance object.
+_qapp = QApplication([])
 
 
 
@@ -89,7 +88,7 @@ class TestLayer2_Behavioral:
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QMessageBox.information")
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.append_log_message")
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QApplication.clipboard")
-    def test_copies_clipboard_and_logs_and_shows_dialog(self, mock_clipboard, mock_log, mock_info, qapp):
+    def test_copies_clipboard_and_logs_and_shows_dialog(self, mock_clipboard, mock_log, mock_info):
         """URL property present → clipboard updated, log appended, dialog shown."""
         from gui._27_article_link_copy_to_clipboard.copy_article_link import (
             copy_article_link,
@@ -104,7 +103,7 @@ class TestLayer2_Behavioral:
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QMessageBox.information")
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.append_log_message")
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QApplication.clipboard")
-    def test_no_op_when_url_missing(self, mock_clipboard, mock_log, mock_info, qapp):
+    def test_no_op_when_url_missing(self, mock_clipboard, mock_log, mock_info):
         """No url property → clipboard not touched, dialog not shown."""
         from gui._27_article_link_copy_to_clipboard.copy_article_link import (
             copy_article_link,

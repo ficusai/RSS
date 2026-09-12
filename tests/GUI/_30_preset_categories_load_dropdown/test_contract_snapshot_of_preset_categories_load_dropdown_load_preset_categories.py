@@ -31,12 +31,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtWidgets import QApplication  # noqa: E402  # offscreen platform
 
-
-@pytest.fixture(scope="module")
-def qapp():
-    """Create a single QApplication instance for the module."""
-    app = QApplication([])
-    yield app
+# Module-level QApplication instance. Kept at module scope so pytest never
+# tears it down (which would crash PyQt6 on Python 3.14 during interpreter
+# shutdown). The real QApplication is only needed as a side-effect of importing
+# PyQt6; the tests themselves never use the instance object.
+_qapp = QApplication([])
 
 
 
@@ -88,7 +87,7 @@ class TestLayer2_Behavioral:
         "features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
         return_value=["Finance", "News", "Science"],
     )
-    def test_populates_dropdown_with_fallback_and_restores_selection(self, mock_get_cats, qapp):
+    def test_populates_dropdown_with_fallback_and_restores_selection(self, mock_get_cats):
         """Dropdown populated with 'All Categories' + sorted cats; selection restored."""
         from gui._30_preset_categories_load_dropdown.load_preset_categories import (
             load_preset_categories,
@@ -106,7 +105,7 @@ class TestLayer2_Behavioral:
         "features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
         side_effect=ImportError("no feature"),
     )
-    def test_fallback_on_import_error(self, mock_get_cats, qapp):
+    def test_fallback_on_import_error(self, mock_get_cats):
         """Import error → falls back to ['All Categories'] only."""
         from gui._30_preset_categories_load_dropdown.load_preset_categories import (
             load_preset_categories,
@@ -119,7 +118,7 @@ class TestLayer2_Behavioral:
         "features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
         return_value=["Finance", "News"],
     )
-    def test_restores_selection_when_still_present(self, mock_get_cats, qapp):
+    def test_restores_selection_when_still_present(self, mock_get_cats):
         """Selection already in new list → restored via setCurrentText."""
         from gui._30_preset_categories_load_dropdown.load_preset_categories import (
             load_preset_categories,

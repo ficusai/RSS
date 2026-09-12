@@ -1,28 +1,47 @@
-"""Contract snapshot: gui/_37_main_window_facade_assembly/main_window_facade.py v1.0.0
+"""
+==============================================================================
+WHAT THIS TEST FILE VERIFIES
+==============================================================================
+This file verifies the MainWindow facade class — the thin QMainWindow subclass
+that delegates every GUI operation to an atomic module. It checks:
+  - MainWindow inherits from QMainWindow
+  - The exact set of public methods matches the expected facade contract
+  - Each delegate method imports from the correct gui._NN_... source module
+  - Headless instantiation creates a window with correct title, size, tabs,
+    empty feeds list, and config path
 
-Structural contract:
-  - Class: MainWindow(QMainWindow)
-  - EXACT_METHODS set defined in this test for drift detection
-  - Each delegate method verifies its source import path points to gui._NN_...
+==============================================================================
+LAYER BREAKDOWN
+==============================================================================
+Layer 1 (Structural):
+  - test_class_exists_and_inherits_qmainwindow : MainWindow is a class
+                                                  inheriting from QMainWindow
+  - test_expected_methods_exact                : MainWindow defines exactly the
+                                                  EXPECTED_METHODS set — no more,
+                                                  no less
+  - test_method_source_paths                   : Each delegate method imports
+                                                  from the correct gui._NN_... module
+  - test_source_imports                        : Source imports QMainWindow,
+                                                  QIcon, and core GUI modules
+
+Layer 2 (Behavioral):
+  - test_headless_instantiation : MainWindow creates with correct title, size,
+                                   tabs, empty feeds, and config_path
+
+LAYER WHAT EACH TEST CHECKS
+==============================================================================
 """
 # ==============================================================================
-# WHAT: Verifies the MainWindow facade contract — exact method set, delegation
-#       paths, and headless instantiation smoke test (title, size, tabs, config).
-#
-# OPTIONS:
-#   window: MainWindow instance created headlessly (QT_QPA_PLATFORM=offscreen).
-#
-# DEFAULTS: Window title "RSS Feed Tracker & Scraping Dashboard", size 1280×840,
-#           min 980×700, 4 tabs, feeds=[], scrape_thread=None.
-#
-# OUTPUT/EFFECT: Fully instantiated MainWindow with all facade methods bound.
-#
-# ERRORS/EDGE CASES: Missing PyQt6 → ImportError at import time.
-#
-# HOW TO TEST: QT_QPA_PLATFORM=offscreen python3 -m pytest tests/GUI/_37_main_window_facade_assembly/test_main_window_facade.py
+# OVERVIEW OF IMPORTS USED IN THIS TEST FILE
 # ==============================================================================
+# pytest: Test framework; provides the @pytest.fixture decorator for the qapp
+#         singleton that all PyQt6 widget tests share.
 import pytest
+# inspect: Examines class members (methods, functions) and function signatures
+#          for structural contract verification.
 import inspect
+# os: Sets the QT_QPA_PLATFORM environment variable to "offscreen" before any
+#     PyQt6 import, enabling headless GUI testing without a display server.
 import os
 
 # offscreen platform required for all PyQt6 widget testing
@@ -33,7 +52,20 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402  # offscreen platform
 
 @pytest.fixture(scope="module")
 def qapp():
-    """Create a single QApplication instance for the module."""
+    """Provide one shared QApplication for the whole module.
+
+    WHAT: Creates a single Qt application object so MainWindow can be
+          instantiated in headless (offscreen) mode without a real display.
+
+    OPTIONS: scope="module" — one instance shared by every test in this file.
+
+    DEFAULTS: Qt runs in offscreen mode (no visible window).
+
+    OUTPUT/EFFECT: Yields a QApplication; Qt cleans it up after the tests run.
+
+    ERRORS/EDGE CASES: Creating two QApplication objects in one process crashes
+                       Qt, so exactly one is shared at module scope.
+    """
     app = QApplication([])
     yield app
 
@@ -96,16 +128,67 @@ METHOD_SOURCE_MAP = {
 # ===========================================================================
 
 class TestLayer1_Structural:
-    """Structural / signature / import contract checks."""
+    """Structural / signature / import contract checks.
+
+    These tests inspect the MainWindow class structure without instantiating it.
+    They fail if the class hierarchy, method set, or delegation paths drift
+    from the expected facade contract.
+    """
 
     def test_class_exists_and_inherits_qmainwindow(self):
-        """MainWindow is a class inheriting from QMainWindow."""
+        """Layer 1 — MainWindow inherits from QMainWindow.
+
+        WHAT: Confirms that MainWindow is a subclass of PyQt6's QMainWindow,
+              which provides the base window functionality (title bar, menu bar,
+              toolbars, status bar, central widget area).
+
+        WHY INHERIT QMainWindow:
+          The RSS app needs a full-featured main window with tabs, toolbars, and
+          a central widget area. QMainWindow is the standard Qt class for this.
+
+        OPTIONS: None — must inherit from QMainWindow.
+
+        DEFAULTS: N/A.
+
+        OUTPUT/EFFECT: Passes when issubclass(MainWindow, QMainWindow) is True.
+
+        ERRORS/EDGE CASES:
+          - Wrong base class: issubclass assertion fails
+          - MainWindow not a class: AttributeError on getattr
+
+        HOW TO TEST: Change `class MainWindow(QMainWindow)` to
+                     `class MainWindow(object)` in the source, then run —
+                     the issubclass check should fail.
+        """
         from PyQt6.QtWidgets import QMainWindow
         from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
         assert issubclass(MainWindow, QMainWindow)
 
     def test_expected_methods_exact(self):
-        """MainWindow defines exactly the EXPECTED_METHODS set — no more, no less."""
+        """Layer 1 — MainWindow defines exactly the EXPECTED_METHODS set.
+
+        WHAT: Verifies that MainWindow has exactly the methods listed in
+              EXPECTED_METHODS — no extra methods and no missing ones. This
+              detects both accidental method additions and unintentional removals.
+
+        WHY EXACT SET:
+          The facade pattern requires a known set of bound methods for Qt signal
+          connections. Adding a method changes the public API; removing one
+          breaks existing signal connections.
+
+        OPTIONS: EXPECTED_METHODS must match exactly — same count, same names.
+
+        DEFAULTS: 35 methods total (including __init__).
+
+        OUTPUT/EFFECT: Passes when actual methods == EXPECTED_METHODS exactly.
+
+        ERRORS/EDGE CASES:
+          - Extra method: "CONTRACT DRIFT — unexpected methods: [...]"
+          - Missing method: "CONTRACT DRIFT — missing methods: [...]"
+
+        HOW TO TEST: Add a new method to MainWindow in the source, then run —
+                     the test should fail with "unexpected methods: ['new_method']".
+        """
         from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
         actual = {name for name, _ in inspect.getmembers(MainWindow, predicate=inspect.isfunction)}
         extra = actual - EXPECTED_METHODS
@@ -114,7 +197,31 @@ class TestLayer1_Structural:
         assert not missing, f"CONTRACT DRIFT — missing methods: {sorted(missing)}"
 
     def test_method_source_paths(self):
-        """Each delegate method imports from the correct gui._NN_... module."""
+        """Layer 1 — each delegate method imports from the correct gui._NN_... module.
+
+        WHAT: For every method in METHOD_SOURCE_MAP, verifies that the method's
+              source code contains the expected import path. Some methods use
+              inline imports (inside the method body); others use module-level
+              imports (at the top of the file). This test checks both locations.
+
+        WHY DELEGATION PATHS:
+          The facade pattern requires each method to delegate to exactly one
+          atomic module. If a method starts importing from a different module,
+          the architectural contract has drifted.
+
+        OPTIONS: Each method must import from its mapped gui._NN_... path.
+
+        DEFAULTS: 34 method-to-module mappings in METHOD_SOURCE_MAP.
+
+        OUTPUT/EFFECT: Passes when every method's source contains its expected path.
+
+        ERRORS/EDGE CASES:
+          - Wrong import path: "CONTRACT DRIFT — method 'X' does not import from Y"
+
+        HOW TO TEST: Change the import in build_header_bar to point to a
+                     different module, then run — the test should fail on that
+                     method's assertion.
+        """
         from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
         import importlib.util
         class_origin = importlib.util.find_spec(
@@ -131,7 +238,30 @@ class TestLayer1_Structural:
                 )
 
     def test_source_imports(self):
-        """Source must import QMainWindow, QIcon, and core GUI modules."""
+        """Layer 1 — source imports QMainWindow, QIcon, and core GUI modules.
+
+        WHAT: Verifies the MainWindow source file imports the essential modules
+              needed for the facade: PyQt6 Qt classes, path constants, stylesheet
+              apply, UI assembly, logging, feed loading, view refreshing, and
+              systemd status.
+
+        WHY THESE IMPORTS:
+          MainWindow cannot function without QMainWindow (base class), QIcon
+          (window icon), path constants (config/assets paths), and the core
+          GUI modules it delegates to during startup.
+
+        OPTIONS: Expected set is exactly the eight modules listed above.
+
+        DEFAULTS: N/A.
+
+        OUTPUT/EFFECT: Passes when all eight imports exist in the source.
+
+        ERRORS/EDGE CASES:
+          - Missing import: "CONTRACT DRIFT — imports in ..." naming the module
+
+        HOW TO TEST: Remove one import from the source, then run —
+                     it should fail and name the missing module.
+        """
         from tests.GUI.conftest import assert_source_imports
         import importlib.util
         spec = importlib.util.find_spec("gui._37_main_window_facade_assembly.main_window_facade")
@@ -157,10 +287,45 @@ class TestLayer1_Structural:
 # ===========================================================================
 
 class TestLayer2_Behavioral:
-    """Behavioral smoke tests against the real MainWindow."""
+    """Behavioral smoke tests against the real MainWindow class.
+
+    These tests instantiate the actual MainWindow (headlessly) and verify
+    that its runtime properties match the expected contract.
+    """
 
     def test_headless_instantiation(self, qapp):
-        """Main window creates with correct title, size, tabs, feeds, config_path."""
+        """Layer 2 — main window creates with correct title, size, tabs, feeds, config.
+
+        WHAT: Creates a MainWindow instance in headless mode and verifies:
+          - Window title is "RSS Feed Tracker & Scraping Dashboard"
+          - Initial size is 1280x840 pixels
+          - Minimum size is 980x700 pixels
+          - feeds list is empty (load_feeds is patched to prevent disk read)
+          - scrape_thread is None (no background task running)
+          - 4 tabs are present (header + subscriptions + articles + operations + presets)
+          - config_path points to the canonical feeds.json location
+
+        WHY PATCH load_feeds:
+          The real load_feeds reads from disk and may populate feeds with
+          existing data. We patch it to ensure a deterministic test that
+          verifies the initial state before any data loading occurs.
+
+        OPTIONS:
+          - qapp fixture provides the headless Qt context
+          - load_feeds is patched to a no-op
+
+        DEFAULTS: Title, size, and min-size are set in MainWindow.__init__.
+
+        OUTPUT/EFFECT: All asserted properties match the expected contract.
+
+        ERRORS/EDGE CASES:
+          - Wrong title: windowTitle() assertion fails
+          - Wrong size: width()/height() assertions fail
+          - Non-empty feeds: load_feeds patch not applied correctly
+
+        HOW TO TEST: Change the window title in MainWindow.__init__ to something
+                     else, then run — the windowTitle() assertion should fail.
+        """
         from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
         from gui._00_paths_config_constant_definitions.paths_config_constants import CONFIG_PATH
         from unittest.mock import patch

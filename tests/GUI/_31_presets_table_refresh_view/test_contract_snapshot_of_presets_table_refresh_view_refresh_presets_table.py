@@ -34,12 +34,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtWidgets import QApplication  # noqa: E402  # offscreen platform
 
-
-@pytest.fixture(scope="module")
-def qapp():
-    """Create a single QApplication instance for the module."""
-    app = QApplication([])
-    yield app
+# Module-level QApplication instance. Kept at module scope so pytest never
+# tears it down (which would crash PyQt6 on Python 3.14 during interpreter
+# shutdown). The real QApplication is needed because refresh_presets_table
+# creates QWidget, QHBoxLayout, and QPushButton objects at runtime.
+_qapp = QApplication([])
 
 
 
@@ -106,7 +105,7 @@ class TestLayer2_Behavioral:
             {"name": "Feed B", "url": "https://b.com/feed", "category": "News"},
         ],
     )
-    def test_builds_five_col_rows_with_add_buttons(self, mock_get_cat, mock_already, mock_search, qapp):
+    def test_builds_five_col_rows_with_add_buttons(self, mock_get_cat, mock_already, mock_search):
         """Two presets → 2 rows, each with 5 columns, status 'Available', button enabled."""
         from gui._31_presets_table_refresh_view.refresh_presets_table import (
             refresh_presets_table,
@@ -125,7 +124,7 @@ class TestLayer2_Behavioral:
         # setCellWidget called once per row for the action button
         assert w.table_presets.setCellWidget.call_count == 2
 
-    def test_returns_early_when_presets_unavailable(self, qapp):
+    def test_returns_early_when_presets_unavailable(self):
         """Import error → returns without updating table."""
         import sys
         from gui._31_presets_table_refresh_view.refresh_presets_table import (
@@ -147,7 +146,7 @@ class TestLayer2_Behavioral:
         "features.feature_feed_presets_library.implementation.feeds_presets.feed_already_present",
         return_value=True,
     )
-    def test_subscribed_status_and_disabled_button(self, mock_already, mock_search, qapp):
+    def test_subscribed_status_and_disabled_button(self, mock_already, mock_search):
         """Already subscribed → status 'Subscribed' (green), Add button disabled."""
         from gui._31_presets_table_refresh_view.refresh_presets_table import (
             refresh_presets_table,
