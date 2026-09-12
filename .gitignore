@@ -30,3 +30,11 @@ __pycache__/
 .pytest_cache/
 # .ruff_cache/: ruff linter's cache folder (auto-generated, can be re-created).
 .ruff_cache/
+
+# GUI contract test artifacts
+
+## Launcher
+GUI-SCRIPT-LAUNCHER/__pycache__/
+
+## Test run caches
+GUI-SCRIPT-LAUNCHER/files/__pycache__/
