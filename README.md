@@ -224,6 +224,7 @@ All commits within this repository maintain strict local directory boundary isol
 | `feature/feed-parsing-unicode-encoding-fixes` | Fixes XML parsing that silently destroyed non-ASCII characters and adds gzip/deflate/brotli decompression so br-only feeds (TechCrunch) parse. |
 | `feature/readability-extraction-quality` | Readability-grade article extraction: block-aware paragraph joining (no broken inline lines), text-density main selection with link-density & boilerplate pruning, smart preview generation (no more "Comments" previews), and an `extractor_version`-gated storage refresh. Requires a full DB rebuild of `SCRAPED-RESULTS`. |
 | `feature/gui-atomic-modular-refactor` | Decomposes monolithic `gui/window.py` (1,362 lines) into 39 atomic per-function modules under `gui/_00_*` … `gui/_38_*`, each in its own folder. `gui/window.py` becomes a thin re-export facade. `main.py` GUI bootstrap delegated to `gui._38_bootstrap_launch_window`. |
+| `feature/gui-contract-tests` | Contract-drift snapshot test suite for all 39 GUI atomic modules: every `tests/GUI/_NN_*` file locks in each `gui/_NN_*` module's signature, imports, callables, and behaviour to catch refactor drift. |
 
 ### Branch-Related File Changes
 
@@ -404,6 +405,61 @@ are actually created and pushed.
 | `gui/window.py` | Replaced — now a thin re-export facade (`from gui._37_… import MainWindow`). |
 | `main.py` | Modified — GUI bootstrap delegated to `gui._38_bootstrap_launch_window.launch_gui_window()`. |
 | `README.md` | Modified — updated Branch Map, Branch-Related File Changes, and compile command. |
+
+#### `feature/gui-contract-tests`
+
+| File | Change |
+| :--- | :--- |
+| `tests/GUI/conftest.py` | Added — shared contract-drift fixtures: offscreen Qt bootstrap, `WindowStub`, `assert_signature`, `assert_constants`, `assert_source_imports`, `assert_callables`, `assert_signals`, `patch_constant`. |
+| `tests/GUI/GUI-SCRIPT-LAUNCHER/RSS-GUI-Contract-Tests.desktop` | Added — desktop launcher entry for the contract-test suite. |
+| `tests/GUI/GUI-SCRIPT-LAUNCHER/files/__main__.py` | Added — launcher package entry point. |
+| `tests/GUI/GUI-SCRIPT-LAUNCHER/files/launcher.py` | Added — launcher orchestrator for the contract-test suite. |
+| `tests/GUI/GUI-SCRIPT-LAUNCHER/files/run_gui_tests.sh` | Added — shell wrapper running the headless contract suite. |
+| `tests/GUI/GUI-SCRIPT-LAUNCHER/files/run_tests_worker.py` | Added — worker harness executing each module's snapshot. |
+| `tests/GUI/GUI-SCRIPT-LAUNCHER/files/GUI-CONTRACT-TESTS-PLAN-COMPLETED.md` | Added — completion plan for the contract-test suite. |
+| `tests/GUI/_00_paths_config_constant_definitions/test_contract_snapshot_of_paths_config_constant_definitions_module.py` | Added — contract-drift snapshot guarding `gui/_00_paths_config_constant_definitions`. |
+| `tests/GUI/_01_window_stylesheet_dark_modern_theme/test_contract_snapshot_of_window_stylesheet_dark_modern_theme_apply_function.py` | Added — contract-drift snapshot guarding `gui/_01_window_stylesheet_dark_modern_theme`. |
+| `tests/GUI/_02_background_scrape_thread_worker/test_contract_snapshot_of_background_scrape_thread_worker_class_and_signals.py` | Added — contract-drift snapshot guarding `gui/_02_background_scrape_thread_worker`. |
+| `tests/GUI/_03_ui_assembly_orchestrator/test_contract_snapshot_of_ui_assembly_orchestrator_build_main_window_ui.py` | Added — contract-drift snapshot guarding `gui/_03_ui_assembly_orchestrator`. |
+| `tests/GUI/_04_ui_header_bar_top_section_build/test_contract_snapshot_of_ui_header_bar_top_section_build_build_header_bar.py` | Added — contract-drift snapshot guarding `gui/_04_ui_header_bar_top_section_build`. |
+| `tests/GUI/_05_ui_articles_explorer_tab_build/test_contract_snapshot_of_ui_articles_explorer_tab_build_build_articles_tab.py` | Added — contract-drift snapshot guarding `gui/_05_ui_articles_explorer_tab_build`. |
+| `tests/GUI/_06_ui_subscriptions_hub_tab_build/test_contract_snapshot_of_ui_subscriptions_hub_tab_build_build_subscriptions_tab.py` | Added — contract-drift snapshot guarding `gui/_06_ui_subscriptions_hub_tab_build`. |
+| `tests/GUI/_07_ui_operations_system_tab_build/test_contract_snapshot_of_ui_operations_system_tab_build_build_operations_tab.py` | Added — contract-drift snapshot guarding `gui/_07_ui_operations_system_tab_build`. |
+| `tests/GUI/_08_ui_presets_library_tab_build/test_contract_snapshot_of_ui_presets_library_tab_build_build_presets_tab.py` | Added — contract-drift snapshot guarding `gui/_08_ui_presets_library_tab_build`. |
+| `tests/GUI/_09_feed_identifier_generate_from_name/test_contract_snapshot_of_feed_identifier_generate_from_name_generate_feed_id_pure_function.py` | Added — contract-drift snapshot guarding `gui/_09_feed_identifier_generate_from_name`. |
+| `tests/GUI/_10_log_append_timestamped_message/test_contract_snapshot_of_log_append_timestamped_message_append_log_message.py` | Added — contract-drift snapshot guarding `gui/_10_log_append_timestamped_message`. |
+| `tests/GUI/_11_log_clear_console/test_contract_snapshot_of_log_clear_console_clear_log_console.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_12_add_drawer_toggle_visibility/test_contract_snapshot_of_add_drawer_toggle_visibility_toggle_add_drawer.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_13_stats_badges_update_live/test_contract_snapshot_of_stats_badges_update_live_update_stats_badges.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_14_feed_config_load_from_disk/test_contract_snapshot_of_feed_config_load_from_disk_load_feeds.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_15_feed_config_save_to_disk/test_contract_snapshot_of_feed_config_save_to_disk_save_feeds.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_16_refresh_all_views_pipeline/test_contract_snapshot_of_refresh_all_views_pipeline_refresh_window.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_17_subscriptions_table_refresh_view/test_contract_snapshot_of_subscriptions_table_refresh_view_refresh_subscriptions_table.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_18_articles_table_refresh_view/test_contract_snapshot_of_articles_table_refresh_view_refresh_articles_table.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_19_feed_add_single_subscription/test_contract_snapshot_of_feed_add_single_subscription_add_feed.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_20_feed_delete_subscription/test_contract_snapshot_of_feed_delete_subscription_delete_feed.py` | Modified — plain-language OVEREXPLAINATION comments added (non-programmer walkthrough of every test line). |
+| `tests/GUI/_21_feed_toggle_enabled_state/test_contract_snapshot_of_feed_toggle_enabled_state_toggle_feed.py` | Added — contract-drift snapshot guarding `gui/_21_feed_toggle_enabled_state`. |
+| `tests/GUI/_22_feed_update_interval_frequency/test_contract_snapshot_of_feed_update_interval_frequency_set_feed_frequency.py` | Added — contract-drift snapshot guarding `gui/_22_feed_update_interval_frequency`. |
+| `tests/GUI/_23_feed_ping_endpoint_single_scrape/test_contract_snapshot_of_feed_ping_endpoint_single_scrape_ping_feed.py` | Added — contract-drift snapshot guarding `gui/_23_feed_ping_endpoint_single_scrape`. |
+| `tests/GUI/_24_preset_quick_import_single_feed/test_contract_snapshot_of_preset_quick_import_single_feed_import_preset.py` | Added — contract-drift snapshot guarding `gui/_24_preset_quick_import_single_feed`. |
+| `tests/GUI/_25_article_selection_reader_update/test_contract_snapshot_of_article_selection_reader_update_on_article_selected.py` | Added — contract-drift snapshot guarding `gui/_25_article_selection_reader_update`. |
+| `tests/GUI/_26_article_link_open_in_browser/test_contract_snapshot_of_article_link_open_in_browser_open_article_in_browser.py` | Added — contract-drift snapshot guarding `gui/_26_article_link_open_in_browser`. |
+| `tests/GUI/_27_article_link_copy_to_clipboard/test_contract_snapshot_of_article_link_copy_to_clipboard_copy_article_link.py` | Added — contract-drift snapshot guarding `gui/_27_article_link_copy_to_clipboard`. |
+| `tests/GUI/_28_systemd_status_refresh_daemon/test_contract_snapshot_of_systemd_status_refresh_daemon_refresh_systemd_status.py` | Added — contract-drift snapshot guarding `gui/_28_systemd_status_refresh_daemon`. |
+| `tests/GUI/_29_systemd_timer_install_handler/test_contract_snapshot_of_systemd_timer_install_handler_handle_install_systemd.py` | Added — contract-drift snapshot guarding `gui/_29_systemd_timer_install_handler`. |
+| `tests/GUI/_30_preset_categories_load_dropdown/test_contract_snapshot_of_preset_categories_load_dropdown_load_preset_categories.py` | Added — contract-drift snapshot guarding `gui/_30_preset_categories_load_dropdown`. |
+| `tests/GUI/_31_presets_table_refresh_view/test_contract_snapshot_of_presets_table_refresh_view_refresh_presets_table.py` | Added — contract-drift snapshot guarding `gui/_31_presets_table_refresh_view`. |
+| `tests/GUI/_32_preset_add_single_from_catalog/test_contract_snapshot_of_preset_add_single_from_catalog_add_preset_feed.py` | Added — contract-drift snapshot guarding `gui/_32_preset_add_single_from_catalog`. |
+| `tests/GUI/_33_preset_add_all_bulk_import/test_contract_snapshot_of_preset_add_all_bulk_import_add_all_presets.py` | Added — contract-drift snapshot guarding `gui/_33_preset_add_all_bulk_import`. |
+| `tests/GUI/_34_scrape_start_enabled_feeds/test_contract_snapshot_of_scrape_start_enabled_feeds_start_scrape.py` | Added — contract-drift snapshot guarding `gui/_34_scrape_start_enabled_feeds`. |
+| `tests/GUI/_35_scrape_run_background_orchestrator/test_contract_snapshot_of_scrape_run_background_orchestrator_run_scrape.py` | Added — contract-drift snapshot guarding `gui/_35_scrape_run_background_orchestrator`. |
+| `tests/GUI/_36_scrape_finished_signal_handler/test_contract_snapshot_of_scrape_finished_signal_handler_on_scrape_done.py` | Added — contract-drift snapshot guarding `gui/_36_scrape_finished_signal_handler`. |
+| `tests/GUI/_37_main_window_facade_assembly/test_contract_snapshot_of_main_window_facade_assembly_mainwindow_class_and_methods.py` | Added — contract-drift snapshot guarding `gui/_37_main_window_facade_assembly`. |
+| `tests/GUI/_38_bootstrap_launch_window/test_contract_snapshot_of_bootstrap_launch_window_launch_gui_window_entry_point.py` | Added — contract-drift snapshot guarding `gui/_38_bootstrap_launch_window`. |
+| `.gitignore` | Modified — ignore `__pycache__`, scraped results, and local env artifacts for the test suite. |
+| `requirements.txt` | Modified — ensure `pytest` and `PyQt6` are declared for the GUI tests. |
+| `gui/__init__.py` | Modified — package exports for the atomic module tree under test. |
+| `README.md` | Modified — added Branch Map row + Branch-Related File Changes table for `feature/gui-contract-tests`; documented the plain-language OVEREXPLAINATION pass over `tests/GUI/_11` … `_20`. |
 
 ---
 
