@@ -156,8 +156,10 @@ class TestLayer2_Behavioral:
         """Main window creates with correct title, size, tabs, feeds, config_path."""
         from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
         from gui._00_paths_config_constant_definitions.paths_config_constants import CONFIG_PATH
+        from unittest.mock import patch
 
-        w = MainWindow()
+        with patch("gui._37_main_window_facade_assembly.main_window_facade.load_feeds"):
+            w = MainWindow()
         assert w.windowTitle() == "RSS Feed Tracker & Scraping Dashboard"
         assert w.width() == 1280
         assert w.height() == 840
