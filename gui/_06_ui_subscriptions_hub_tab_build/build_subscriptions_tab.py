@@ -324,6 +324,10 @@ def build_subscriptions_tab(window) -> None:
     # Hide row numbers, set row height, enable alternating colors.
     window.table_feeds.verticalHeader().setVisible(False)
     window.table_feeds.verticalHeader().setDefaultSectionSize(48)
+    # Resize rows to fit their content (allows cells with widgets to grow taller).
+    window.table_feeds.verticalHeader().setSectionResizeMode(
+        QHeaderView.ResizeMode.ResizeToContents
+    )
     window.table_feeds.setAlternatingRowColors(True)
 
     # Hide the RSS Endpoint URL column by default; revealed via toggle button.
