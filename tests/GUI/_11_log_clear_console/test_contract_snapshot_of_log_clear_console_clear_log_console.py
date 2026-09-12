@@ -22,7 +22,7 @@ Do NOT patch this test. Instead:
 # This test file is a "CONTRACT SNAPSHOT": it locks in the exact shape and
 # behaviour of gui/_11_log_clear_console/clear_log_console.py so that future
 # refactors cannot silently change it. The source's job: when the user clicks
-# the "🧹 Clear Log" button, every message in the operations console disappears.
+# the "Clear Log" button, every message in the operations console disappears.
 
 # import ast — Python's "code reader". It reads another Python file's TEXT and
 #   turns it into a structured tree (an Abstract Syntax Tree) so the test can
@@ -73,27 +73,29 @@ def _import_module():
     return mod
 
 
-===============================================================================
-============== WHAT THIS TEST FILE VERIFIES ===============
-This file protects the contract of gui/_11_log_clear_console/clear_log_console.py.
-The source function clear_log_console(window) is called when the user clicks the
-"Clear Log" button in the operations console. It empties all text from
-window.log_box (a QTextEdit widget) by calling .clear() on it. The function is
-deliberately minimal: it has no imports of its own and expects only a window
-object with a log_box attribute.
-===============================================================================
-============== LAYER BREAKDOWN ===============
-Layer 1 (Structural):
-  - test_file_exists                  : source file must still be at its contract path
-  - test_import_health                : source module must import without errors
-  - test_ast_no_imports               : source must contain zero import statements
-  - test_clear_log_console_signature  : exactly clear_log_console(window) -> None
-Layer 2 (Behavioral):
-  - test_clears_log_box                      : calling clear_log_console empties the log
-  - test_plain_text_empty_after_clear        : toPlainText() reflects empty state after clear
-===============================================================================
-============== LAYER WHAT EACH TEST CHECKS ===============
-===============================================================================
+# ===========================================================================
+# WHAT THIS TEST FILE VERIFIES
+# ===========================================================================
+# This file protects the contract of gui/_11_log_clear_console/clear_log_console.py.
+# The source function clear_log_console(window) is called when the user clicks the
+# "Clear Log" button in the operations console. It empties all text from
+# window.log_box (a QTextEdit widget) by calling .clear() on it. The function is
+# deliberately minimal: it has no imports of its own and expects only a window
+# object with a log_box attribute.
+# ===========================================================================
+# LAYER BREAKDOWN
+# ===========================================================================
+# Layer 1 (Structural):
+#   - test_file_exists                  : source file must still be at its contract path
+#   - test_import_health                : source module must import without errors
+#   - test_ast_no_imports               : source must contain zero import statements
+#   - test_clear_log_console_signature  : exactly clear_log_console(window) -> None
+# Layer 2 (Behavioral):
+#   - test_clears_log_box                      : calling clear_log_console empties the log
+#   - test_plain_text_empty_after_clear        : toPlainText() reflects empty state after clear
+# ===========================================================================
+# LAYER WHAT EACH TEST CHECKS
+# ===========================================================================
 
 
 class TestLayer1Structural:
@@ -105,7 +107,7 @@ class TestLayer1Structural:
     """
 
     def test_file_exists(self):
-        """WHAT: Verifies the source file still exists at its contract path.
+        r"""WHAT: Verifies the source file still exists at its contract path.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -124,7 +126,7 @@ class TestLayer1Structural:
         assert p.exists(), f"Source file missing: {p}"
 
     def test_import_health(self):
-        """WHAT: Verifies the source module can be imported without errors.
+        r"""WHAT: Verifies the source module can be imported without errors.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -140,7 +142,7 @@ class TestLayer1Structural:
         assert mod is not None
 
     def test_ast_no_imports(self):
-        """WHAT: Verifies the source module contains zero import statements.
+        r"""WHAT: Verifies the source module contains zero import statements.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -171,7 +173,7 @@ class TestLayer1Structural:
         assert not found, f"Unexpected imports: {sorted(found)}"
 
     def test_clear_log_console_signature(self):
-        """WHAT: Verifies the exact signature of clear_log_console(window) -> None.
+        r"""WHAT: Verifies the exact signature of clear_log_console(window) -> None.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -209,7 +211,7 @@ class TestLayer2Behavioral:
     """
 
     def test_clears_log_box(self):
-        """WHAT: Calling clear_log_console(window) calls log_box.clear() exactly once.
+        r"""WHAT: Calling clear_log_console(window) calls log_box.clear() exactly once.
 
         OPTIONS: window must have a log_box attribute (a widget with .clear()).
         DEFAULTS: N/A.
@@ -236,7 +238,7 @@ class TestLayer2Behavioral:
         mock_box.clear.assert_called_once()
 
     def test_plain_text_empty_after_clear(self):
-        """WHAT: After clear_log_console, toPlainText() conceptually returns empty.
+        r"""WHAT: After clear_log_console, toPlainText() conceptually returns empty.
 
         OPTIONS: window must have a log_box attribute with toPlainText() and clear().
         DEFAULTS: N/A.

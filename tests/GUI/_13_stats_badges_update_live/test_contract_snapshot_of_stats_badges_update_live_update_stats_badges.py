@@ -5,14 +5,14 @@ CONTRACT SNAPSHOT
   function : update_stats_badges(window) -> None
   imports  : core.storage.get_stats
   effects  : sets window.lbl_articles_stat.setText / window.lbl_feeds_stat.setText
-  errors   : exception → badges unchanged (silent)
+  errors   : exception -> badges unchanged (silent)
 """
 # WHAT: This file protects the recorded CONTRACT of the source function
 # gui/_13_stats_badges_update_live/update_stats_badges.py.
 # SOURCE BEHAVIOUR (the contract being locked in):
 #   Reads the article count from the SQLite database via core.storage.get_stats(),
 #   counts total vs. enabled feeds from window.feeds, then updates two header
-#   badges: "📰 <arts> Articles" and "📡 <active>/<total> Feeds Active".
+#   badges: "Articles" and "Feeds Active".
 #   If anything raises, it does nothing silently (the except clause passes).
 # OPTIONS: window must expose lbl_articles_stat, lbl_feeds_stat (QLabels) and
 #            a feeds list where each feed dict may have an 'enabled' key.
@@ -83,28 +83,30 @@ from tests.GUI.conftest import assert_signature, assert_constants, assert_source
 from gui._13_stats_badges_update_live.update_stats_badges import update_stats_badges
 
 
-===============================================================================
-============== WHAT THIS TEST FILE VERIFIES ===============
-This file protects the contract of
-gui/_13_stats_badges_update_live/update_stats_badges.py. The source function
-update_stats_badges(window) reads article statistics from the SQLite database
-via core.storage.get_stats(), counts total and active feeds from window.feeds,
-and updates two header badges: "📰 <N> Articles" and "📡 <active>/<total> Feeds
-Active". If anything raises an exception, the function silently passes — the
-badges keep their previous text.
-===============================================================================
-============== LAYER BREAKDOWN ===============
-Layer 1 (Structural):
-  - test_signature             : exactly update_stats_badges(window) -> None
-  - test_source_imports        : source must import core.storage
-  - test_callables             : module defines exactly one public function
-Layer 2 (Behavioral):
-  - test_sets_article_and_feed_badges    : correct badge text from fake stats
-  - test_exception_preserves_badges      : exception leaves badges unchanged
-  - test_missing_enabled_key_defaults_true: missing 'enabled' key counts as active
-===============================================================================
-============== LAYER WHAT EACH TEST CHECKS ===============
-===============================================================================
+# ===========================================================================
+# WHAT THIS TEST FILE VERIFIES
+# ===========================================================================
+# This file protects the contract of
+# gui/_13_stats_badges_update_live/update_stats_badges.py. The source function
+# update_stats_badges(window) reads article statistics from the SQLite database
+# via core.storage.get_stats(), counts total and active feeds from window.feeds,
+# and updates two header badges: "Articles" and "Feeds Active". If anything
+# raises an exception, the function silently passes — the badges keep their
+# previous text.
+# ===========================================================================
+# LAYER BREAKDOWN
+# ===========================================================================
+# Layer 1 (Structural):
+#   - test_signature             : exactly update_stats_badges(window) -> None
+#   - test_source_imports        : source must import core.storage
+#   - test_callables             : module defines exactly one public function
+# Layer 2 (Behavioral):
+#   - test_sets_article_and_feed_badges    : correct badge text from fake stats
+#   - test_exception_preserves_badges      : exception leaves badges unchanged
+#   - test_missing_enabled_key_defaults_true: missing 'enabled' key counts as active
+# ===========================================================================
+# LAYER WHAT EACH TEST CHECKS
+# ===========================================================================
 
 
 # ===========================================================================
@@ -125,7 +127,7 @@ class TestLayer1Structural:
     """
 
     def test_signature(self):
-        """WHAT: Verifies the exact signature of update_stats_badges(window) -> None.
+        r"""WHAT: Verifies the exact signature of update_stats_badges(window) -> None.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -143,7 +145,7 @@ class TestLayer1Structural:
         assert_signature(update_stats_badges, [("window", 1, inspect.Parameter.empty)], None)
 
     def test_source_imports(self):
-        """WHAT: Verifies the source imports core.storage (for get_stats).
+        r"""WHAT: Verifies the source imports core.storage (for get_stats).
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -162,7 +164,7 @@ class TestLayer1Structural:
         assert_source_imports(module_path, {"core.storage"})
 
     def test_callables(self):
-        """WHAT: Verifies the module defines exactly one public function.
+        r"""WHAT: Verifies the module defines exactly one public function.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -194,19 +196,19 @@ class TestLayer2Behavioral:
     """
 
     def test_sets_article_and_feed_badges(self):
-        """WHAT: Verifies correct badge text from fake stats and feed list.
+        r"""WHAT: Verifies correct badge text from fake stats and feed list.
 
         OPTIONS: window must expose lbl_articles_stat, lbl_feeds_stat (with
           setText), and a feeds list where each feed dict may have an 'enabled'
           key.
         DEFAULTS: missing 'enabled' key counts the feed as ACTIVE (True);
           missing 'total_articles' stat falls back to 0.
-        OUTPUT/EFFECT: lbl_articles_stat.setText("📰 150 Articles") and
-          lbl_feeds_stat.setText("📡 2/3 Feeds Active") are each called once.
+        OUTPUT/EFFECT: lbl_articles_stat.setText("150 Articles") and
+          lbl_feeds_stat.setText("2/3 Feeds Active") are each called once.
         ERRORS/EDGE CASES: None — this is the happy path with explicit fakes.
         HOW TO TEST: In the app, ensure the database has 150 articles and the
           feed list has 2 active + 1 disabled feed. The header badges should
-          read "📰 150 Articles" and "📡 2/3 Feeds Active".
+          read "150 Articles" and "2/3 Feeds Active".
         """
         # Build a fake window and give it a 3-feed list where feeds "a" and
         # "c" are enabled and "b" is disabled (2 active out of 3 total).
@@ -224,13 +226,13 @@ class TestLayer2Behavioral:
             update_stats_badges(window)
 
         # WindowStub's badges are MagicMocks: setText must have been called
-        # exactly once with "📰 150 Articles" (150 comes from the fake stats).
+        # exactly once with "150 Articles" (150 comes from the fake stats).
         window.lbl_articles_stat.setText.assert_called_once_with("📰 150 Articles")
-        # 2 enabled out of 3 total -> "📡 2/3 Feeds Active".
+        # 2 enabled out of 3 total -> "2/3 Feeds Active".
         window.lbl_feeds_stat.setText.assert_called_once_with("📡 2/3 Feeds Active")
 
     def test_exception_preserves_badges(self):
-        """WHAT: Verifies exceptions leave badge text unchanged.
+        r"""WHAT: Verifies exceptions leave badge text unchanged.
 
         OPTIONS: window must expose lbl_articles_stat and lbl_feeds_stat (with
           setText).
@@ -259,16 +261,16 @@ class TestLayer2Behavioral:
         update_stats_badges(window)
 
     def test_missing_enabled_key_defaults_true(self):
-        """WHAT: Verifies a feed without 'enabled' is counted as active.
+        r"""WHAT: Verifies a feed without 'enabled' is counted as active.
 
         OPTIONS: window must expose lbl_feeds_stat (with setText) and a feeds
           list where a dict may lack an 'enabled' key.
         DEFAULTS: missing 'enabled' key counts the feed as ACTIVE (True).
-        OUTPUT/EFFECT: lbl_feeds_stat.setText("📡 1/1 Feeds Active") is called.
+        OUTPUT/EFFECT: lbl_feeds_stat.setText("1/1 Feeds Active") is called.
         ERRORS/EDGE CASES: A feed dict with no 'enabled' key is treated as
           enabled (f.get("enabled", True) returns the fallback True).
         HOW TO TEST: In the app, add a feed without an 'enabled' field to the
-          list. The badge should show it as active, e.g. "📡 1/1 Feeds Active".
+          list. The badge should show it as active, e.g. "1/1 Feeds Active".
         """
         window = WindowStub()
         # A feed dict with NO "enabled" key at all. In the source,
@@ -279,5 +281,5 @@ class TestLayer2Behavioral:
                    return_value={"total_articles": 0}):
             update_stats_badges(window)
         # 1 feed present, no "enabled" key -> counted as enabled, so the badge
-        # must read "📡 1/1 Feeds Active".
+        # must read "1/1 Feeds Active".
         window.lbl_feeds_stat.setText.assert_called_once_with("📡 1/1 Feeds Active")

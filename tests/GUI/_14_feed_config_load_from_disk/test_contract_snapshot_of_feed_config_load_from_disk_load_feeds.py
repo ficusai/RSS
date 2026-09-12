@@ -5,7 +5,7 @@ CONTRACT SNAPSHOT
   function : load_feeds(window) -> None
   imports  : gui._00_paths_config_constant_definitions.paths_config_constants.CONFIG_PATH
   effects  : sets window.feeds from config/feeds.json
-  errors   : missing/malformed file → window.feeds == []
+  errors   : missing/malformed file -> window.feeds == []
 """
 # WHAT: This file protects the recorded CONTRACT of the source function
 # gui/_14_feed_config_load_from_disk/load_feeds.py.
@@ -66,28 +66,30 @@ from tests.GUI.conftest import assert_signature, assert_source_imports, assert_c
 from gui._14_feed_config_load_from_disk.load_feeds import load_feeds
 
 
-===============================================================================
-============== WHAT THIS TEST FILE VERIFIES ===============
-This file protects the contract of
-gui/_14_feed_config_load_from_disk/load_feeds.py. The source function
-load_feeds(window) reads the RSS feed subscriptions from config/feeds.json
-(the path comes from CONFIG_PATH) and stores the result in window.feeds.
-It accepts both wrapped format {"feeds": [...]} and bare list format [...].
-If the file is missing or contains invalid JSON, window.feeds becomes [].
-===============================================================================
-============== LAYER BREAKDOWN ===============
-Layer 1 (Structural):
-  - test_signature               : exactly load_feeds(window) -> None
-  - test_source_imports          : source must import the paths constants module
-  - test_callables               : module defines exactly one public function
-Layer 2 (Behavioral):
-  - test_missing_file_yields_empty_list       : absent file -> window.feeds == []
-  - test_malformed_json_yields_empty_list     : corrupt JSON -> window.feeds == []
-  - test_dict_with_feeds_key_extracted        : {"feeds": [...]} -> inner list assigned
-  - test_raw_list_used_directly               : [...] -> list used as-is
-===============================================================================
-============== LAYER WHAT EACH TEST CHECKS ===============
-===============================================================================
+# ===========================================================================
+# WHAT THIS TEST FILE VERIFIES
+# ===========================================================================
+# This file protects the contract of
+# gui/_14_feed_config_load_from_disk/load_feeds.py. The source function
+# load_feeds(window) reads the RSS feed subscriptions from config/feeds.json
+# (the path comes from CONFIG_PATH) and stores the result in window.feeds.
+# It accepts both wrapped format {"feeds": [...]} and bare list format [...].
+# If the file is missing or contains invalid JSON, window.feeds becomes [].
+# ===========================================================================
+# LAYER BREAKDOWN
+# ===========================================================================
+# Layer 1 (Structural):
+#   - test_signature               : exactly load_feeds(window) -> None
+#   - test_source_imports          : source must import the paths constants module
+#   - test_callables               : module defines exactly one public function
+# Layer 2 (Behavioral):
+#   - test_missing_file_yields_empty_list       : absent file -> window.feeds == []
+#   - test_malformed_json_yields_empty_list     : corrupt JSON -> window.feeds == []
+#   - test_dict_with_feeds_key_extracted        : {"feeds": [...]} -> inner list assigned
+#   - test_raw_list_used_directly               : [...] -> list used as-is
+# ===========================================================================
+# LAYER WHAT EACH TEST CHECKS
+# ===========================================================================
 
 
 # ===========================================================================
@@ -106,7 +108,7 @@ class TestLayer1Structural:
     """
 
     def test_signature(self):
-        """WHAT: Verifies the exact signature of load_feeds(window) -> None.
+        r"""WHAT: Verifies the exact signature of load_feeds(window) -> None.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -122,7 +124,7 @@ class TestLayer1Structural:
         assert_signature(load_feeds, [("window", 1, inspect.Parameter.empty)], None)
 
     def test_source_imports(self):
-        """WHAT: Verifies the source imports the paths constants module.
+        r"""WHAT: Verifies the source imports the paths constants module.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -140,7 +142,7 @@ class TestLayer1Structural:
         assert_source_imports(module_path, {"gui._00_paths_config_constant_definitions.paths_config_constants"})
 
     def test_callables(self):
-        """WHAT: Verifies the module defines exactly one public function.
+        r"""WHAT: Verifies the module defines exactly one public function.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -170,7 +172,7 @@ class TestLayer2Behavioral:
     """
 
     def test_missing_file_yields_empty_list(self):
-        """WHAT: A missing config file leaves window.feeds as an empty list.
+        r"""WHAT: A missing config file leaves window.feeds as an empty list.
 
         OPTIONS: window must have a 'feeds' attribute; CONFIG_PATH patched to
           a fake path whose .exists() returns False.
@@ -194,7 +196,7 @@ class TestLayer2Behavioral:
         assert window.feeds == []
 
     def test_malformed_json_yields_empty_list(self):
-        """WHAT: Malformed JSON in the config file leaves window.feeds as [].
+        r"""WHAT: Malformed JSON in the config file leaves window.feeds as [].
 
         OPTIONS: window must have a 'feeds' attribute; CONFIG_PATH patched to
           a temporary file containing invalid JSON.
@@ -224,7 +226,7 @@ class TestLayer2Behavioral:
         Path(tmp).unlink(missing_ok=True)
 
     def test_dict_with_feeds_key_extracted(self):
-        """WHAT: A {"feeds": [...]} file extracts the inner list into window.feeds.
+        r"""WHAT: A {"feeds": [...]} file extracts the inner list into window.feeds.
 
         OPTIONS: window must have a 'feeds' attribute; CONFIG_PATH patched to
           a temporary file containing valid wrapped JSON.
@@ -255,7 +257,7 @@ class TestLayer2Behavioral:
         Path(tmp).unlink(missing_ok=True)
 
     def test_raw_list_used_directly(self):
-        """WHAT: A bare [...] JSON file is used directly as window.feeds.
+        r"""WHAT: A bare [...] JSON file is used directly as window.feeds.
 
         OPTIONS: window must have a 'feeds' attribute; CONFIG_PATH patched to
           a temporary file containing valid bare-list JSON.

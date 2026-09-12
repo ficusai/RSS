@@ -65,27 +65,29 @@ from tests.GUI.conftest import assert_signature, assert_source_imports, assert_c
 from gui._15_feed_config_save_to_disk.save_feeds import save_feeds
 
 
-===============================================================================
-============== WHAT THIS TEST FILE VERIFIES ===============
-This file protects the contract of
-gui/_15_feed_config_save_to_disk/save_feeds.py. The source function
-save_feeds(window) writes the current feed list window.feeds to
-config/feeds.json as the JSON object {"feeds": [...]} with 2-space indentation,
-creating parent directories automatically if needed. On any write failure, the
-function logs the error via append_log_message instead of raising.
-===============================================================================
-============== LAYER BREAKDOWN ===============
-Layer 1 (Structural):
-  - test_signature               : exactly save_feeds(window) -> None
-  - test_source_imports          : source must import paths constants + log module
-  - test_callables               : module defines exactly one public function
-Layer 2 (Behavioral):
-  - test_writes_config_json_with_two_space_indent  : saved JSON has correct shape + indent
-  - test_creates_config_parent_directory           : parent dirs created automatically
-  - test_error_logs_via_append_log_message         : write failure logs instead of raising
-===============================================================================
-============== LAYER WHAT EACH TEST CHECKS ===============
-===============================================================================
+# ===========================================================================
+# WHAT THIS TEST FILE VERIFIES
+# ===========================================================================
+# This file protects the contract of
+# gui/_15_feed_config_save_to_disk/save_feeds.py. The source function
+# save_feeds(window) writes the current feed list window.feeds to
+# config/feeds.json as the JSON object {"feeds": [...]} with 2-space indentation,
+# creating parent directories automatically if needed. On any write failure, the
+# function logs the error via append_log_message instead of raising.
+# ===========================================================================
+# LAYER BREAKDOWN
+# ===========================================================================
+# Layer 1 (Structural):
+#   - test_signature               : exactly save_feeds(window) -> None
+#   - test_source_imports          : source must import paths constants + log module
+#   - test_callables               : module defines exactly one public function
+# Layer 2 (Behavioral):
+#   - test_writes_config_json_with_two_space_indent  : saved JSON has correct shape + indent
+#   - test_creates_config_parent_directory           : parent dirs created automatically
+#   - test_error_logs_via_append_log_message         : write failure logs instead of raising
+# ===========================================================================
+# LAYER WHAT EACH TEST CHECKS
+# ===========================================================================
 
 
 # ===========================================================================
@@ -103,7 +105,7 @@ class TestLayer1Structural:
     """
 
     def test_signature(self):
-        """WHAT: Verifies the exact signature of save_feeds(window) -> None.
+        r"""WHAT: Verifies the exact signature of save_feeds(window) -> None.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -119,7 +121,7 @@ class TestLayer1Structural:
         assert_signature(save_feeds, [("window", 1, inspect.Parameter.empty)], None)
 
     def test_source_imports(self):
-        """WHAT: Verifies the source imports the paths constants and log modules.
+        r"""WHAT: Verifies the source imports the paths constants and log modules.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -140,7 +142,7 @@ class TestLayer1Structural:
         })
 
     def test_callables(self):
-        """WHAT: Verifies the module defines exactly one public function.
+        r"""WHAT: Verifies the module defines exactly one public function.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -170,7 +172,7 @@ class TestLayer2Behavioral:
     """
 
     def test_writes_config_json_with_two_space_indent(self):
-        """WHAT: Verifies save_feeds writes correct JSON with 2-space indent.
+        r"""WHAT: Verifies save_feeds writes correct JSON with 2-space indent.
 
         OPTIONS: window.feeds must be a list of feed dicts; CONFIG_PATH patched
           to a temporary location.
@@ -212,7 +214,7 @@ class TestLayer2Behavioral:
             assert '  "feeds"' in raw
 
     def test_creates_config_parent_directory(self):
-        """WHAT: Verifies save_feeds creates parent directories automatically.
+        r"""WHAT: Verifies save_feeds creates parent directories automatically.
 
         OPTIONS: window.feeds must be a list; CONFIG_PATH patched to a deep
           temporary path whose parent folders do not exist yet.
@@ -238,7 +240,7 @@ class TestLayer2Behavioral:
             assert fake_config.parent.exists()
 
     def test_error_logs_via_append_log_message(self):
-        """WHAT: Verifies write failures are logged instead of raised.
+        r"""WHAT: Verifies write failures are logged instead of raised.
 
         OPTIONS: window.feeds must be a list; CONFIG_PATH patched to an
           unwritable path; append_log_message patched to a recording fake.

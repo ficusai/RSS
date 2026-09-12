@@ -58,27 +58,29 @@ def _import_module():
     return mod
 
 
-===============================================================================
-============== WHAT THIS TEST FILE VERIFIES ===============
-This file protects the contract of
-gui/_12_add_drawer_toggle_visibility/toggle_add_drawer.py. The source function
-toggle_add_drawer(window) toggles the visibility of the collapsible "New Feed /
-Presets" drawer panel. When called, it reads the current visibility state of
-window.drawer_box, inverts it, and updates window.btn_toggle_drawer's caption
-between "Hide Drawer" (when showing) and "New Feed / Presets  " (when hiding).
-===============================================================================
-============== LAYER BREAKDOWN ===============
-Layer 1 (Structural):
-  - test_file_exists                   : source file must still be at its contract path
-  - test_import_health                 : source module must import without errors
-  - test_ast_no_imports                : source must contain zero import statements
-  - test_toggle_add_drawer_signature   : exactly toggle_add_drawer(window) -> None
-Layer 2 (Behavioral):
-  - test_first_call_shows_drawer          : first toggle call sets visible=True + hide caption
-  - test_second_call_hides_drawer         : second toggle call sets visible=False + show caption
-===============================================================================
-============== LAYER WHAT EACH TEST CHECKS ===============
-===============================================================================
+# ===========================================================================
+# WHAT THIS TEST FILE VERIFIES
+# ===========================================================================
+# This file protects the contract of
+# gui/_12_add_drawer_toggle_visibility/toggle_add_drawer.py. The source function
+# toggle_add_drawer(window) toggles the visibility of the collapsible "New Feed /
+# Presets" drawer panel. When called, it reads the current visibility state of
+# window.drawer_box, inverts it, and updates window.btn_toggle_drawer's caption
+# between "Hide Drawer" (when showing) and "New Feed / Presets  " (when hiding).
+# ===========================================================================
+# LAYER BREAKDOWN
+# ===========================================================================
+# Layer 1 (Structural):
+#   - test_file_exists                   : source file must still be at its contract path
+#   - test_import_health                 : source module must import without errors
+#   - test_ast_no_imports                : source must contain zero import statements
+#   - test_toggle_add_drawer_signature   : exactly toggle_add_drawer(window) -> None
+# Layer 2 (Behavioral):
+#   - test_first_call_shows_drawer          : first toggle call sets visible=True + hide caption
+#   - test_second_call_hides_drawer         : second toggle call sets visible=False + show caption
+# ===========================================================================
+# LAYER WHAT EACH TEST CHECKS
+# ===========================================================================
 
 
 class TestLayer1Structural:
@@ -90,7 +92,7 @@ class TestLayer1Structural:
     """
 
     def test_file_exists(self):
-        """WHAT: Verifies the source file still exists at its contract path.
+        r"""WHAT: Verifies the source file still exists at its contract path.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -107,7 +109,7 @@ class TestLayer1Structural:
         assert p.exists(), f"Source file missing: {p}"
 
     def test_import_health(self):
-        """WHAT: Verifies the source module can be imported without errors.
+        r"""WHAT: Verifies the source module can be imported without errors.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -122,7 +124,7 @@ class TestLayer1Structural:
         assert mod is not None
 
     def test_ast_no_imports(self):
-        """WHAT: Verifies the source module contains zero import statements.
+        r"""WHAT: Verifies the source module contains zero import statements.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -152,7 +154,7 @@ class TestLayer1Structural:
         assert not found, f"Unexpected imports: {sorted(found)}"
 
     def test_toggle_add_drawer_signature(self):
-        """WHAT: Verifies the exact signature of toggle_add_drawer(window) -> None.
+        r"""WHAT: Verifies the exact signature of toggle_add_drawer(window) -> None.
 
         OPTIONS: None.
         DEFAULTS: N/A.
@@ -184,7 +186,7 @@ class TestLayer2Behavioral:
     """
 
     def test_first_call_shows_drawer(self):
-        """WHAT: First toggle call shows the drawer and sets the hide caption.
+        r"""WHAT: First toggle call shows the drawer and sets the hide caption.
 
         OPTIONS: window must have drawer_box (with isVisible/setVisible) and
           btn_toggle_drawer (with setText).
@@ -216,7 +218,7 @@ class TestLayer2Behavioral:
         mock_btn.setText.assert_called_once_with("➖ Hide Drawer")
 
     def test_second_call_hides_drawer(self):
-        """WHAT: Second toggle call hides the drawer and restores the show caption.
+        r"""WHAT: Second toggle call hides the drawer and restores the show caption.
 
         OPTIONS: window must have drawer_box (with isVisible/setVisible) and
           btn_toggle_drawer (with setText).
