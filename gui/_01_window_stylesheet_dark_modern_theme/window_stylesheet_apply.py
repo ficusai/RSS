@@ -105,7 +105,6 @@ QTableWidget {
 }
 QHeaderView::section {
     background: #161b22; color: #8b949e;
-    border: none; border-right: 1px solid #21262d;
     border-bottom: 2px solid #21262d; padding: 10px 14px;
     font-weight: 700; font-size: 16px; min-height: 46px;
 }
