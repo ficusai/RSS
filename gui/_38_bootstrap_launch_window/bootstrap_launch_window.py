@@ -7,6 +7,7 @@
 # HOW TO TEST: launch_gui_window() from an interactive Python session with a display
 import sys
 
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
 
 from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
@@ -17,6 +18,7 @@ def launch_gui_window() -> int:
     app = QApplication(sys.argv)
     win = MainWindow()
     win.show()
-    # Propagate tab page sizes so tables fill the window on first render.
-    win._propagate_tab_sizes()
+    # Defer tab size propagation until after the event loop has processed
+    # the show() layout — otherwise QTabWidget has not sized its pages yet.
+    QTimer.singleShot(0, win._propagate_tab_sizes)
     return sys.exit(app.exec())
