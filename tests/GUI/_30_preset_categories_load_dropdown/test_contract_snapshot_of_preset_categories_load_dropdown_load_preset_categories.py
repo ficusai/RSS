@@ -85,8 +85,7 @@ class TestLayer2_Behavioral:
     """Behavioral smoke tests against the real function."""
 
     @patch(
-        "gui._30_preset_categories_load_dropdown.load_preset_categories"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
+        "features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
         return_value=["Finance", "News", "Science"],
     )
     def test_populates_dropdown_with_fallback_and_restores_selection(self, mock_get_cats, qapp):
@@ -104,8 +103,7 @@ class TestLayer2_Behavioral:
         w.preset_combo_cat.setCurrentText.assert_not_called()
 
     @patch(
-        "gui._30_preset_categories_load_dropdown.load_preset_categories"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
+        "features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
         side_effect=ImportError("no feature"),
     )
     def test_fallback_on_import_error(self, mock_get_cats, qapp):
@@ -118,8 +116,7 @@ class TestLayer2_Behavioral:
         w.preset_combo_cat.addItems.assert_called_once_with(["All Categories"])
 
     @patch(
-        "gui._30_preset_categories_load_dropdown.load_preset_categories"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
+        "features.feature_feed_presets_library.implementation.feeds_presets.get_preset_categories",
         return_value=["Finance", "News"],
     )
     def test_restores_selection_when_still_present(self, mock_get_cats, qapp):

@@ -93,21 +93,18 @@ class TestLayer2_Behavioral:
     """Behavioral smoke tests against the real function."""
 
     @patch(
-        "gui._31_presets_table_refresh_view.refresh_presets_table"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.search_presets",
+        "features.feature_feed_presets_library.implementation.feeds_presets.search_presets"
+    )
+    @patch(
+        "features.feature_feed_presets_library.implementation.feeds_presets.feed_already_present",
+        return_value=False,
+    )
+    @patch(
+        "features.feature_feed_presets_library.implementation.feeds_presets.get_presets_by_category",
         return_value=[
             {"name": "Feed A", "url": "https://a.com/feed", "category": "Tech"},
             {"name": "Feed B", "url": "https://b.com/feed", "category": "News"},
         ],
-    )
-    @patch(
-        "gui._31_presets_table_refresh_view.refresh_presets_table"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.feed_already_present",
-        return_value=False,
-    )
-    @patch(
-        "gui._31_presets_table_refresh_view.refresh_presets_table"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.get_presets_by_category"
     )
     def test_builds_five_col_rows_with_add_buttons(self, mock_get_cat, mock_already, mock_search, qapp):
         """Two presets → 2 rows, each with 5 columns, status 'Available', button enabled."""
@@ -122,33 +119,32 @@ class TestLayer2_Behavioral:
         # Actually with empty query, it calls get_presets_by_category("All Categories")
         # Let's verify row count
         assert w.table_presets.insertRow.call_count == 2
-        # setItem called 5 times per row × 2 rows = 10
-        assert w.table_presets.setItem.call_count == 10
+        # setItem called 4 times per row (cols 0-3 set text items) × 2 rows = 8
+        # Column 4 (Add button) is added with setCellWidget, not setItem.
+        assert w.table_presets.setItem.call_count == 8
         # setCellWidget called once per row for the action button
         assert w.table_presets.setCellWidget.call_count == 2
 
-    @patch(
-        "gui._31_presets_table_refresh_view.refresh_presets_table"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.search_presets",
-        side_effect=ImportError("no feature"),
-    )
-    def test_returns_early_when_presets_unavailable(self, mock_search, qapp):
+    def test_returns_early_when_presets_unavailable(self, qapp):
         """Import error → returns without updating table."""
+        import sys
         from gui._31_presets_table_refresh_view.refresh_presets_table import (
             refresh_presets_table,
         )
         w = _make_window()
-        refresh_presets_table(w)
+        with patch.dict(
+            sys.modules,
+            {"features.feature_feed_presets_library.implementation.feeds_presets": None},
+        ):
+            refresh_presets_table(w)
         w.table_presets.setRowCount.assert_not_called()
 
     @patch(
-        "gui._31_presets_table_refresh_view.refresh_presets_table"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.search_presets",
+        "features.feature_feed_presets_library.implementation.feeds_presets.search_presets",
         return_value=[{"name": "Sub", "url": "https://sub.com/feed", "category": "Tech"}],
     )
     @patch(
-        "gui._31_presets_table_refresh_view.refresh_presets_table"
-        ".features.feature_feed_presets_library.implementation.feeds_presets.feed_already_present",
+        "features.feature_feed_presets_library.implementation.feeds_presets.feed_already_present",
         return_value=True,
     )
     def test_subscribed_status_and_disabled_button(self, mock_already, mock_search, qapp):

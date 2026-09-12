@@ -74,7 +74,7 @@ def test_append_log_message_signature():
 
 
 def test_appends_timestamped_line():
-    """Layer 2 — appends line matching ^\[\d{2}:\d{2}:\d{2}\] test msg."""
+    r"""Layer 2 — appends line matching ^\[\d{2}:\d{2}:\d{2}\] test msg."""
     mod = _import_module()
     window = MagicMock()
     mock_box = MagicMock()

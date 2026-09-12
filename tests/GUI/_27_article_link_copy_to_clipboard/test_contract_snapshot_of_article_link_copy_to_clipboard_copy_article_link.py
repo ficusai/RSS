@@ -88,7 +88,8 @@ class TestLayer2_Behavioral:
 
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QMessageBox.information")
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.append_log_message")
-    def test_copies_clipboard_and_logs_and_shows_dialog(self, mock_log, mock_info, qapp):
+    @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QApplication.clipboard")
+    def test_copies_clipboard_and_logs_and_shows_dialog(self, mock_clipboard, mock_log, mock_info, qapp):
         """URL property present → clipboard updated, log appended, dialog shown."""
         from gui._27_article_link_copy_to_clipboard.copy_article_link import (
             copy_article_link,
@@ -96,13 +97,14 @@ class TestLayer2_Behavioral:
         w = _make_window()
         copy_article_link(w)
         url = "https://example.com/article"
-        QApplication.clipboard().setText.assert_called_once_with(url)
+        mock_clipboard.return_value.setText.assert_called_once_with(url)
         mock_log.assert_called_once_with(w, f"Copied URL to clipboard: {url}")
         mock_info.assert_called_once_with(w, "Link Copied", "Article URL copied to clipboard!")
 
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QMessageBox.information")
     @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.append_log_message")
-    def test_no_op_when_url_missing(self, mock_log, mock_info, qapp):
+    @patch("gui._27_article_link_copy_to_clipboard.copy_article_link.QApplication.clipboard")
+    def test_no_op_when_url_missing(self, mock_clipboard, mock_log, mock_info, qapp):
         """No url property → clipboard not touched, dialog not shown."""
         from gui._27_article_link_copy_to_clipboard.copy_article_link import (
             copy_article_link,
@@ -110,6 +112,6 @@ class TestLayer2_Behavioral:
         w = _make_window()
         w.btn_copy_link.property = MagicMock(return_value=None)
         copy_article_link(w)
-        QApplication.clipboard().setText.assert_not_called()
+        mock_clipboard.return_value.setText.assert_not_called()
         mock_log.assert_not_called()
         mock_info.assert_not_called()

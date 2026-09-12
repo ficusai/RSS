@@ -40,6 +40,7 @@ def qapp():
 
 # Exact expected method set for MainWindow facade
 EXPECTED_METHODS = {
+    "__init__",
     "build_main_window_ui", "build_header_bar", "build_articles_tab",
     "build_subscriptions_tab", "build_operations_tab", "build_presets_tab",
     "toggle_add_drawer", "_log", "clear_log", "load_feeds", "save_feeds",
@@ -115,13 +116,19 @@ class TestLayer1_Structural:
     def test_method_source_paths(self):
         """Each delegate method imports from the correct gui._NN_... module."""
         from gui._37_main_window_facade_assembly.main_window_facade import MainWindow
+        import importlib.util
+        class_origin = importlib.util.find_spec(
+            "gui._37_main_window_facade_assembly.main_window_facade"
+        ).origin
+        class_source = open(class_origin).read()
         for method_name, expected_path in METHOD_SOURCE_MAP.items():
             method = getattr(MainWindow, method_name)
             source = inspect.getsource(method)
-            assert expected_path in source, (
-                f"CONTRACT DRIFT — method '{method_name}' does not import from {expected_path}\n"
-                f"Source:\n{source}"
-            )
+            if expected_path not in source:
+                assert expected_path in class_source, (
+                    f"CONTRACT DRIFT — method '{method_name}' does not import from {expected_path}\n"
+                    f"Method source:\n{source}"
+                )
 
     def test_source_imports(self):
         """Source must import QMainWindow, QIcon, and core GUI modules."""

@@ -15,7 +15,7 @@ import ast
 import inspect
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, patch
 
 # NOTE: conftest.py sets QT_QPA_PLATFORM=offscreen before this import.
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
@@ -81,11 +81,19 @@ def test_build_calls_sub_builders():
     """Layer 2 — Calls build_header_bar, build_articles_tab, etc. once each."""
     mod = _import_module()
     window = MagicMock()
-    with patch.object(mod, "build_header_bar") as mock_hdr, \
+    with patch.object(mod, "QWidget") as MockW, \
+         patch.object(mod, "QVBoxLayout") as MockL, \
+         patch.object(mod, "build_header_bar") as mock_hdr, \
          patch.object(mod, "build_articles_tab") as mock_art, \
          patch.object(mod, "build_subscriptions_tab") as mock_sub, \
          patch.object(mod, "build_operations_tab") as mock_ops, \
          patch.object(mod, "build_presets_tab") as mock_pre:
+        MockW.return_value = MagicMock()
+        mock_layout = MagicMock()
+        mock_layout.setSpacing = MagicMock()
+        mock_layout.setContentsMargins = MagicMock()
+        mock_layout.addWidget = MagicMock()
+        MockL.return_value = mock_layout
         mod.build_main_window_ui(window)
         mock_hdr.assert_called_once_with(window)
         mock_art.assert_called_once_with(window)
@@ -98,7 +106,16 @@ def test_creates_progress_bar():
     """Layer 2 — Creates progress bar."""
     mod = _import_module()
     window = MagicMock()
-    with patch("gui._03_ui_assembly_orchestrator.build_main_window_ui.QProgressBar") as MockProgress:
+    with patch.object(mod, "QWidget") as MockW, \
+         patch.object(mod, "QVBoxLayout") as MockL, \
+         patch("gui._03_ui_assembly_orchestrator.build_main_window_ui.QProgressBar") as MockProgress:
+        mock_central = MagicMock()
+        MockW.return_value = mock_central
+        mock_layout = MagicMock()
+        mock_layout.setSpacing = MagicMock()
+        mock_layout.setContentsMargins = MagicMock()
+        mock_layout.addWidget = MagicMock()
+        MockL.return_value = mock_layout
         mock_bar = MagicMock()
         mock_bar.setTextVisible = MagicMock()
         mock_bar.setVisible = MagicMock()
@@ -113,7 +130,16 @@ def test_creates_tabs_widget():
     """Layer 2 — Creates tabs QTabWidget."""
     mod = _import_module()
     window = MagicMock()
-    with patch("gui._03_ui_assembly_orchestrator.build_main_window_ui.QTabWidget") as MockTabs:
+    with patch.object(mod, "QWidget") as MockW, \
+         patch.object(mod, "QVBoxLayout") as MockL, \
+         patch("gui._03_ui_assembly_orchestrator.build_main_window_ui.QTabWidget") as MockTabs:
+        mock_central = MagicMock()
+        MockW.return_value = mock_central
+        mock_layout = MagicMock()
+        mock_layout.setSpacing = MagicMock()
+        mock_layout.setContentsMargins = MagicMock()
+        mock_layout.addWidget = MagicMock()
+        MockL.return_value = mock_layout
         mock_tabs = MagicMock()
         MockTabs.return_value = mock_tabs
         mod.build_main_window_ui(window)
