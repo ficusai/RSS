@@ -238,6 +238,8 @@ class WindowStub:
         self.cb_freq.currentIndex = MagicMock(return_value=3)
         self.btn_add = MagicMock()
         self.btn_toggle_drawer = MagicMock()
+        self.btn_toggle_url = MagicMock()
+        self.btn_toggle_url.setText = MagicMock()
         self.drawer_box = MagicMock()
         self.drawer_box.isVisible = MagicMock(return_value=False)
         # Subscriptions filter
@@ -259,6 +261,11 @@ class WindowStub:
         self.table_feeds.insertRow = MagicMock()
         self.table_feeds.setItem = MagicMock()
         self.table_feeds.setCellWidget = MagicMock()
+        self.table_feeds.showColumn = MagicMock()
+        self.table_feeds.hideColumn = MagicMock()
+        # URL column toggle state
+        self._url_visible = False
+        self.toggle_url_column = MagicMock()
         self.table_articles = MagicMock()
         self.table_articles.setRowCount = MagicMock()
         self.table_articles.insertRow = MagicMock()

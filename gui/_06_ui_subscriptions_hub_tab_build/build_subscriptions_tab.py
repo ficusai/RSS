@@ -135,13 +135,15 @@ def build_subscriptions_tab(window) -> None:
                 - window.in_filter: search box
                 - window.cb_cat_filter: category filter dropdown
                 - window.btn_toggle_drawer: show/hide drawer button
+                - window.btn_toggle_url: show/hide URL column button
                 - window.drawer_box: collapsible add-form panel (QFrame)
                 - window.in_name, window.in_url, window.in_cat: form inputs
                 - window.cb_freq: interval dropdown
                 - window.btn_add: add feed button
-                - window.table_feeds: feed table widget
+                - window.table_feeds: feed management table
                 - window.cb_preset_cat: category selector for preset import
                 - window.cb_preset_select: preset feed selector dropdown
+                - window._url_visible: bool tracking URL column state (default False)
 
     DEFAULTS: None.
 
@@ -195,12 +197,20 @@ def build_subscriptions_tab(window) -> None:
     window.btn_toggle_drawer.setObjectName("primary_blue")
     window.btn_toggle_drawer.clicked.connect(window.toggle_add_drawer)
 
+    # QPushButton: toggle RSS Endpoint URL column visibility.
+    window.btn_toggle_url = QPushButton("🔗 URL")
+    window.btn_toggle_url.setObjectName("secondary")
+    window.btn_toggle_url.setMaximumWidth(80)
+    window.btn_toggle_url.clicked.connect(window.toggle_url_column)
+    window._url_visible = False
+
     # Add controls to header layout (title left, stretch, then filters/button right).
     catalog_header.addWidget(catalog_title)
     catalog_header.addStretch()
     catalog_header.addWidget(window.in_filter, 1)
     catalog_header.addWidget(window.cb_cat_filter)
     catalog_header.addWidget(window.btn_toggle_drawer)
+    catalog_header.addWidget(window.btn_toggle_url)
     feed_l.addLayout(catalog_header)
 
     # --- Collapsible Add & Presets Drawer ---
@@ -317,6 +327,9 @@ def build_subscriptions_tab(window) -> None:
     window.table_feeds.verticalHeader().setVisible(False)
     window.table_feeds.verticalHeader().setDefaultSectionSize(48)
     window.table_feeds.setAlternatingRowColors(True)
+
+    # Hide the RSS Endpoint URL column by default; revealed via toggle button.
+    window.table_feeds.hideColumn(1)
 
     feed_l.addWidget(window.table_feeds, 1)
 

@@ -12,3 +12,11 @@ def toggle_add_drawer(window) -> None:
     visible = not window.drawer_box.isVisible()
     window.drawer_box.setVisible(visible)
     window.btn_toggle_drawer.setText("➖ Hide Drawer" if visible else "➕ New Feed / Presets ▾")
+    # Sync URL column: show it when drawer is open, hide when closed.
+    window._url_visible = visible
+    if visible:
+        window.table_feeds.showColumn(1)
+        window.btn_toggle_url.setText("🔗 Hide URL")
+    else:
+        window.table_feeds.hideColumn(1)
+        window.btn_toggle_url.setText("🔗 URL")

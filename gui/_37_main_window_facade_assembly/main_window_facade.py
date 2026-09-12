@@ -70,6 +70,10 @@ class MainWindow(QMainWindow):
         from gui._12_add_drawer_toggle_visibility.toggle_add_drawer import toggle_add_drawer
         toggle_add_drawer(self)
 
+    def toggle_url_column(self):
+        from gui._39_toggle_url_column_visibility.toggle_url_column import toggle_url_column
+        toggle_url_column(self)
+
     def _log(self, msg):
         append_log_message(self, msg)
 
