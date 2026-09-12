@@ -316,12 +316,15 @@ def build_subscriptions_tab(window) -> None:
     header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)  # Name: user-resizable
     header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)      # URL: fills remaining space
     header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Category: auto-size
-    header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Interval: auto-size
-    header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Active: auto-size
-    header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Actions: auto-size
+    header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)     # Interval: fixed width
+    header.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)     # Active: fixed width
+    header.setSectionResizeMode(5, QHeaderView.ResizeMode.Interactive)     # Actions: fixed width
 
-    # Set fixed width for the Name column.
-    window.table_feeds.setColumnWidth(0, 190)
+    # Set fixed widths for columns whose content exceeds ResizeToContents.
+    window.table_feeds.setColumnWidth(0, 190)   # Name
+    window.table_feeds.setColumnWidth(3, 110)   # Interval
+    window.table_feeds.setColumnWidth(4, 70)    # Active
+    window.table_feeds.setColumnWidth(5, 180)   # Actions
 
     # Hide row numbers, set row height, enable alternating colors.
     window.table_feeds.verticalHeader().setVisible(False)
