@@ -10,4 +10,5 @@ PROJECT_ROOT="$(cd "${LAUNCHER_DIR}/../../../../.." && pwd)"
 export QT_QPA_PLATFORM=offscreen
 export PYTHONPATH="${PROJECT_ROOT}:${LAUNCHER_DIR}:${PYTHONPATH:-}"
 
-exec python3 -m GUI_SCRIPT_LAUNCHER "$@"
+# Run launcher.py directly (no package name needed — works with hyphens in dir)
+exec python3 "${LAUNCHER_DIR}/launcher.py" "$@"
