@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TEST-RSS-GUI-FULL
+Comment=Run all 39 GUI contract-drift tests with visual progress
+Exec=/home/ficus-pro/Documents/RSS/gui-tests-launcher/TEST-RSS-GUI-FULL.sh
+Icon=utilities-terminal
+Terminal=false
+Categories=Development;
+Keywords=RSS;GUI;tests;contract;drift;PyQt6;
+StartupWMClass=launcher
