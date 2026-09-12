@@ -311,22 +311,15 @@ def build_subscriptions_tab(window) -> None:
     window.table_feeds.setColumnCount(6)
     window.table_feeds.setHorizontalHeaderLabels(["Name", "RSS Endpoint URL", "Category", "Interval", "Active", "Actions"])
 
-    # Configure column resizing: all columns are user-resizable (Interactive)
-    # except URL which stretches to fill remaining window width.
+    # Configure column resizing: Name stretches to fill available width;
+    # every other column auto-sizes to its content (no manual dragging needed).
     header = window.table_feeds.horizontalHeader()
-    header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)  # Name
-    header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)      # URL: fills remaining space
-    header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)  # Category
-    header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)  # Interval
-    header.setSectionResizeMode(4, QHeaderView.ResizeMode.Interactive)  # Active
-    header.setSectionResizeMode(5, QHeaderView.ResizeMode.Interactive)  # Actions
-
-    # Default widths — user can drag column borders to resize freely.
-    window.table_feeds.setColumnWidth(0, 190)   # Name
-    window.table_feeds.setColumnWidth(2, 130)   # Category
-    window.table_feeds.setColumnWidth(3, 110)   # Interval
-    window.table_feeds.setColumnWidth(4, 70)    # Active
-    window.table_feeds.setColumnWidth(5, 160)   # Actions
+    header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)     # Name
+    header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # URL (hidden by default)
+    header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Category
+    header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Interval
+    header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Active
+    header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Actions
 
     # Hide row numbers, set row height, enable alternating colors.
     window.table_feeds.verticalHeader().setVisible(False)
