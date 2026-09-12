@@ -34,11 +34,10 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtWidgets import QApplication  # noqa: E402  # offscreen platform
 
-# Module-level QApplication instance. Kept at module scope so pytest never
-# tears it down (which would crash PyQt6 on Python 3.14 during interpreter
-# shutdown). The real QApplication is only needed as a side-effect of importing
-# PyQt6; the tests themselves never use the instance object.
-_qapp = QApplication([])
+# Module-level QApplication instance. Uses QApplication.instance() to reuse
+# an existing app created by another test module, preventing the PyQt6 crash
+# that occurs when multiple QApplications exist in the same process.
+_qapp = QApplication.instance() or QApplication([])
 
 
 
