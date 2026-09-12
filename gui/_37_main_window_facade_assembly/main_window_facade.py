@@ -180,12 +180,22 @@ class MainWindow(QMainWindow):
 
     # --- Window resize propagation ---
     def _propagate_tab_sizes(self):
-        """Resize all QTabWidget pages to match the tab widget's current size."""
+        """Resize all QTabWidget pages to match the tab widget's current size.
+
+        WHAT: QTabWidget does not automatically resize hidden tab pages when
+          the window grows. This method forces all pages to the tab widget's
+          current size AND triggers a layout recalculation so children
+          (tables, splitters, etc.) receive the new space.
+        """
         if hasattr(self, "tabs") and self.tabs is not None:
             tab_rect = self.tabs.rect()
             for idx in range(self.tabs.count()):
                 page = self.tabs.widget(idx)
                 page.resize(tab_rect.size())
+                # Force layout recalculation so children distribute the new size.
+                page.updateGeometry()
+                if page.layout():
+                    page.layout().activate()
 
     def resizeEvent(self, event):
         """Propagate window resize to all QTabWidget page children so tables expand."""
