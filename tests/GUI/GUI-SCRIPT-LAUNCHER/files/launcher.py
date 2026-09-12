@@ -27,7 +27,7 @@ class LauncherWindow(QMainWindow):
         self.setWindowTitle("RSS GUI Test Launcher")
         self.setMinimumSize(800, 600)
 
-        self.test_dir = Path(__file__).resolve().parents[1]
+        self.test_dir = Path(__file__).resolve().parents[2]
         self.results: list[dict] = []
 
         central = QWidget()
