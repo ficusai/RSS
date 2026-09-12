@@ -1,8 +1,5 @@
 """PyQt6 launcher for running all GUI test scripts in RSS/tests/GUI/."""
 
-import os
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
-
 import sys
 from pathlib import Path
 
